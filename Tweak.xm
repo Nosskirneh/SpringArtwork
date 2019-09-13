@@ -64,14 +64,10 @@
 %group SpringBoard
     CanvasReceiver *receiver;
 
-    static void setInterruptMusic(AVPlayer *player, BOOL interrupt) {
+    static void setNoInterruptionMusic(AVPlayer *player) {
         AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
         NSError *error = nil;
-
-        if (interrupt)
-            [session setCategory:AVAudioSessionCategorySoloAmbient error:&error];
-        else
-            [session setCategory:AVAudioSessionCategoryAmbient error:&error];
+        [session setCategory:AVAudioSessionCategoryAmbient error:&error];
     }
 
     static void hideDock(BOOL hide) {
@@ -108,6 +104,7 @@
 
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
+        setNoInterruptionMusic(player);
         self.canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
         self.canvasLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
 
@@ -140,10 +137,9 @@
                                                      selector:@selector(replayMovie:)
                                                          name:AVPlayerItemDidPlayToEndTimeNotification
                                                        object:player.currentItem];
-            setInterruptMusic(player, NO);
             [player play];
         } else {
-            setInterruptMusic(player, YES);
+
             [player pause];
             [self.canvasLayer removeFromSuperlayer];
             hideDock(NO);
