@@ -4,7 +4,7 @@ ARCHS = arm64# arm64e
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = SpotifyBackgrounds
-$(TWEAK_NAME)_FILES = Tweak.xm CanvasReceiver.m Common.m
+$(TWEAK_NAME)_FILES = Tweak.xm SAViewController.xm CanvasReceiver.m Common.m
 $(TWEAK_NAME)_FRAMEWORKS = AVFoundation
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
 $(TWEAK_NAME)_LIBRARIES = rocketbootstrap
