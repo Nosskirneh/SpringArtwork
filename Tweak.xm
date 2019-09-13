@@ -1,5 +1,6 @@
 #import "Spotify.h"
 #import "SpringBoard.h"
+#import "Common.h"
 
 %group Spotify
 
@@ -32,17 +33,30 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
     return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation), session)).trackChecker;
 }
 
+static void sendCanvasURL(NSURL *url) {
+    CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SPBG_IDENTIFIER];
+    rocketbootstrap_distributedmessagingcenter_apply(c);
+
+    NSMutableDictionary *dict = [NSMutableDictionary new];
+
+    if (url)
+        dict[kCanvasURL] = url.absoluteString;
+    [c sendMessageName:kCanvasURLMessage userInfo:dict];
+}
+
 %hook SPTNowPlayingBarContainerViewController
 
 - (void)setCurrentTrack:(SPTPlayerTrack *)track {
     %log;
     %orig;
 
+    NSURL *localURL = nil;  
     if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
         NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
-        NSURL *localURL = [getVideoURLAssetLoader() localURLForAssetURL:canvasURL];
+        localURL = [getVideoURLAssetLoader() localURLForAssetURL:canvasURL];
         HBLogDebug(@"localURL: %@", localURL.absoluteString);
     }
+    sendCanvasURL(localURL);
 }
 
 %end
@@ -50,42 +64,91 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 
 %group SpringBoard
 
+CanvasReceiver *receiver;
+
+static void setInterruptMusic(AVPlayer *player, BOOL interrupt) {
+    AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
+    NSError *error = nil;
+
+    if (interrupt)
+        [session setCategory:AVAudioSessionCategorySoloAmbient error:&error];
+    else
+        [session setCategory:AVAudioSessionCategoryAmbient error:&error];
+}
+
+static void hideDock(BOOL hide) {
+    SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
+    SBDockView *dockView = [rootFolderController.contentView dockView];
+    MSHookIvar<UIView *>(dockView, "_backgroundView").hidden = hide;
+}
+
 // Add background here
 %hook SBFStaticWallpaperView
 
-%property (nonatomic, retain) AVPlayerLayer *playerLayer;
-
-%new
-- (void)replayMovie:(NSNotification *)notification {
-    %log;
-    [self.playerLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
-        if (seeked)
-            [self.playerLayer.player play];
-    }];
-}
-
-%new
-- (void)_setupPlayerLayer:(UIView *)view {
-    // find movie file
-    NSString *moviePath = @"file:///var/mobile/Containers/Data/Application/94E12254-06ED-4EB5-8B30-BF02C62BF812/Library/Caches/com.spotify.service.network/1bafb5e3714432b2d883f9cbf0a73e6ac367ec7b.mp4";
-    NSURL *movieURL = [NSURL URLWithString:moviePath];
-    self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:[[AVPlayer alloc] initWithURL:movieURL]];
-    self.playerLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
-
-    [view.layer addSublayer:self.playerLayer];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(replayMovie:)
-                                                 name:AVPlayerItemDidPlayToEndTimeNotification 
-                                               object:self.playerLayer.player.currentItem];
-    [self.playerLayer.player play];
-}
+%property (nonatomic, retain) AVPlayerLayer *canvasLayer;
 
 - (void)_setUpStaticImageContentView:(UIView *)view {
     %log;
     %orig;
 
-    if (!self.playerLayer)
-        [self _setupPlayerLayer:view];
+    if (!self.canvasLayer)
+        [self _setupCanvasLayer:view];
+}
+
+%new
+- (void)replayMovie:(NSNotification *)notification {
+    %log;
+    [self.canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
+        if (seeked)
+            [self.canvasLayer.player play];
+    }];
+}
+
+%new
+- (void)_setupCanvasLayer:(UIView *)view {
+    %log;
+
+    AVPlayer *player = [[AVPlayer alloc] init];
+    player.muted = YES;
+    self.canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
+    self.canvasLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(canvasUpdated)
+                                                 name:kUpdateCanvas
+                                               object:nil];
+}
+
+%new
+- (void)canvasUpdated {
+    %log;
+
+    AVPlayer *player = self.canvasLayer.player;
+
+    if (player.currentItem)
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:AVPlayerItemDidPlayToEndTimeNotification
+                                                      object:player.currentItem];
+
+    if (receiver.canvasURL) {
+        [self.layer addSublayer:self.canvasLayer];
+
+        hideDock(YES);
+
+        AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:receiver.canvasURL]];
+        [player replaceCurrentItemWithPlayerItem:newItem];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(replayMovie:)
+                                                     name:AVPlayerItemDidPlayToEndTimeNotification
+                                                   object:player.currentItem];
+        setInterruptMusic(player, NO);
+        [player play];
+    } else {
+        setInterruptMusic(player, YES);
+        [player pause];
+        [self.canvasLayer removeFromSuperlayer];
+        hideDock(NO);
+    }
 }
 
 %end
@@ -95,8 +158,15 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 %ctor {
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
 
-    if ([bundleID isEqualToString:@"com.spotify.client"])
+    if ([bundleID isEqualToString:@"com.spotify.client"]) {
         %init(Spotify);
-    else
+    } else {
+        // if (fromUntrustedSource(package$bs()))
+        //     %init(PackagePirated);
+
+        receiver = [[CanvasReceiver alloc] init];
+
+        [receiver setup];
         %init(SpringBoard);
+    }
 }

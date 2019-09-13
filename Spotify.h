@@ -1,3 +1,6 @@
+#import <AppSupport/CPDistributedMessagingCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
+
 @protocol SPTService <NSObject>
 + (NSString *)serviceIdentifier;
 @end

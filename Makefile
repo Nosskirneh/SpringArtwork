@@ -4,10 +4,13 @@ ARCHS = arm64# arm64e
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = SpotifyBackgrounds
-$(TWEAK_NAME)_FILES = Tweak.xm
+$(TWEAK_NAME)_FILES = Tweak.xm CanvasReceiver.m Common.m
 $(TWEAK_NAME)_FRAMEWORKS = AVFoundation
+$(TWEAK_NAME)_CFLAGS = -fobjc-arc
+$(TWEAK_NAME)_LIBRARIES = rocketbootstrap
+$(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
 after-install::
-	install.exec "killall -9 Spotify"
+	install.exec "killall -9 Spotify SpringBoard"
