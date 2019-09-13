@@ -193,12 +193,7 @@
         animation.toValue = [NSNumber numberWithFloat:toValueFloat];
         animation.fromValue = [NSNumber numberWithFloat:fromValueFloat];
 
-        void (^newCompletion)() = ^() {
-            if (completion)
-                completion();
-        };
-
-        [CATransaction setCompletionBlock:newCompletion];
+        [CATransaction setCompletionBlock:completion];
         [self.canvasLayer addAnimation:animation forKey:@"timeViewFadeIn"];
         self.canvasLayer.opacity = toValueFloat;
         [CATransaction commit];
