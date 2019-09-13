@@ -4,5 +4,5 @@
 
 @interface SBFStaticWallpaperView : UIView
 @property (nonatomic, retain) AVPlayerLayer *playerLayer;
-- (void)_setupPlayerLayer;
+- (void)_setupPlayerLayer:(UIView *)view;
 @end

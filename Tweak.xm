@@ -58,35 +58,37 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 %new
 - (void)replayMovie:(NSNotification *)notification {
     %log;
-    [self.playerLayer.player play];
+    [self.playerLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
+        if (seeked)
+            [self.playerLayer.player play];
+    }];
 }
 
 %new
-- (void)_setupPlayerLayer {
+- (void)_setupPlayerLayer:(UIView *)view {
     // find movie file
     NSString *moviePath = @"file:///var/mobile/Containers/Data/Application/94E12254-06ED-4EB5-8B30-BF02C62BF812/Library/Caches/com.spotify.service.network/1bafb5e3714432b2d883f9cbf0a73e6ac367ec7b.mp4";
     NSURL *movieURL = [NSURL URLWithString:moviePath];
     self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:[[AVPlayer alloc] initWithURL:movieURL]];
     self.playerLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+
+    [view.layer addSublayer:self.playerLayer];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(replayMovie:)
+                                                 name:AVPlayerItemDidPlayToEndTimeNotification 
+                                               object:self.playerLayer.player.currentItem];
     [self.playerLayer.player play];
 }
 
-- (void)_setUpStaticImageContentView:(id)arg1 {
+- (void)_setUpStaticImageContentView:(UIView *)view {
     %log;
     %orig;
 
     if (!self.playerLayer)
-        [self _setupPlayerLayer];
-
-    [self.layer addSublayer:self.playerLayer];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(replayMovie:)
-                                                 name:AVPlayerItemDidPlayToEndTimeNotification 
-                                               object:nil];
+        [self _setupPlayerLayer:view];
 }
 
 %end
-
 %end
 
 
