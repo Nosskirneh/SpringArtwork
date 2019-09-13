@@ -1,3 +1,8 @@
+
+#import <AVFoundation/AVPlayerItem.h>
+#import <AVFoundation/AVPlayer.h>
+#import <AVFoundation/AVPlayerLayer.h>
+
 @protocol SPTService <NSObject>
 + (NSString *)serviceIdentifier;
 @end
@@ -89,7 +94,56 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 
 %group SpringBoard
 
+
+// @interface AVPlayerLayer : CALayer
+// @property (nonatomic, retain) AVPlayer *player;
+// + (id)playerLayerWithPlayer:(id)arg1;
+// @end
+
+@interface SBFStaticWallpaperView : UIView
+@property (nonatomic, retain) AVPlayerLayer *playerLayer;
+- (void)_setupPlayerLayer;
+@end
+
 // Add background here
+%hook SBFStaticWallpaperView
+
+%property (nonatomic, retain) AVPlayerLayer *playerLayer;
+
+%new
+- (void)replayMovie:(NSNotification *)notification {
+    %log;
+    [self.playerLayer.player play];
+}
+
+%new
+- (void)_setupPlayerLayer {
+    // find movie file
+    NSString *moviePath = @"file:///var/mobile/Containers/Data/Application/94E12254-06ED-4EB5-8B30-BF02C62BF812/Library/Caches/com.spotify.service.network/1bafb5e3714432b2d883f9cbf0a73e6ac367ec7b.mp4";
+    // NSURL *movieURL = [NSURL fileURLWithPath:moviePath];
+    NSURL *movieURL = [NSURL URLWithString:moviePath];
+    self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:[[AVPlayer alloc] initWithURL:movieURL]];
+    HBLogDebug(@"url: %@", movieURL.absoluteString);
+    HBLogDebug(@"%f, %f", self.frame.size.width, self.frame.size.height);
+    self.playerLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    [self.playerLayer.player play];
+}
+
+- (void)_setUpStaticImageContentView:(id)arg1 {
+    %log;
+    %orig;
+
+    if (!self.playerLayer)
+        [self _setupPlayerLayer];
+
+    [self.layer addSublayer:self.playerLayer];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(replayMovie:)
+                                                 name:AVPlayerItemDidPlayToEndTimeNotification 
+                                               object:nil];
+}
+
+%end
 
 %end
 
@@ -99,6 +153,9 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 
     if ([bundleID isEqualToString:@"com.spotify.client"])
         %init(Spotify);
-    else
+    else {
+        HBLogDebug(@"ctor sb");
+
         %init(SpringBoard);
+    }
 }
