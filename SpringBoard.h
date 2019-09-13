@@ -2,6 +2,7 @@
 #import <AVFoundation/AVPlayerItem.h>
 #import <AVFoundation/AVPlayer.h>
 #import <AVFoundation/AVPlayerLayer.h>
+#import <AVFoundation/AVAudioSession.h>
 
 @interface SBFStaticWallpaperView : UIView
 @property (nonatomic, retain) AVPlayerLayer *canvasLayer;
