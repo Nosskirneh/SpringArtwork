@@ -46,14 +46,12 @@
     %hook SPTNowPlayingBarContainerViewController
 
     - (void)setCurrentTrack:(SPTPlayerTrack *)track {
-        %log;
         %orig;
 
         NSURL *localURL = nil;  
         if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
             localURL = [getVideoURLAssetLoader() localURLForAssetURL:canvasURL];
-            HBLogDebug(@"localURL: %@", localURL.absoluteString);
         }
         sendCanvasURL(localURL);
     }
@@ -73,16 +71,20 @@
     static void hideDock(BOOL hide) {
         SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
         SBDockView *dockView = [rootFolderController.contentView dockView];
-        MSHookIvar<UIView *>(dockView, "_backgroundView").hidden = hide;
+        UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
+
+        [UIView animateWithDuration:ANIMATION_DURATION
+                         animations:^{
+                            background.alpha = hide ? 0.0f : 1.0f;
+                         }
+                         completion:nil];
     }
 
-    // Add background here
     %hook SBFStaticWallpaperView
 
     %property (nonatomic, retain) AVPlayerLayer *canvasLayer;
 
     - (void)_setUpStaticImageContentView:(UIView *)view {
-        %log;
         %orig;
 
         if (!self.canvasLayer)
@@ -91,7 +93,6 @@
 
     %new
     - (void)replayMovie:(NSNotification *)notification {
-        %log;
         [self.canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
             if (seeked)
                 [self.canvasLayer.player play];
@@ -100,8 +101,6 @@
 
     %new
     - (void)_setupCanvasLayer:(UIView *)view {
-        %log;
-
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
         setNoInterruptionMusic(player);
@@ -116,34 +115,93 @@
 
     %new
     - (void)canvasUpdated:(NSNotification *)notification {
-        %log;
-
         AVPlayer *player = self.canvasLayer.player;
-
         if (player.currentItem)
             [[NSNotificationCenter defaultCenter] removeObserver:self
                                                             name:AVPlayerItemDidPlayToEndTimeNotification
                                                           object:player.currentItem];
 
         NSString *canvasURL = notification.userInfo[kCanvasURL];
-        if (canvasURL)
-            [self.layer addSublayer:self.canvasLayer];
-
-            hideDock(YES);
-
-            AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:receiver.canvasURL]];
-            [player replaceCurrentItemWithPlayerItem:newItem];
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(replayMovie:)
-                                                         name:AVPlayerItemDidPlayToEndTimeNotification
-                                                       object:player.currentItem];
-            [player play];
+        if (canvasURL) {
+            [self fadeCanvasLayerIn];
+            [self changeCanvasURL:[NSURL URLWithString:canvasURL]];
         } else {
+            [self fadeCanvasLayerOut];
+        }
+    }
 
+    %new
+    - (void)changeCanvasURL:(NSURL *)url {
+        AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:url];
+
+        AVPlayer *player = self.canvasLayer.player;
+        [player replaceCurrentItemWithPlayerItem:newItem];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(replayMovie:)
+                                                     name:AVPlayerItemDidPlayToEndTimeNotification
+                                                   object:player.currentItem];
+        [player play];
+    }
+
+    %new
+    - (void)fadeCanvasLayerIn {
+        if (self.canvasLayer.superlayer)
+            return;
+
+        [self.layer addSublayer:self.canvasLayer];
+
+        hideDock(YES);
+        [self _showCanvasLayer:YES];
+    }
+
+    %new
+    - (void)fadeCanvasLayerOut {
+        if (!self.canvasLayer.superlayer)
+            return;
+
+        hideDock(NO);
+        [self _showCanvasLayer:NO completion:^() {
+            AVPlayer *player = self.canvasLayer.player;
             [player pause];
             [self.canvasLayer removeFromSuperlayer];
-            hideDock(NO);
+        }];
+    }
+
+    %new
+    - (void)_showCanvasLayer:(BOOL)show {
+        [self _showCanvasLayer:show completion:nil];
+    }
+
+    %new
+    - (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
+        float fromValueFloat;
+        float toValueFloat;
+        if (show) {
+            fromValueFloat = 0.0;
+            toValueFloat = 1.0;
+        } else {
+            fromValueFloat = 1.0;
+            toValueFloat = 0.0;
         }
+        self.canvasLayer.opacity = fromValueFloat;
+
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+
+        CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+        animation.duration = ANIMATION_DURATION;
+        animation.toValue = [NSNumber numberWithFloat:toValueFloat];
+        animation.fromValue = [NSNumber numberWithFloat:fromValueFloat];
+
+        void (^newCompletion)() = ^() {
+            if (completion)
+                completion();
+        };
+
+        [CATransaction setCompletionBlock:newCompletion];
+        [self.canvasLayer addAnimation:animation forKey:@"timeViewFadeIn"];
+        self.canvasLayer.opacity = toValueFloat;
+        [CATransaction commit];
     }
 
     %end

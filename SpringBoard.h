@@ -4,9 +4,16 @@
 #import <AVFoundation/AVPlayerLayer.h>
 #import <AVFoundation/AVAudioSession.h>
 
+#define ANIMATION_DURATION 0.75
+
 @interface SBFStaticWallpaperView : UIView
 @property (nonatomic, retain) AVPlayerLayer *canvasLayer;
 - (void)_setupCanvasLayer:(UIView *)view;
+- (void)changeCanvasURL:(NSURL *)url;
+- (void)fadeCanvasLayerIn;
+- (void)fadeCanvasLayerOut;
+- (void)_showCanvasLayer:(BOOL)show;
+- (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion;
 @end
 
 
