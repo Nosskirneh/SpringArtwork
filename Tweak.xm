@@ -112,13 +112,13 @@
         self.canvasLayer.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(canvasUpdated)
+                                                 selector:@selector(canvasUpdated:)
                                                      name:kUpdateCanvas
                                                    object:nil];
     }
 
     %new
-    - (void)canvasUpdated {
+    - (void)canvasUpdated:(NSNotification *)notification {
         %log;
 
         AVPlayer *player = self.canvasLayer.player;
@@ -128,7 +128,8 @@
                                                             name:AVPlayerItemDidPlayToEndTimeNotification
                                                           object:player.currentItem];
 
-        if (receiver.canvasURL) {
+        NSString *canvasURL = notification.userInfo[kCanvasURL];
+        if (canvasURL)
             [self.layer addSublayer:self.canvasLayer];
 
             hideDock(YES);
