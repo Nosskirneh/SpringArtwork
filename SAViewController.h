@@ -11,7 +11,7 @@
 
 
 @interface AVAudioSessionMediaPlayerOnly : NSObject
-- (BOOL)setCategory:(NSString *)category error:(NSError *)error;
+- (BOOL)setCategory:(NSString *)category error:(NSError **)error;
 @end
 
 @interface AVPlayer (Private)
