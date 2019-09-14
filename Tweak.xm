@@ -75,8 +75,6 @@
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 
     - (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config forVariant:(long long)variant shared:(BOOL)shared options:(unsigned long long)options {
-        %log;
-
         UIView *wallpaperView = %orig;
 
         BOOL homescreen = shared || variant == 1;
@@ -86,6 +84,21 @@
             self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView homescreen:NO];
 
         return wallpaperView;
+    }
+
+    %end
+
+
+    %hook UIApplication
+
+    - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
+        %orig;
+
+        if (event.type != UIEventSubtypeMotionShake)
+            return;
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
+                                                            object:nil];
     }
 
     %end

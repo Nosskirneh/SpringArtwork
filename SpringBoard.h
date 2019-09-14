@@ -1,4 +1,5 @@
 #import "SAViewController.h"
+#import <SpringBoard/SBUserAgent.h>
 
 @interface SBWallpaperEffectView : UIView
 @property (nonatomic, retain) UIView *blurView;
@@ -17,7 +18,7 @@
 @property (nonatomic, readonly) SBRootFolderView *contentView;
 @end
 
-@interface SBIconController
+@interface SBIconController : NSObject
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
 @end
@@ -33,4 +34,9 @@
 @property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
 @property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12
 @property (nonatomic, retain) SBWallpaperEffectView *panelFadeOutWallpaperEffectView; // iOS 12
+@end
+
+
+@interface SpringBoard : NSObject
+- (SBUserAgent *)pluginUserAgent;
 @end

@@ -37,6 +37,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         NSString *url = receiver.canvasURL;
         if (url)
             [self canvasUpdatedWithURLString:url];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(togglePlayPause)
+                                                     name:kTogglePlayPause
+                                                   object:nil];
     }
     return self;
 }
@@ -125,7 +130,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
-    show ? [self becomeFirstResponder] : [self resignFirstResponder];
     [self performLayerOpacityAnimation:_canvasLayer show:show completion:completion];
 }
 
@@ -153,6 +157,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [layer addAnimation:animation forKey:@"timeViewFadeIn"];
     layer.opacity = to;
     [CATransaction commit];
+}
+
+- (void)togglePlayPause {
+    AVPlayer *player = _canvasLayer.player;
+    if (player.rate == 0 || player.error)
+        [player play];
+    else
+        [player pause];
 }
 
 @end
