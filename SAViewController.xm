@@ -1,7 +1,11 @@
 #import "SAViewController.h"
 #import "Common.h"
 #import "SpringBoard.h"
+#import "CanvasReceiver.h"
 
+#define ANIMATION_DURATION 0.75
+
+extern CanvasReceiver *receiver;
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
@@ -11,8 +15,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 @implementation SAViewController
 
-- (id)initWithTargetView:(UIView *)targetView {
+- (id)initWithTargetView:(UIView *)targetView homescreen:(BOOL)homescreen {
     if (self == [super init]) {
+        _homescreen = homescreen;
+
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
         setNoInterruptionMusic(player);
@@ -27,17 +33,31 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                                  selector:@selector(canvasUpdated:)
                                                      name:kUpdateCanvas
                                                    object:nil];
+        
+        NSString *url = receiver.canvasURL;
+        if (url)
+            [self canvasUpdatedWithURLString:url];
     }
     return self;
 }
 
 - (void)hideDock:(BOOL)hide {
+    // Only the homescreen controller is allowed to change the dock,
+    // otherwise the two will do it simultaneously which obviously causes issues
+    if (!_homescreen)
+        return;
+
     SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
     SBDockView *dockView = [rootFolderController.contentView dockView];
     UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
-    HBLogDebug(@"bg: %@", background);
 
-    [self performLayerOpacityAnimation:background.layer show:!hide completion:nil];
+    if (!hide)
+        background.hidden = NO;
+
+    [self performLayerOpacityAnimation:background.layer show:!hide completion:^() {
+        if (hide)
+            background.hidden = YES;
+    }];
 }
 
 - (void)replayMovie:(NSNotification *)notification {
@@ -48,16 +68,19 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)canvasUpdated:(NSNotification *)notification {
+    [self canvasUpdatedWithURLString:notification.userInfo[kCanvasURL]];
+}
+
+- (void)canvasUpdatedWithURLString:(NSString *)url {
     AVPlayer *player = _canvasLayer.player;
     if (player.currentItem)
         [[NSNotificationCenter defaultCenter] removeObserver:self
                                                         name:AVPlayerItemDidPlayToEndTimeNotification
                                                       object:player.currentItem];
 
-    NSString *canvasURL = notification.userInfo[kCanvasURL];
-    if (canvasURL) {
+    if (url) {
         [self fadeCanvasLayerIn];
-        [self changeCanvasURL:[NSURL URLWithString:canvasURL]];
+        [self changeCanvasURL:[NSURL URLWithString:url]];
     } else {
         [self fadeCanvasLayerOut];
     }

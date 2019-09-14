@@ -4,6 +4,16 @@
 #import <AVFoundation/AVAudioSession.h>
 
 @interface SAViewController : UIViewController
+@property (nonatomic, readonly) BOOL homescreen;
 @property (nonatomic, retain, readonly) AVPlayerLayer *canvasLayer;
-- (id)initWithTargetView:(UIView *)view;
+- (id)initWithTargetView:(UIView *)view homescreen:(BOOL)homescreen;
+@end
+
+
+@interface AVAudioSessionMediaPlayerOnly : NSObject
+- (BOOL)setCategory:(NSString *)category error:(NSError *)error;
+@end
+
+@interface AVPlayer (Private)
+- (AVAudioSessionMediaPlayerOnly *)playerAVAudioSession;
 @end

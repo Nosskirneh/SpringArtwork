@@ -1,19 +1,12 @@
-#import "CanvasReceiver.h"
 #import "SAViewController.h"
 
-#define ANIMATION_DURATION 0.75
-
-@interface SBFStaticWallpaperView : UIView
-@property (nonatomic, retain) SAViewController *canvasViewController;
+@interface SBWallpaperEffectView : UIView
+@property (nonatomic, retain) UIView *blurView;
 @end
 
-
-@interface SBWallpaperEffectView : UIView {
+@interface SBDockView : UIView {
     SBWallpaperEffectView *_backgroundView;
 }
-@end
-
-@interface SBDockView : UIView
 @end
 
 @interface SBRootFolderView : UIView
@@ -30,10 +23,14 @@
 @end
 
 
-@interface AVAudioSessionMediaPlayerOnly : NSObject
-- (BOOL)setCategory:(NSString *)category error:(id *)error;
+@interface SBFStaticWallpaperView : UIView
+@property (nonatomic, retain) SAViewController *canvasViewController;
 @end
 
-@interface AVPlayer (Private)
-- (AVAudioSessionMediaPlayerOnly *)playerAVAudioSession;
+
+@interface SBCoverSheetPrimarySlidingViewController : UIViewController
+@property (nonatomic, retain) SAViewController *canvasNormalViewController;
+@property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
+@property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12
+@property (nonatomic, retain) SBWallpaperEffectView *panelFadeOutWallpaperEffectView; // iOS 12
 @end

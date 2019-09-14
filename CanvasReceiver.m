@@ -3,9 +3,7 @@
 #import <rocketbootstrap/rocketbootstrap.h>
 #import "Common.h"
 
-@implementation CanvasReceiver {
-	NSString *_canvasURL;
-}
+@implementation CanvasReceiver
 
 - (void)setup {
     CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:SPBG_IDENTIFIER];
@@ -15,10 +13,13 @@
 }
 
 - (void)handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
-    if (![dict[kCanvasURL] isEqualToString:_canvasURL])
+	NSString *urlString = dict[kCanvasURL];
+    if (![urlString isEqualToString:_canvasURL]) {
+    	_canvasURL = urlString;
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateCanvas
                                                             object:nil
                                                           userInfo:dict];
+    }
 }
 
 @end
