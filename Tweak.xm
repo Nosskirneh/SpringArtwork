@@ -154,7 +154,7 @@
         if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
             %init(newiOS11);
 
-        if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded:)])
+        if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded)])
             %init(wallpaperEffectView_newiOS11);
         else
             %init(wallpaperEffectView_oldiOS11);
