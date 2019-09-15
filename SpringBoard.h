@@ -39,4 +39,5 @@
 
 @interface SpringBoard : NSObject
 - (SBUserAgent *)pluginUserAgent;
+- (id)_accessibilityFrontMostApplication;
 @end

@@ -100,7 +100,9 @@
     - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
         %orig;
 
-        if (event.type != UIEventSubtypeMotionShake || ![receiver isActive])
+        if (event.type != UIEventSubtypeMotionShake ||
+            ![receiver isActive] ||
+            [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication])
             return;
 
         [receiver.hapticGenerator impactOccurred];
