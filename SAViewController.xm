@@ -32,6 +32,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [targetView addSubview:self.view];
 
         _canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
+        _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
         _canvasLayer.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
 
         [[NSNotificationCenter defaultCenter] addObserver:self
