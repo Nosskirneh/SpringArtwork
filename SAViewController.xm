@@ -15,6 +15,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 @implementation SAViewController {
     BOOL _homescreen;
+    AVPlayerLayer *_canvasLayer;
 }
 
 #pragma mark Public
