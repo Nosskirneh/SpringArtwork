@@ -11,8 +11,8 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 @interface SACanvasReceiver : NSObject
 @property (nonatomic, assign, readonly) NSString *canvasURL;
-@property (nonatomic, retain, readonly) UIImpactFeedbackGenerator *hapticGenerator;
 - (void)setup;
+- (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isActive;
 @end

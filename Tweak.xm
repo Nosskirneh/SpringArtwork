@@ -105,9 +105,7 @@
             [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication])
             return;
 
-        [receiver.hapticGenerator impactOccurred];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
-                                                            object:nil];
+        [receiver togglePlayManually];
     }
 
     %end
@@ -142,7 +140,6 @@
 }
 %end
 %end
-
 
 
 %ctor {

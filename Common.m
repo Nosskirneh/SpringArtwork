@@ -3,3 +3,4 @@ NSString *const kCanvasURL = @"canvasURL";
 NSString *const kUpdateCanvas = @"updateCanvas";
 
 NSString *const kTogglePlayPause = @"togglePlayPause";
+NSString *const kPlayState = @"playState";

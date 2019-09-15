@@ -13,7 +13,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [session setCategory:AVAudioSessionCategoryAmbient error:&error];
 }
 
-@implementation SAViewController
+@implementation SAViewController {
+    BOOL _homescreen;
+}
+
+#pragma mark Public
 
 - (id)initWithTargetView:(UIView *)targetView homescreen:(BOOL)homescreen {
     if (self == [super init]) {
@@ -30,23 +34,25 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _canvasLayer.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(canvasUpdated:)
+                                                 selector:@selector(_canvasUpdated:)
                                                      name:kUpdateCanvas
                                                    object:nil];
         
         NSString *url = receiver.canvasURL;
         if (url)
-            [self canvasUpdatedWithURLString:url];
+            [self _canvasUpdatedWithURLString:url];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(togglePlayPause)
+                                                 selector:@selector(_togglePlayPause:)
                                                      name:kTogglePlayPause
                                                    object:nil];
     }
     return self;
 }
 
-- (void)hideDock:(BOOL)hide {
+#pragma mark Private
+
+- (void)_hideDock:(BOOL)hide {
     // Only the homescreen controller is allowed to change the dock,
     // otherwise the two will do it simultaneously which obviously causes issues
     if (!_homescreen)
@@ -59,24 +65,25 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (!hide)
         background.hidden = NO;
 
-    [self performLayerOpacityAnimation:background.layer show:!hide completion:^() {
+    [self _performLayerOpacityAnimation:background.layer show:!hide completion:^() {
         if (hide)
             background.hidden = YES;
     }];
 }
 
-- (void)replayMovie:(NSNotification *)notification {
+- (void)_replayMovie:(NSNotification *)notification {
+    HBLogDebug(@"_replayMovie:");
     [_canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
         if (seeked)
             [_canvasLayer.player play];
     }];
 }
 
-- (void)canvasUpdated:(NSNotification *)notification {
-    [self canvasUpdatedWithURLString:notification.userInfo[kCanvasURL]];
+- (void)_canvasUpdated:(NSNotification *)notification {
+    [self _canvasUpdatedWithURLString:notification.userInfo[kCanvasURL]];
 }
 
-- (void)canvasUpdatedWithURLString:(NSString *)url {
+- (void)_canvasUpdatedWithURLString:(NSString *)url {
     AVPlayer *player = _canvasLayer.player;
     if (player.currentItem)
         [[NSNotificationCenter defaultCenter] removeObserver:self
@@ -84,40 +91,40 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                                       object:player.currentItem];
 
     if (url) {
-        [self fadeCanvasLayerIn];
-        [self changeCanvasURL:[NSURL URLWithString:url]];
+        [self _fadeCanvasLayerIn];
+        [self _changeCanvasURL:[NSURL URLWithString:url]];
     } else {
-        [self fadeCanvasLayerOut];
+        [self _fadeCanvasLayerOut];
     }
 }
 
-- (void)changeCanvasURL:(NSURL *)url {
+- (void)_changeCanvasURL:(NSURL *)url {
     AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:url];
 
     AVPlayer *player = _canvasLayer.player;
     [player replaceCurrentItemWithPlayerItem:newItem];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(replayMovie:)
+                                             selector:@selector(_replayMovie:)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:player.currentItem];
     [player play];
 }
 
-- (void)fadeCanvasLayerIn {
+- (void)_fadeCanvasLayerIn {
     if (_canvasLayer.superlayer)
         return;
 
     [self.view.layer addSublayer:_canvasLayer];
 
-    [self hideDock:YES];
+    [self _hideDock:YES];
     [self _showCanvasLayer:YES];
 }
 
-- (void)fadeCanvasLayerOut {
+- (void)_fadeCanvasLayerOut {
     if (!_canvasLayer.superlayer)
         return;
 
-    [self hideDock:NO];
+    [self _hideDock:NO];
     [self _showCanvasLayer:NO completion:^() {
         AVPlayer *player = _canvasLayer.player;
         [player pause];
@@ -130,10 +137,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
-    [self performLayerOpacityAnimation:_canvasLayer show:show completion:completion];
+    [self _performLayerOpacityAnimation:_canvasLayer show:show completion:completion];
 }
 
-- (void)performLayerOpacityAnimation:(CALayer *)layer show:(BOOL)show completion:(void (^)(void))completion {
+- (void)_performLayerOpacityAnimation:(CALayer *)layer show:(BOOL)show completion:(void (^)(void))completion {
     float from;
     float to;
     if (show) {
@@ -159,8 +166,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [CATransaction commit];
 }
 
-- (void)togglePlayPause {
+- (void)_togglePlayPause:(NSNotification *)notification {
     AVPlayer *player = _canvasLayer.player;
+
+    NSNumber *playState = notification.userInfo[kPlayState];
+    if (playState) {
+        [playState boolValue] ? [player play] : [player pause];
+        return;
+    }
+
     if (player.rate == 0 || player.error)
         [player play];
     else
