@@ -85,7 +85,7 @@
                                                             object:nil
                                                           userInfo:dict];
         _manuallyPaused = NO;
-        _playing = YES;
+        _playing = urlString != nil;
     }
 }
 
