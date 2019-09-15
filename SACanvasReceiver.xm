@@ -49,32 +49,30 @@
 #pragma mark Private
 
 - (BOOL)_registerScreenEvent {
-    __weak SACanvasReceiver *weakSelf = self;
-
     uint32_t result = notify_register_dispatch(kNotificationNameDidChangeDisplayStatus,
        &_notifyTokenForDidChangeDisplayStatus,
        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
        ^(int info) {
-            __strong SACanvasReceiver *strongSelf = weakSelf;
+            // If the user manually paused the video, do not resume on screen turn on event
+            if (!_playing && _manuallyPaused)
+                return;
 
-            if (strongSelf) {
-                // If the user manually paused the video, do not resume on screen turn on event
-                if (!_playing && _manuallyPaused)
-                    return;
-
-                uint64_t state;
-                notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
-
-                NSDictionary *info = @{
-                    kPlayState : @((BOOL)state)
-                };
-
-                [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
-                                                                    object:nil
-                                                                  userInfo:info];
-            }
+            uint64_t state;
+            notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
+            [self _sendPlayPauseNotificationWithState:BOOL(state)];
        });
+
     return result == NOTIFY_STATUS_OK;
+}
+
+- (void)_sendPlayPauseNotificationWithState:(BOOL)newState {
+    NSDictionary *info = @{
+        kPlayState : @(newState)
+    };
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
+                                                        object:nil
+                                                      userInfo:info];
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
