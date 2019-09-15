@@ -3,7 +3,7 @@ ARCHS = arm64# arm64e
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = SpotifyBackgrounds
+TWEAK_NAME = SpringArtwork
 $(TWEAK_NAME)_FILES = Tweak.xm SAViewController.xm SACanvasReceiver.xm Common.m
 $(TWEAK_NAME)_FRAMEWORKS = AVFoundation
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc

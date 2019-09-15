@@ -1,9 +1,9 @@
-Package: se.nosskirneh.spotifybackgrounds
-Name: SpotifyBackgrounds
+Package: se.nosskirneh.springartwork
+Name: SpringArtwork
 Depends: mobilesubstrate
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: Set Spotify video artwork as your background!
+Description: Set current artwork as your wallpaper
 Maintainer: Andreas Henriksson
 Author: Andreas Henriksson
 Section: Tweaks
