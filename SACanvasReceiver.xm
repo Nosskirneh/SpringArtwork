@@ -3,8 +3,10 @@
 #import <rocketbootstrap/rocketbootstrap.h>
 #import "Common.h"
 #import <notify.h>
+#import "SpringBoard.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
+#define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 
 
 @implementation SACanvasReceiver {
@@ -23,6 +25,12 @@
     [c registerForMessageName:kCanvasURLMessage target:self selector:@selector(_handleIncomingMessage:withUserInfo:)];
 
     [self _registerScreenEvent];
+
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_appChanged:)
+                                                 name:kSBApplicationProcessStateDidChange
+                                               object:nil];
 }
 
 - (BOOL)isActive {
@@ -73,6 +81,18 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
                                                         object:nil
                                                       userInfo:info];
+}
+
+- (void)_appChanged:(NSNotification *)notification {    
+    // If the user manually paused the video, do not resume on screen turn on event
+    if (![self isActive] || (!_playing && _manuallyPaused))
+        return;
+
+    SBApplication *app = notification.object;
+    BOOL foreground = [app respondsToSelector:@selector(internalProcessState)] ?
+                       app.internalProcessState.foreground :
+                       app.processState.foreground;
+    [self _sendPlayPauseNotificationWithState:!foreground];
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
