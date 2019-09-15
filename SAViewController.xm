@@ -44,10 +44,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         if (url)
             [self _canvasUpdatedWithURLString:url];
 
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_togglePlayPause:)
-                                                     name:kTogglePlayPause
-                                                   object:nil];
+        if (![(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication]) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(_togglePlayPause:)
+                                                         name:kTogglePlayPause
+                                                       object:nil];
+        }
     }
     return self;
 }
