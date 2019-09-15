@@ -62,7 +62,7 @@
        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
        ^(int info) {
             // If the user manually paused the video, do not resume on screen turn on event
-            if (!_playing && _manuallyPaused)
+            if (![self isActive] || (!_playing && _manuallyPaused))
                 return;
 
             uint64_t state;
@@ -84,7 +84,7 @@
 }
 
 - (void)_appChanged:(NSNotification *)notification {    
-    // If the user manually paused the video, do not resume on screen turn on event
+    // If the user manually paused the video, do not resume when app enters background
     if (![self isActive] || (!_playing && _manuallyPaused))
         return;
 
