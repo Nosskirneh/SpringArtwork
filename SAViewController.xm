@@ -1,11 +1,11 @@
 #import "SAViewController.h"
-#import "Common.h"
+#import "SACanvasReceiver.h"
 #import "SpringBoard.h"
-#import "CanvasReceiver.h"
+#import "Common.h"
 
 #define ANIMATION_DURATION 0.75
 
-extern CanvasReceiver *receiver;
+extern SACanvasReceiver *receiver;
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];

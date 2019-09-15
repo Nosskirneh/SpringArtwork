@@ -1,6 +1,6 @@
 #import "Spotify.h"
 #import "SpringBoard.h"
-#import "CanvasReceiver.h"
+#import "SACanvasReceiver.h"
 #import "Common.h"
 
 
@@ -61,8 +61,9 @@
     %end
 %end
 
+
 %group SpringBoard
-    CanvasReceiver *receiver;
+    SACanvasReceiver *receiver;
 
     @interface SBWallpaperController : NSObject
     @property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
@@ -73,6 +74,11 @@
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
+
+    - (id)init {
+        [receiver loadHaptic];
+        return %orig;
+    }
 
     - (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config forVariant:(long long)variant shared:(BOOL)shared options:(unsigned long long)options {
         UIView *wallpaperView = %orig;
@@ -94,9 +100,10 @@
     - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
         %orig;
 
-        if (event.type != UIEventSubtypeMotionShake)
+        if (event.type != UIEventSubtypeMotionShake || ![receiver isActive])
             return;
 
+        [receiver.hapticGenerator impactOccurred];
         [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
                                                             object:nil];
     }
@@ -145,7 +152,7 @@
         // if (fromUntrustedSource(package$bs()))
         //     %init(PackagePirated);
 
-        receiver = [[CanvasReceiver alloc] init];
+        receiver = [[SACanvasReceiver alloc] init];
 
         [receiver setup];
         %init(SpringBoard);

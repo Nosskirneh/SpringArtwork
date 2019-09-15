@@ -1,9 +1,9 @@
-#import "CanvasReceiver.h"
+#import "SACanvasReceiver.h"
 #import <AppSupport/CPDistributedMessagingCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
 #import "Common.h"
 
-@implementation CanvasReceiver
+@implementation SACanvasReceiver
 
 - (void)setup {
     CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:SPBG_IDENTIFIER];
@@ -20,6 +20,14 @@
                                                             object:nil
                                                           userInfo:dict];
     }
+}
+
+- (void)loadHaptic {
+    _hapticGenerator = [[%c(UIImpactFeedbackGenerator) alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+}
+
+- (BOOL)isActive {
+    return _canvasURL != nil;
 }
 
 @end
