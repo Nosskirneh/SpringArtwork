@@ -72,7 +72,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_replayMovie:(NSNotification *)notification {
-    HBLogDebug(@"_replayMovie:");
     [_canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
         if (seeked)
             [_canvasLayer.player play];
