@@ -65,12 +65,6 @@
 %group SpringBoard
     SACanvasReceiver *receiver;
 
-    @interface SBWallpaperController : NSObject
-    @property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
-    @property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
-    @end
-
-
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;

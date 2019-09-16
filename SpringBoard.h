@@ -24,8 +24,9 @@
 @end
 
 
-@interface SBFStaticWallpaperView : UIView
-@property (nonatomic, retain) SAViewController *canvasViewController;
+@interface SBWallpaperController : NSObject
+@property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
+@property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 @end
 
 
