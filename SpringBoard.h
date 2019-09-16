@@ -38,6 +38,24 @@
 @end
 
 
+@interface SBHomeScreenBackdropView : UIView {
+    UIView *_materialView;
+    UIImageView *_blurredContentSnapshotImageView;
+}
+@end
+
+
+@interface SBUIController : NSObject {
+    SBHomeScreenBackdropView *_homeScreenBackdropView; // iOS 12
+
+    // iOS 11.1.2 and below (11.3.1 unknown)
+    UIView *_homeScreenContentBackdropView;
+    UIImageView *_homeScreenBlurredContentSnapshotImageView;
+}
+@property (nonatomic, retain) SAViewController *canvasViewController;
+@end
+
+
 @interface SpringBoard : NSObject
 - (SBUserAgent *)pluginUserAgent;
 - (id)_accessibilityFrontMostApplication;

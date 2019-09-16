@@ -106,6 +106,42 @@
 %end
 
 
+// When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
+// appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
+// The solution is to hide the UIImageView and instead always show the transition MTMaterialView.
+%group SwitcherBackdrop_iOS11
+%hook SBUIController
+
+- (void)_updateBackdropViewIfNeeded {
+    %orig;
+
+    if ([receiver isActive]) {
+        MSHookIvar<UIView *>(self, "_homeScreenContentBackdropView").hidden = NO;
+        MSHookIvar<UIImageView *>(self, "_homeScreenBlurredContentSnapshotImageView").hidden = YES;
+    }
+}
+
+%end
+%end
+
+%group SwitcherBackdrop_iOS12
+%hook SBHomeScreenBackdropView
+
+- (void)_updateBackdropViewIfNeeded {
+    %orig;
+
+    if ([receiver isActive]) {
+        MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
+        MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
+        [[%c(SBIconController) sharedInstance] contentView].hidden = NO;
+    }
+}
+
+%end
+%end
+
+
+// Lockscreen (NC pulldown)
 %hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, retain) SAViewController *canvasNormalViewController;
 %property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
@@ -158,5 +194,10 @@
             %init(wallpaperEffectView_newiOS11);
         else
             %init(wallpaperEffectView_oldiOS11);
+
+        if (%c(SBHomeScreenBackdropView))
+            %init(SwitcherBackdrop_iOS12);
+        else
+            %init(SwitcherBackdrop_iOS11);
     }
 }
