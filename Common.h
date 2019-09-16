@@ -1,4 +1,4 @@
-#define SPBG_IDENTIFIER @"se.nosskirneh.spotifybackgrounds"
+#define SA_IDENTIFIER @"se.nosskirneh.springartwork"
 
 extern NSString *const kCanvasURLMessage;
 extern NSString *const kCanvasURL;

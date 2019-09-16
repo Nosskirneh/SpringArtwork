@@ -35,7 +35,7 @@
     }
 
     static void sendCanvasURL(NSURL *url) {
-        CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SPBG_IDENTIFIER];
+        CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SA_IDENTIFIER];
         rocketbootstrap_distributedmessagingcenter_apply(c);
 
         NSMutableDictionary *dict = [NSMutableDictionary new];
