@@ -1,6 +1,6 @@
 #import "Spotify.h"
 #import "SpringBoard.h"
-#import "SACanvasReceiver.h"
+#import "SAManager.h"
 #import "Common.h"
 
 
@@ -63,14 +63,14 @@
 
 
 %group SpringBoard
-    SACanvasReceiver *receiver;
+    SAManager *manager;
 
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 
     - (id)init {
-        [receiver loadHaptic];
+        [manager loadHaptic];
         return %orig;
     }
 
@@ -98,11 +98,11 @@
         %orig;
 
         if (event.type != UIEventSubtypeMotionShake ||
-            ![receiver isActive] ||
+            ![manager isCanvasActive] ||
             [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication])
             return;
 
-        [receiver togglePlayManually];
+        [manager togglePlayManually];
     }
 
     %end
@@ -118,7 +118,7 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([receiver isActive]) {
+    if ([manager isCanvasActive]) {
         MSHookIvar<UIView *>(self, "_homeScreenContentBackdropView").hidden = NO;
         MSHookIvar<UIImageView *>(self, "_homeScreenBlurredContentSnapshotImageView").hidden = YES;
     }
@@ -133,7 +133,7 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([receiver isActive]) {
+    if ([manager isCanvasActive]) {
         MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
         MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
         [[%c(SBIconController) sharedInstance] contentView].hidden = NO;
@@ -178,15 +178,15 @@
 %ctor {
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
 
-    if ([bundleID isEqualToString:@"com.spotify.client"]) {
+    if ([bundleID isEqualToString:kSpotifyBundleID]) {
         %init(Spotify);
     } else {
         // if (fromUntrustedSource(package$bs()))
         //     %init(PackagePirated);
 
-        receiver = [[SACanvasReceiver alloc] init];
+        manager = [[SAManager alloc] init];
 
-        [receiver setup];
+        [manager setup];
         %init(SpringBoard);
         %init();
 

@@ -9,10 +9,10 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)impactOccurred;
 @end
 
-@interface SACanvasReceiver : NSObject
+@interface SAManager : NSObject
 @property (nonatomic, assign, readonly) NSString *canvasURL;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;
-- (BOOL)isActive;
+- (BOOL)isCanvasActive;
 @end

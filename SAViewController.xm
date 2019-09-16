@@ -1,11 +1,11 @@
 #import "SAViewController.h"
-#import "SACanvasReceiver.h"
+#import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
 
 #define ANIMATION_DURATION 0.75
 
-extern SACanvasReceiver *receiver;
+extern SAManager *manager;
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
@@ -41,10 +41,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_canvasUpdated:)
-                                                     name:kUpdateCanvas
+                                                     name:kUpdateArtwork
                                                    object:nil];
         
-        NSString *url = receiver.canvasURL;
+        NSString *url = manager.canvasURL;
         if (url)
             [self _canvasUpdatedWithURLString:url];
 
@@ -87,7 +87,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_canvasUpdated:(NSNotification *)notification {
-    [self _canvasUpdatedWithURLString:notification.userInfo[kCanvasURL]];
+    NSString *canvasURL = nil;
+    if (notification.userInfo && notification.userInfo[kCanvasURL])
+        canvasURL = notification.userInfo[kCanvasURL];
+    [self _canvasUpdatedWithURLString:canvasURL];
 }
 
 - (void)_canvasUpdatedWithURLString:(NSString *)url {
