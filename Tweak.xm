@@ -74,14 +74,17 @@
         return %orig;
     }
 
-    - (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config forVariant:(long long)variant shared:(BOOL)shared options:(unsigned long long)options {
+    - (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config
+                                                  forVariant:(long long)variant
+                                                      shared:(BOOL)shared
+                                                     options:(unsigned long long)options {
         UIView *wallpaperView = %orig;
 
         BOOL homescreen = shared || variant == 1;
         if (homescreen)
             self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView managesDock:YES];
         else
-            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView managesDock:NO];
+            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView];
 
         return wallpaperView;
     }
@@ -150,7 +153,7 @@
 - (void)_createFadeOutWallpaperEffectView {
     %orig;
 
-    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView managesDock:NO];
+    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView];
 }
 %end
 
@@ -158,7 +161,7 @@
 - (void)_createPanelWallpaperEffectViewIfNeeded {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView managesDock:NO];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView];
 }
 %end
 
@@ -166,7 +169,7 @@
 - (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView managesDock:NO];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView];
 }
 %end
 %end

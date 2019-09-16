@@ -20,6 +20,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 #pragma mark Public
 
+- (id)initWithTargetView:(UIView *)targetView {
+    return [self initWithTargetView:targetView managesDock:NO];
+}
+
 - (id)initWithTargetView:(UIView *)targetView managesDock:(BOOL)managesDock {
     if (self == [super init]) {
         _managesDock = managesDock;

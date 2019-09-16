@@ -4,6 +4,7 @@
 #import <AVFoundation/AVAudioSession.h>
 
 @interface SAViewController : UIViewController
+- (id)initWithTargetView:(UIView *)view;
 - (id)initWithTargetView:(UIView *)view managesDock:(BOOL)managesDock;
 @end
 
