@@ -14,20 +14,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 @implementation SAViewController {
-    BOOL _managesDock;
     AVPlayerLayer *_canvasLayer;
 }
 
 #pragma mark Public
 
 - (id)initWithTargetView:(UIView *)targetView {
-    return [self initWithTargetView:targetView managesDock:NO];
-}
-
-- (id)initWithTargetView:(UIView *)targetView managesDock:(BOOL)managesDock {
     if (self == [super init]) {
-        _managesDock = managesDock;
-
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
         setNoInterruptionMusic(player);
@@ -59,25 +52,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 #pragma mark Private
-
-- (void)_hideDock:(BOOL)hide {
-    // Only the homescreen controller is allowed to change the dock,
-    // otherwise the two will do it simultaneously which obviously causes issues
-    if (!_managesDock)
-        return;
-
-    SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
-    SBDockView *dockView = [rootFolderController.contentView dockView];
-    UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
-
-    if (!hide)
-        background.hidden = NO;
-
-    [self _performLayerOpacityAnimation:background.layer show:!hide completion:^() {
-        if (hide)
-            background.hidden = YES;
-    }];
-}
 
 - (void)_replayMovie:(NSNotification *)notification {
     [_canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
@@ -125,8 +99,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return;
 
     [self.view.layer addSublayer:_canvasLayer];
-
-    [self _hideDock:YES];
     [self _showCanvasLayer:YES];
 }
 
@@ -134,7 +106,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (!_canvasLayer.superlayer)
         return;
 
-    [self _hideDock:NO];
     [self _showCanvasLayer:NO completion:^() {
         AVPlayer *player = _canvasLayer.player;
         [player pause];

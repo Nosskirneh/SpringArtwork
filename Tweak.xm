@@ -1,7 +1,9 @@
 #import "Spotify.h"
 #import "SpringBoard.h"
+#import "SADockViewController.h"
 #import "SAManager.h"
 #import "Common.h"
+#import "DockManagement.h"
 
 
 %group Spotify
@@ -82,7 +84,7 @@
 
         BOOL homescreen = shared || variant == 1;
         if (homescreen)
-            self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView managesDock:YES];
+            self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView];
         else
             self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView];
 

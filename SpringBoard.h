@@ -1,26 +1,5 @@
 #import "SAViewController.h"
-
-@interface SBWallpaperEffectView : UIView
-@property (nonatomic, retain) UIView *blurView;
-@end
-
-@interface SBDockView : UIView {
-    SBWallpaperEffectView *_backgroundView;
-}
-@end
-
-@interface SBRootFolderView : UIView
-- (SBDockView *)dockView;
-@end
-
-@interface SBRootFolderController : UIViewController
-@property (nonatomic, readonly) SBRootFolderView *contentView;
-@end
-
-@interface SBIconController : NSObject
-+ (id)sharedInstance;
-- (SBRootFolderController *)_rootFolderController;
-@end
+#import "SBWallpaperEffectView.h"
 
 
 @interface SBWallpaperController : NSObject
