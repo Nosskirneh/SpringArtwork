@@ -14,15 +14,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 @implementation SAViewController {
-    BOOL _homescreen;
+    BOOL _managesDock;
     AVPlayerLayer *_canvasLayer;
 }
 
 #pragma mark Public
 
-- (id)initWithTargetView:(UIView *)targetView homescreen:(BOOL)homescreen {
+- (id)initWithTargetView:(UIView *)targetView managesDock:(BOOL)managesDock {
     if (self == [super init]) {
-        _homescreen = homescreen;
+        _managesDock = managesDock;
 
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
@@ -59,7 +59,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 - (void)_hideDock:(BOOL)hide {
     // Only the homescreen controller is allowed to change the dock,
     // otherwise the two will do it simultaneously which obviously causes issues
-    if (!_homescreen)
+    if (!_managesDock)
         return;
 
     SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
