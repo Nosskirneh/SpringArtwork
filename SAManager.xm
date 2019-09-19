@@ -7,6 +7,7 @@
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
 #import <MediaRemote/MediaRemote.h>
+#import "SAColorHelper.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -167,8 +168,13 @@
             dict = [NSMutableDictionary new];
             dict[kArtworkImage] = image;
 
-            if (YES/*shouldBlur*/) // TODO: Add settings for this
+            SAColorInfo *colorInfo = [SAColorHelper colorsForImage:image edge:Right];
+            HBLogDebug(@"colorInfo: %@, bg: %@", colorInfo, colorInfo.background);
+
+            if (NO/*blurMode*/) // TODO: Add settings for this
                 dict[kBlurredImage] = [self _blurredImage:image];
+            else if (YES/*colorMode*/)
+                dict[kColor] = colorInfo.background;
         }
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil

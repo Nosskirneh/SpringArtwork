@@ -15,6 +15,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 @implementation SAViewController {
     AVPlayerLayer *_canvasLayer;
+    UIView *_artworkContainer;
     UIImageView *_artworkImageView;
     UIImageView *_backgroundArtworkImageView;
 }
@@ -30,16 +31,19 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
         [targetView addSubview:self.view];
 
+        _artworkContainer = [[UIView alloc] initWithFrame:self.view.frame];
+
         CGRect imageViewFrame = self.view.frame;
         imageViewFrame.size.height = imageViewFrame.size.width;
         imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
         _artworkImageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
         _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
+        [_artworkContainer addSubview:_artworkImageView];
 
         _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
         _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
         _backgroundArtworkImageView.layer.opacity = 0.0;
-        [_backgroundArtworkImageView addSubview:_artworkImageView];
+        [_artworkContainer addSubview:_backgroundArtworkImageView];
 
         _canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -67,6 +71,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 #pragma mark Private
 
 - (void)_replayMovie:(NSNotification *)notification {
+    HBLogDebug(@"_replayMovie");
     [_canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
         if (seeked)
             [_canvasLayer.player play];
@@ -81,28 +86,30 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             return [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
         else if (userInfo[kArtworkImage]) {
             [self _canvasUpdatedWithURLString:nil isDirty:NO];
-            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage]];
+            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor]];
         }
     } else {
         [self _canvasUpdatedWithURLString:nil isDirty:NO];   
     }
 }
 
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage {
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
     _artworkImageView.image = artwork;
     if (blurredImage)
         _backgroundArtworkImageView.image = blurredImage;
+    else if (color)
+        _artworkContainer.backgroundColor = color;
     artwork ? [self _showArtworkViews] : [self _hideArtworkViews];
 }
 
 - (void)_showArtworkViews {
-    [self.view addSubview:_backgroundArtworkImageView];
-    [self _performLayerOpacityAnimation:_backgroundArtworkImageView.layer show:YES completion:nil];
+    [self.view addSubview:_artworkContainer];
+    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:nil];
 }
 
 - (void)_hideArtworkViews {
-    [self _performLayerOpacityAnimation:_backgroundArtworkImageView.layer show:NO completion:^() {
-        [_backgroundArtworkImageView removeFromSuperview];
+    [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^() {
+        [_artworkContainer removeFromSuperview];
     }];
 }
 
