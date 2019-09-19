@@ -15,6 +15,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 @implementation SAViewController {
     AVPlayerLayer *_canvasLayer;
+    UIImageView *_artworkImageView;
+    UIImageView *_backgroundArtworkImageView;
 }
 
 #pragma mark Public
@@ -25,15 +27,26 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         player.muted = YES;
         setNoInterruptionMusic(player);
 
-        self.view.frame = targetView.frame;
+        self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
         [targetView addSubview:self.view];
+
+        CGRect imageViewFrame = self.view.frame;
+        imageViewFrame.size.height = imageViewFrame.size.width;
+        imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
+        _artworkImageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
+        _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
+
+        _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
+        _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
+        _backgroundArtworkImageView.layer.opacity = 0.0;
+        [_backgroundArtworkImageView addSubview:_artworkImageView];
 
         _canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-        _canvasLayer.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
+        _canvasLayer.frame = self.view.frame;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_canvasUpdated:)
+                                                 selector:@selector(_artworkUpdated:)
                                                      name:kUpdateArtwork
                                                    object:nil];
         
@@ -60,13 +73,37 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }];
 }
 
-- (void)_canvasUpdated:(NSNotification *)notification {
+- (void)_artworkUpdated:(NSNotification *)notification {
     HBLogDebug(@"_artworkUpdated: %@", notification);
     NSDictionary *userInfo = notification.userInfo;
     if (userInfo) {
         if (userInfo[kCanvasURL])
-            [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
+            return [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
+        else if (userInfo[kArtworkImage]) {
+            [self _canvasUpdatedWithURLString:nil isDirty:NO];
+            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage]];
+        }
+    } else {
+        [self _canvasUpdatedWithURLString:nil isDirty:NO];   
     }
+}
+
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage {
+    _artworkImageView.image = artwork;
+    if (blurredImage)
+        _backgroundArtworkImageView.image = blurredImage;
+    artwork ? [self _showArtworkViews] : [self _hideArtworkViews];
+}
+
+- (void)_showArtworkViews {
+    [self.view addSubview:_backgroundArtworkImageView];
+    [self _performLayerOpacityAnimation:_backgroundArtworkImageView.layer show:YES completion:nil];
+}
+
+- (void)_hideArtworkViews {
+    [self _performLayerOpacityAnimation:_backgroundArtworkImageView.layer show:NO completion:^() {
+        [_backgroundArtworkImageView removeFromSuperview];
+    }];
 }
 
 - (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty {

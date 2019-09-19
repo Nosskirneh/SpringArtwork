@@ -21,6 +21,16 @@
     }];
 }
 
+- (void)_showArtworkViews {
+    [super _showArtworkViews];
+    [self _hideDock:YES];
+}
+
+- (void)_hideArtworkViews {
+    [super _hideArtworkViews];
+    [self _hideDock:NO];
+}
+
 - (void)_fadeCanvasLayerIn {
     [super _fadeCanvasLayerIn];
     [self _hideDock:YES];

@@ -6,19 +6,19 @@
 #import "SpringBoard.h"
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
+#import <MediaRemote/MediaRemote.h>
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 #define kSBMediaApplicationActivityDidEndNotification @"SBMediaApplicationActivityDidEndNotification"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
-#define kSBMediaNowPlayingChangedNotification @"SBMediaNowPlayingChangedNotification"
-
 
 @implementation SAManager {
     int _notifyTokenForDidChangeDisplayStatus;
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
+    NSString *_artworkIdentifier;
     BOOL _insideApp;
     BOOL _screenTurnedOn;
     // isDirty marks that there has been a change of canvasURL,
@@ -39,6 +39,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingAppChanged:)
                                                  name:kSBMediaNowPlayingAppChangedNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nowPlayingChanged:)
+                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
                                                object:nil];
 
     [self _registerEventsForCanvasMode];
@@ -137,8 +141,6 @@
 }
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
-    HBLogDebug(@"_nowPlayingAppChanged: %@", notification);
-
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
@@ -148,17 +150,71 @@
     } else {
         _canvasURL = nil;
 
-        HBLogDebug(@"Not Spotify, setting _canvasURL: %@", _canvasURL);
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil];
     }
+}
+
+- (void)_nowPlayingChanged:(NSNotification *)notification {
+    if (!_canvasURL)
+        [self _updateArtwork];
+}
+
+- (void)_updateArtwork {
+    [self _fetchArtwork:^(UIImage *image) {
+        NSMutableDictionary *dict = nil;
+        if (image) {
+            dict = [NSMutableDictionary new];
+            dict[kArtworkImage] = image;
+
+            if (YES/*shouldBlur*/) // TODO: Add settings for this
+                dict[kBlurredImage] = [self _blurredImage:image];
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
+                                                            object:nil
+                                                          userInfo:dict];
+    }];
+}
+
+- (UIImage *)_blurredImage:(UIImage *)image {
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CIImage *inputImage = [[CIImage alloc] initWithImage:image];
+
+    CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
+    [filter setValue:inputImage forKey:kCIInputImageKey];
+    [filter setValue:[NSNumber numberWithFloat:5.0f] forKey:@"inputRadius"];
+
+    CIImage *result = [filter valueForKey:kCIOutputImageKey];
+    CGImageRef cgImage = [context createCGImage:result fromRect:inputImage.extent];
+    UIImage *blurredAndDarkenedImage = [UIImage imageWithCGImage:cgImage];
+
+    CGImageRelease(cgImage);
+    return blurredAndDarkenedImage;
+}
+
+- (void)_fetchArtwork:(void (^)(UIImage *))completion {
+    MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
+        NSDictionary *dict = (__bridge NSDictionary *)information;
+        if ([dict[@"kMRMediaRemoteNowPlayingInfoArtworkIdentifier"] isEqualToString:_artworkIdentifier])
+            return;
+
+        NSData *imageData = dict[@"kMRMediaRemoteNowPlayingInfoArtworkData"];
+        if (!imageData) { 
+            _artworkIdentifier = nil;
+            return completion(nil);
+        }
+
+        _artworkIdentifier = dict[@"kMRMediaRemoteNowPlayingInfoArtworkIdentifier"];
+
+        HBLogDebug(@"We got the information: %@ – %@", dict[@"kMRMediaRemoteNowPlayingInfoTitle"], dict[@"kMRMediaRemoteNowPlayingInfoArtist"]);
+        completion([UIImage imageWithData:imageData]);
+    });
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
-        HBLogDebug(@"setting _canvasURL: %@", _canvasURL);
 
         if (_insideApp || !_screenTurnedOn)
             _isDirty = YES;
