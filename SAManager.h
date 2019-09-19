@@ -10,7 +10,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @end
 
 @interface SAManager : NSObject
-@property (nonatomic, assign, readonly) NSString *canvasURL;
+@property (nonatomic, retain, readonly) NSString *canvasURL;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;
