@@ -3,6 +3,7 @@
 
 extern NSString *const kCanvasURLMessage;
 extern NSString *const kCanvasURL;
+extern NSString *const kIsDirty;
 extern NSString *const kUpdateArtwork;
 
 extern NSString *const kTogglePlayPause;

@@ -39,7 +39,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         
         NSString *url = manager.canvasURL;
         if (url)
-            [self _canvasUpdatedWithURLString:url];
+            [self _canvasUpdatedWithURLString:url isDirty:YES];
 
         if (![(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication]) {
             [[NSNotificationCenter defaultCenter] addObserver:self
@@ -61,13 +61,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_canvasUpdated:(NSNotification *)notification {
-    NSString *canvasURL = nil;
-    if (notification.userInfo && notification.userInfo[kCanvasURL])
-        canvasURL = notification.userInfo[kCanvasURL];
-    [self _canvasUpdatedWithURLString:canvasURL];
+    HBLogDebug(@"_artworkUpdated: %@", notification);
+    NSDictionary *userInfo = notification.userInfo;
+    if (userInfo) {
+        if (userInfo[kCanvasURL])
+            [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
+    }
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url {
+- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty {
     AVPlayer *player = _canvasLayer.player;
     if (player.currentItem)
         [[NSNotificationCenter defaultCenter] removeObserver:self
@@ -76,13 +78,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     if (url) {
         [self _fadeCanvasLayerIn];
-        [self _changeCanvasURL:[NSURL URLWithString:url]];
+        [self _changeCanvasURL:[NSURL URLWithString:url] isDirty:isDirty];
     } else {
         [self _fadeCanvasLayerOut];
     }
 }
 
-- (void)_changeCanvasURL:(NSURL *)url {
+- (void)_changeCanvasURL:(NSURL *)url isDirty:(BOOL)isDirty {
     AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:url];
 
     AVPlayer *player = _canvasLayer.player;
@@ -91,7 +93,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                              selector:@selector(_replayMovie:)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:player.currentItem];
-    [player play];
+    if (!isDirty)
+        [player play];
 }
 
 - (void)_fadeCanvasLayerIn {

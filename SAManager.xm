@@ -18,8 +18,13 @@
     int _notifyTokenForDidChangeDisplayStatus;
     BOOL _manuallyPaused;
     BOOL _playing;
-    BOOL _subscribedToMediaInfo;
     UIImpactFeedbackGenerator *_hapticGenerator;
+    BOOL _insideApp;
+    BOOL _screenTurnedOn;
+    // isDirty marks that there has been a change of canvasURL,
+    // but we're not updating it because once the event occurred
+    // the device was either at sleep or some app was in the foreground.
+    BOOL _isDirty;
 }
 
 #pragma mark Public
@@ -35,6 +40,8 @@
                                              selector:@selector(_nowPlayingAppChanged:)
                                                  name:kSBMediaNowPlayingAppChangedNotification
                                                object:nil];
+
+    [self _registerEventsForCanvasMode];
 }
 
 - (BOOL)isCanvasActive {
@@ -74,53 +81,25 @@
        &_notifyTokenForDidChangeDisplayStatus,
        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
        ^(int info) {
+            uint64_t state;
+            notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
+            _screenTurnedOn = BOOL(state);
+
             // If the user manually paused the video, do not resume on screen turn on event
             if (![self isCanvasActive] || (!_playing && _manuallyPaused))
                 return;
 
-            uint64_t state;
-            notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
-            [self _sendCanvasPlayPauseNotificationWithState:BOOL(state)];
+            if (!_insideApp) //|| [self  ])
+                [self _sendCanvasPlayPauseNotificationWithState:_screenTurnedOn];
        });
 
     return result == NOTIFY_STATUS_OK;
 }
 
-- (void)_unregisterEventsForCanvasMode {
-    if (_notifyTokenForDidChangeDisplayStatus != 0)
-        [self _unregisterScreenEvent];
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:kSBApplicationProcessStateDidChange
-                                                  object:nil];
-}
-
-- (BOOL)_unregisterScreenEvent {
-    return notify_cancel(_notifyTokenForDidChangeDisplayStatus) == NOTIFY_STATUS_OK;
-}
-
-- (void)_subscribeToMediaInfo {
-    if (_subscribedToMediaInfo)
-        return;
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_nowPlayingChanged:)
-                                                 name:kSBMediaNowPlayingChangedNotification
-                                               object:nil];
-    _subscribedToMediaInfo = YES;
-}
-
-- (void)_unsubscribeToMediaInfo {
-    if (!_subscribedToMediaInfo)
-        return;
-
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:kSBMediaNowPlayingChangedNotification
-                                                  object:nil];
-    _subscribedToMediaInfo = NO;
-}
-
 - (void)_sendCanvasPlayPauseNotificationWithState:(BOOL)newState {
+    if (_isDirty)
+        _isDirty = NO;
+
     NSDictionary *info = @{
         kPlayState : @(newState)
     };
@@ -128,18 +107,33 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
                                                         object:nil
                                                       userInfo:info];
+    _manuallyPaused = NO;
+    _playing = _canvasURL != nil;
 }
 
-- (void)_currentAppChanged:(NSNotification *)notification {    
+- (void)_sendCanvasUpdatedNotification {
+    NSMutableDictionary *dict = [NSMutableDictionary new];
+    if (_canvasURL) {
+        dict[kCanvasURL] = _canvasURL;
+        if (_isDirty)
+            dict[kIsDirty] = @YES;
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
+                                                        object:nil
+                                                      userInfo:dict];
+}
+
+- (void)_currentAppChanged:(NSNotification *)notification {
+    SBApplication *app = notification.object;
+    id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
+                                        app.internalProcessState : app.processState;
+    _insideApp = processState.foreground && processState.visibility != ForegroundObscured;
+
     // If the user manually paused the video, do not resume when app enters background
     if (![self isCanvasActive] || (!_playing && _manuallyPaused))
         return;
 
-    SBApplication *app = notification.object;
-    BOOL foreground = [app respondsToSelector:@selector(internalProcessState)] ?
-                       app.internalProcessState.foreground :
-                       app.processState.foreground;
-    [self _sendCanvasPlayPauseNotificationWithState:!foreground];
+    [self _sendCanvasPlayPauseNotificationWithState:!_insideApp];
 }
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
@@ -149,34 +143,27 @@
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
     if ([bundleID isEqualToString:kSpotifyBundleID]) {
-        [self _registerEventsForCanvasMode];
-        [self _unsubscribeToMediaInfo];
+        if (!_canvasURL)
+            [self _updateArtwork];
+    } else {
+        _canvasURL = nil;
 
-        HBLogDebug(@"updating with URL: %@", _canvasURL);
+        HBLogDebug(@"Not Spotify, setting _canvasURL: %@", _canvasURL);
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil];
-    } else {
-        [self _unregisterEventsForCanvasMode];
-        if (bundleID) {
-            HBLogDebug(@"adding again...");
-            [self _subscribeToMediaInfo];
-        }
     }
-}
-
-- (void)_nowPlayingChanged:(NSNotification *)notification {
-    HBLogDebug(@"_nowPlayingChanged: %@", notification);
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
-        [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                            object:nil
-                                                          userInfo:dict];
-        _manuallyPaused = NO;
-        _playing = urlString != nil;
+        HBLogDebug(@"setting _canvasURL: %@", _canvasURL);
+
+        if (_insideApp || !_screenTurnedOn)
+            _isDirty = YES;
+
+        [self _sendCanvasUpdatedNotification];
     }
 }
 

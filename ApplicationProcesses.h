@@ -6,12 +6,23 @@
 @end
 
 
-@interface FBProcessState : NSObject
-@property (assign, getter=isForeground, nonatomic) BOOL foreground;
+typedef enum ProcessVisiblity {
+    Unknown = 0,
+    Background = 1,
+    Foreground = 2,
+    ForegroundObscured = 3
+} ProcessVisiblity;
+
+@protocol ProcessStateInfo
+@property (getter=isForeground, nonatomic, readonly) BOOL foreground;
+@property (nonatomic, readonly) ProcessVisiblity visibility;
 @end
 
-@interface SBApplicationProcessState : NSObject
-@property (getter=isForeground, nonatomic, readonly) BOOL foreground;
+
+@interface FBProcessState : NSObject<ProcessStateInfo>
+@end
+
+@interface SBApplicationProcessState : NSObject<ProcessStateInfo>
 @end
 
 
