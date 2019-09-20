@@ -7,7 +7,7 @@
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
 #import <MediaRemote/MediaRemote.h>
-#import "SAColorHelper.h"
+#import "DockManagement.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -168,14 +168,24 @@
             dict = [NSMutableDictionary new];
             dict[kArtworkImage] = image;
 
-            SAColorInfo *colorInfo = [SAColorHelper colorsForImage:image edge:Right];
-            HBLogDebug(@"colorInfo: %@, bg: %@", colorInfo, colorInfo.background);
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                _colorInfo = [SAColorHelper colorsForImage:image];
+                HBLogDebug(@"colorInfo: %@, bg: %@", _colorInfo, _colorInfo.backgroundColor);
 
-            if (NO/*blurMode*/) // TODO: Add settings for this
-                dict[kBlurredImage] = [self _blurredImage:image];
-            else if (YES/*colorMode*/)
-                dict[kColor] = colorInfo.background;
+                if (NO/*blurMode*/) // TODO: Add settings for this
+                    dict[kBlurredImage] = [self _blurredImage:image];
+                else if (YES/*colorMode*/)
+                    dict[kColor] = _colorInfo.backgroundColor;
+
+                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
+                                                                        object:nil
+                                                                      userInfo:dict];
+                });
+            });
+            return;
         }
+
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil
                                                           userInfo:dict];

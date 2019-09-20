@@ -1,3 +1,5 @@
+#import "SAColorHelper.h"
+
 typedef enum UIImpactFeedbackStyle : NSInteger {
     UIImpactFeedbackStyleHeavy,
     UIImpactFeedbackStyleLight,
@@ -11,6 +13,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 @interface SAManager : NSObject
 @property (nonatomic, retain, readonly) NSString *canvasURL;
+@property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;
