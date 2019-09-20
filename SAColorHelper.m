@@ -4,7 +4,7 @@
 + (id)infoWithBackgroundColor:(UIColor *)backgroundColor
                  primaryColor:(UIColor *)primaryColor
                secondaryColor:(UIColor *)secondaryColor
-       inverseBackgroundColor:(UIColor *)inverseBackgroundColor;
+                    textColor:(UIColor *)textColor;
 @end
 
 @implementation SAColorInfo
@@ -12,22 +12,22 @@
 + (id)infoWithBackgroundColor:(UIColor *)backgroundColor
                  primaryColor:(UIColor *)primaryColor
                secondaryColor:(UIColor *)secondaryColor
-       inverseBackgroundColor:(UIColor *)inverseBackgroundColor {
+                    textColor:(UIColor *)textColor {
     return [[SAColorInfo alloc] infoWithBackgroundColor:backgroundColor
                                            primaryColor:primaryColor
                                          secondaryColor:secondaryColor
-                                 inverseBackgroundColor:inverseBackgroundColor];
+                                 textColor:textColor];
 }
 
 - (id)infoWithBackgroundColor:(UIColor *)backgroundColor
                  primaryColor:(UIColor *)primaryColor
                secondaryColor:(UIColor *)secondaryColor
-       inverseBackgroundColor:(UIColor *)inverseBackgroundColor {
+       textColor:(UIColor *)textColor {
     if (self == [super init]) {
         _backgroundColor = backgroundColor;
         _primaryColor = primaryColor;
         _secondaryColor = secondaryColor;
-        _inverseBackgroundColor = inverseBackgroundColor;
+        _textColor = textColor;
     }
     return self;
 }
@@ -192,31 +192,31 @@
         if (colorArray.count > 2)
             secondaryColor = colorArray[2];
     }
-    UIColor *inverseBackgroundColor = [self inverseColor:backgroundColor];
+    UIColor *textColor = [self labelColorForBackgroundColor:backgroundColor];
 
     return [SAColorInfo infoWithBackgroundColor:backgroundColor
                                    primaryColor:primaryColor
                                  secondaryColor:secondaryColor
-                         inverseBackgroundColor:inverseBackgroundColor];
+                         textColor:textColor];
 }
 
++ (BOOL)colorIsLight:(UIColor *)color {
+    CGFloat colorBrightness = 0;
+    CGColorSpaceRef colorSpace = CGColorGetColorSpace(color.CGColor);
+    CGColorSpaceModel colorSpaceModel = CGColorSpaceGetModel(colorSpace);
 
-+ (UIColor *)inverseColor:(UIColor *)color {
-    CGFloat alpha;
+    if(colorSpaceModel == kCGColorSpaceModelRGB){
+        const CGFloat *componentColors = CGColorGetComponents(color.CGColor);
+        colorBrightness = ((componentColors[0] * 299) + (componentColors[1] * 587) + (componentColors[2] * 114)) / 1000;
+    } else {
+        [color getWhite:&colorBrightness alpha:0];
+    }
 
-    CGFloat white;
-    if ([color getWhite:&white alpha:&alpha])
-        return [UIColor colorWithWhite:1.0 - white alpha:alpha];
+    return colorBrightness >= .5f;
+}
 
-    CGFloat hue, saturation, brightness;
-    if ([color getHue:&hue saturation:&saturation brightness:&brightness alpha:&alpha])
-        return [UIColor colorWithHue:1.0 - hue saturation:1.0 - saturation brightness:1.0 - brightness alpha:alpha];
-
-    CGFloat red, green, blue;
-    if ([color getRed:&red green:&green blue:&blue alpha:&alpha])
-        return [UIColor colorWithRed:1.0 - red green:1.0 - green blue:1.0 - blue alpha:alpha];
-
-    return nil;
++ (UIColor *)labelColorForBackgroundColor:(UIColor *)color {
+    return [self colorIsLight:color] ? UIColor.blackColor : UIColor.whiteColor;
 }
 
 @end

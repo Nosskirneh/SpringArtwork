@@ -37,3 +37,8 @@
 @interface SpringBoard : NSObject
 - (id)_accessibilityFrontMostApplication;
 @end
+
+
+@interface SBMutableIconLabelImageParameters
+@property (nonatomic, retain) UIColor *textColor;
+@end

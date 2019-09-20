@@ -170,7 +170,6 @@
 
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 _colorInfo = [SAColorHelper colorsForImage:image];
-                HBLogDebug(@"colorInfo: %@, bg: %@", _colorInfo, _colorInfo.backgroundColor);
 
                 if (NO/*blurMode*/) // TODO: Add settings for this
                     dict[kBlurredImage] = [self _blurredImage:image];
@@ -181,6 +180,7 @@
                     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                                         object:nil
                                                                       userInfo:dict];
+                    [self _updateAppLabels];
                 });
             });
             return;
@@ -189,6 +189,13 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil
                                                           userInfo:dict];
+    }];
+}
+
+- (void)_updateAppLabels {
+    SBIconViewMap *viewMap = ((SBIconController *)[%c(SBIconController) sharedInstance]).homescreenIconViewMap;
+    [viewMap enumerateMappedIconViewsUsingBlock:^(SBIconView *iconView) {
+        [iconView _updateLabel];
     }];
 }
 

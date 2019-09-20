@@ -108,6 +108,19 @@
     }
 
     %end
+
+
+    %hook SBIconLegibilityLabelView
+
+    - (void)updateIconLabelWithSettings:(id)settings
+                        imageParameters:(SBMutableIconLabelImageParameters *)parameters {
+        if (parameters && manager.colorInfo)
+            parameters.textColor = manager.colorInfo.textColor;
+
+        %orig;
+    }
+
+    %end
 %end
 
 

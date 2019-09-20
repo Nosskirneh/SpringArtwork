@@ -1,6 +1,6 @@
 @interface SAColorInfo : NSObject
 @property (nonatomic, retain, readonly) UIColor *backgroundColor;
-@property (nonatomic, retain, readonly) UIColor *inverseBackgroundColor;
+@property (nonatomic, retain, readonly) UIColor *textColor;
 @property (nonatomic, retain, readonly) UIColor *primaryColor;
 @property (nonatomic, retain, readonly) UIColor *secondaryColor;
 @end
