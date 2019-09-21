@@ -22,7 +22,7 @@
 - (id)infoWithBackgroundColor:(UIColor *)backgroundColor
                  primaryColor:(UIColor *)primaryColor
                secondaryColor:(UIColor *)secondaryColor
-       textColor:(UIColor *)textColor {
+                    textColor:(UIColor *)textColor {
     if (self == [super init]) {
         _backgroundColor = backgroundColor;
         _primaryColor = primaryColor;
@@ -137,7 +137,7 @@
  
     NSMutableDictionary *colorCounter = [NSMutableDictionary new];
  
-    //count the occurences in the array
+    // Count the occurences in the array
     NSCountedSet *countedSet = [[NSCountedSet alloc] initWithArray:flexibleColors];
     for (NSString *item in countedSet) {
         NSUInteger count = [countedSet countForObject:item];
