@@ -20,5 +20,4 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isCanvasActive;
-- (void)updateArtworkWithCatalog:(MPArtworkCatalog *)catalog;
 @end

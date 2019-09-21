@@ -1,23 +1,21 @@
-#import <MediaPlayer/MediaPlayer.h>
-
-@interface MPArtworkCatalog : NSObject
-@property (nonatomic, readonly) BOOL hasImageOnDisk;
-@property (assign, nonatomic) double destinationScale;
-@property (assign, nonatomic) CGSize fittingSize;
-- (id)bestImageFromDisk;
-- (void)requestImageWithCompletionHandler:(id)arg1;
+@interface _MRNowPlayingClientProtobuf
+@property (nonatomic, retain) NSString *bundleIdentifier;
 @end
 
-typedef MPArtworkCatalog *(^block)(void);
 
-@interface MPMusicPlayerController (Addition)
-- (id)nowPlayingItemAtIndex:(NSUInteger)arg1;
+@interface MRContentItem : NSObject
+- (NSDictionary *)dictionaryRepresentation;
 @end
 
-@interface MPModelObjectMediaItem : MPMediaItem
-@property (nonatomic, readonly) id modelObject;
+@interface MPCPlayerPath : NSObject
++ (id)deviceActivePlayerPath;
 @end
 
-@interface MPModelSong : NSObject
-- (id)valueForModelKey:(id)aa;
+@interface MPCFuture : NSObject
+- (MPCFuture *)onCompletion:(void (^)(id))completion;
+@end
+
+@interface MPCMediaRemoteController : NSObject
++ (MPCFuture *)controllerForPlayerPath:(MPCPlayerPath *)path;
+- (MPCFuture *)contentItemArtworkForContentItemIdentifier:(NSString *)identifier artworkIdentifier:(NSString *)artworkIdentifier size:(CGSize)size;
 @end

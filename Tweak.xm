@@ -4,7 +4,6 @@
 #import "SAManager.h"
 #import "Common.h"
 #import "DockManagement.h"
-#import "Artwork.h"
 
 
 %group Spotify
@@ -125,20 +124,6 @@
     }
 
     %end
-
-
-    /* Forward MPArtworkCatalog to our own implementation.
-       This can be done with MediaRemote instead, but that
-       doesn't give high resolution images all the time. */
-    %hook PanelViewController
-
-    - (void)setArtworkCatalog:(MPArtworkCatalog *)catalog {
-        %orig;
-
-        [manager updateArtworkWithCatalog:catalog];
-    }
-
-    %end
 %end
 
 
@@ -221,10 +206,7 @@
 
         [manager setup];
         %init(SpringBoard);
-        Class c = %c(MRPlatterViewController);
-        if (!c)
-            c = %c(MediaControlsPanelViewController);
-        %init(PanelViewController = c);
+        %init;
 
         if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
             %init(newiOS11);

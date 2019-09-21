@@ -6,18 +6,20 @@
 #import "SpringBoard.h"
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
+#import <MediaRemote/MediaRemote.h>
 #import "DockManagement.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
-#define kSBMediaApplicationActivityDidEndNotification @"SBMediaApplicationActivityDidEndNotification"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
+
 
 @implementation SAManager {
     int _notifyTokenForDidChangeDisplayStatus;
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
+    NSString *_artworkIdentifier;
     BOOL _insideApp;
     BOOL _screenTurnedOn;
     // isDirty marks that there has been a change of canvasURL,
@@ -38,6 +40,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingAppChanged:)
                                                  name:kSBMediaNowPlayingAppChangedNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nowPlayingChanged:)
+                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
                                                object:nil];
 
     [self _registerEventsForCanvasMode];
@@ -62,19 +68,6 @@
         _manuallyPaused = YES;
 
     _playing = !_playing;
-}
-
-- (void)updateArtworkWithCatalog:(MPArtworkCatalog *)catalog {
-    if (_canvasURL)
-        return;
-
-    if (catalog) {
-        [catalog requestImageWithCompletionHandler:^(UIImage *image) {
-            [self _updateArtworkWithImage:image];
-        }];
-    } else {
-        [self _updateArtworkWithImage:nil];
-    }
 }
 
 #pragma mark Private
@@ -160,7 +153,62 @@
     }
 }
 
+- (void)_nowPlayingChanged:(NSNotification *)notification {
+    if (_canvasURL)
+        return;
+
+    // HBLogDebug(@"notification: %@", notification);
+
+    NSDictionary *userInfo = notification.userInfo;
+    _MRNowPlayingClientProtobuf *processInfo = userInfo[@"kMRNowPlayingClientUserInfoKey"];
+    NSString *bundleID = processInfo.bundleIdentifier;
+
+    NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
+    if (!contentItems && contentItems.count == 0)
+        return [self _updateArtworkWithImage:nil];
+
+    MRContentItem *contentItem = contentItems[0];
+    NSDictionary *info = [contentItem dictionaryRepresentation];
+    // HBLogDebug(@"info: %@", info);
+
+    if ([self _isPlaceholderImageForBundleID:bundleID info:info]) {
+        HBLogDebug(@"skipping placeholder...");
+        return;
+    }
+
+    NSString *identifier = info[@"identifier"];
+    NSDictionary *metadata = info[@"metadata"];
+    if (!identifier || !metadata)
+        return [self _updateArtworkWithImage:nil];
+
+    NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
+    if ([_artworkIdentifier isEqualToString:artworkIdentifier])
+        return;
+
+    HBLogDebug(@"identifier: %@, artworkIdentifier: %@", identifier, artworkIdentifier);
+
+    [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
+        onCompletion:^void(MPCMediaRemoteController *controller) {
+            float width = [UIScreen mainScreen].nativeBounds.size.width;
+            [[controller contentItemArtworkForContentItemIdentifier:identifier artworkIdentifier:artworkIdentifier size:CGSizeMake(width, width)]
+                onCompletion:^void(UIImage *image) {
+                    [self _updateArtworkWithImage:image];
+                    _artworkIdentifier = artworkIdentifier;
+                }
+            ];
+        }
+    ];
+}
+
+/* Hopefully there are some pattern to recognize. We might have to analyze the image data god forbid :/ */
+- (BOOL)_isPlaceholderImageForBundleID:(NSString *)bundleID info:(NSDictionary *)info {
+    // return [bundleID isEqualToString:kSpotifyBundleID] && ...);
+    return NO;
+}
+
 - (void)_updateArtworkWithImage:(UIImage *)image {
+    if (_canvasURL) // Need to check again, since retrieving the image was done async
+        return;
     _artworkImage = image;
 
     NSMutableDictionary *dict = nil;
