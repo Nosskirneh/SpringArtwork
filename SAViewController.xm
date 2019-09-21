@@ -83,38 +83,77 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     HBLogDebug(@"_artworkUpdated: %@", notification);
     NSDictionary *userInfo = notification.userInfo;
     if (userInfo) {
-        if (userInfo[kCanvasURL])
-            return [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
-        else if (userInfo[kArtworkImage]) {
-            [self _canvasUpdatedWithURLString:nil isDirty:NO];
+        if (userInfo[kCanvasURL]) {
+            [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil stillPlaying:YES];
+            [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
+        } else if (userInfo[kArtworkImage]) {
+            [self _canvasUpdatedWithURLString:nil isDirty:NO stillPlaying:YES];
             [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor]];
         }
     } else {
-        [self _canvasUpdatedWithURLString:nil isDirty:NO];   
+        [self _canvasUpdatedWithURLString:nil isDirty:NO];
     }
 }
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
+    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color stillPlaying:NO];
+}
+
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color stillPlaying:(BOOL)stillPlaying {
+    if (!artwork)
+        [self _hideArtworkViews];
+    else if ([self _isShowingArtworkView])
+        [self _animateArtworkChange:artwork blurredImage:blurredImage color:color];
+    else { // Not already visible, so we don't need to animate the image change, just the layer
+        [self _setArtwork:artwork blurredImage:blurredImage color:color];
+        [self _showArtworkViews];
+    }
+}
+
+- (void)_setArtwork:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
     _artworkImageView.image = artwork;
     if (blurredImage)
         _backgroundArtworkImageView.image = blurredImage;
     else if (color)
         _artworkContainer.backgroundColor = color;
-    artwork ? [self _showArtworkViews] : [self _hideArtworkViews];
 }
 
-- (void)_showArtworkViews {
+- (void)_animateArtworkChange:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
+    [UIView transitionWithView:_artworkImageView duration:ANIMATION_DURATION options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+            [self _setArtwork:artwork blurredImage:blurredImage color:color];
+        }
+        completion:nil
+    ];
+}
+
+- (BOOL)_isShowingArtworkView {
+    return _artworkContainer.superview;
+}
+
+- (BOOL)_showArtworkViews {
+    if ([self _isShowingArtworkView])
+        return NO;
+
     [self.view addSubview:_artworkContainer];
     [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:nil];
+    return YES;
 }
 
-- (void)_hideArtworkViews {
+- (BOOL)_hideArtworkViews {
+    if (![self _isShowingArtworkView])
+        return NO;
+
     [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^() {
         [_artworkContainer removeFromSuperview];
     }];
+    return YES;
 }
 
 - (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty {
+    [self _canvasUpdatedWithURLString:url isDirty:isDirty stillPlaying:NO];
+}
+
+- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty stillPlaying:(BOOL)stillPlaying {
     AVPlayer *player = _canvasLayer.player;
     if (player.currentItem)
         [[NSNotificationCenter defaultCenter] removeObserver:self
@@ -142,23 +181,25 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [player play];
 }
 
-- (void)_fadeCanvasLayerIn {
+- (BOOL)_fadeCanvasLayerIn {
     if (_canvasLayer.superlayer)
-        return;
+        return NO;
 
     [self.view.layer addSublayer:_canvasLayer];
     [self _showCanvasLayer:YES];
+    return YES;
 }
 
-- (void)_fadeCanvasLayerOut {
+- (BOOL)_fadeCanvasLayerOut {
     if (!_canvasLayer.superlayer)
-        return;
+        return NO;
 
     [self _showCanvasLayer:NO completion:^() {
         AVPlayer *player = _canvasLayer.player;
         [player pause];
         [_canvasLayer removeFromSuperlayer];
     }];
+    return YES;
 }
 
 - (void)_showCanvasLayer:(BOOL)show {
@@ -179,7 +220,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         from = 1.0;
         to = 0.0;
     }
-    _canvasLayer.opacity = from;
+    layer.opacity = from;
 
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
