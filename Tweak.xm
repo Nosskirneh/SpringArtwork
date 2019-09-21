@@ -50,14 +50,13 @@
     %hook SPTNowPlayingBarContainerViewController
 
     - (void)setCurrentTrack:(SPTPlayerTrack *)track {
-        %orig;
-
         NSURL *localURL = nil;  
         if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
             localURL = [getVideoURLAssetLoader() localURLForAssetURL:canvasURL];
         }
         sendCanvasURL(localURL);
+        %orig;
     }
 
     %end
