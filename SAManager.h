@@ -1,4 +1,5 @@
 #import "SAColorHelper.h"
+#import "Artwork.h"
 
 typedef enum UIImpactFeedbackStyle : NSInteger {
     UIImpactFeedbackStyleHeavy,
@@ -14,8 +15,10 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @interface SAManager : NSObject
 @property (nonatomic, retain, readonly) NSString *canvasURL;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
+@property (nonatomic, retain, readonly) UIImage *artworkImage;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isCanvasActive;
+- (void)updateArtworkWithCatalog:(MPArtworkCatalog *)catalog;
 @end

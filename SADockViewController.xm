@@ -10,6 +10,9 @@
 - (void)_hideDock:(BOOL)hide {
     SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
     SBDockView *dockView = [rootFolderController.contentView dockView];
+    if (!dockView)
+        return;
+
     UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
 
     if (!hide)

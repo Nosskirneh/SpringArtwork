@@ -6,7 +6,6 @@
 #import "SpringBoard.h"
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
-#import <MediaRemote/MediaRemote.h>
 #import "DockManagement.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
@@ -19,7 +18,6 @@
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
-    NSString *_artworkIdentifier;
     BOOL _insideApp;
     BOOL _screenTurnedOn;
     // isDirty marks that there has been a change of canvasURL,
@@ -40,10 +38,6 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingAppChanged:)
                                                  name:kSBMediaNowPlayingAppChangedNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nowPlayingChanged:)
-                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
                                                object:nil];
 
     [self _registerEventsForCanvasMode];
@@ -68,6 +62,19 @@
         _manuallyPaused = YES;
 
     _playing = !_playing;
+}
+
+- (void)updateArtworkWithCatalog:(MPArtworkCatalog *)catalog {
+    if (_canvasURL)
+        return;
+
+    if (catalog) {
+        [catalog requestImageWithCompletionHandler:^(UIImage *image) {
+            [self _updateArtworkWithImage:image];
+        }];
+    } else {
+        [self _updateArtworkWithImage:nil];
+    }
 }
 
 #pragma mark Private
@@ -145,10 +152,7 @@
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
-    if ([bundleID isEqualToString:kSpotifyBundleID]) {
-        if (!_canvasURL)
-            [self _updateArtwork];
-    } else {
+    if (![bundleID isEqualToString:kSpotifyBundleID]) {
         _canvasURL = nil;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
@@ -156,40 +160,35 @@
     }
 }
 
-- (void)_nowPlayingChanged:(NSNotification *)notification {
-    if (!_canvasURL)
-        [self _updateArtwork];
-}
+- (void)_updateArtworkWithImage:(UIImage *)image {
+    _artworkImage = image;
 
-- (void)_updateArtwork {
-    [self _fetchArtwork:^(UIImage *image) {
-        NSMutableDictionary *dict = nil;
-        if (image) {
-            dict = [NSMutableDictionary new];
-            dict[kArtworkImage] = image;
+    NSMutableDictionary *dict = nil;
+    if (image) {
+        dict = [NSMutableDictionary new];
+        dict[kArtworkImage] = image;
 
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                _colorInfo = [SAColorHelper colorsForImage:image];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            _colorInfo = [SAColorHelper colorsForImage:image];
 
-                if (NO/*blurMode*/) // TODO: Add settings for this
-                    dict[kBlurredImage] = [self _blurredImage:image];
-                else if (YES/*colorMode*/)
-                    dict[kColor] = _colorInfo.backgroundColor;
+            if (NO/*blurMode*/) // TODO: Add settings for this
+                dict[kBlurredImage] = [self _blurredImage:image];
+            else if (YES/*colorMode*/)
+                dict[kColor] = _colorInfo.backgroundColor;
 
-                dispatch_async(dispatch_get_main_queue(), ^(void) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                                        object:nil
-                                                                      userInfo:dict];
-                    [self _updateAppLabels];
-                });
+            dispatch_async(dispatch_get_main_queue(), ^(void) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
+                                                                    object:nil
+                                                                  userInfo:dict];
+                [self _updateAppLabels];
             });
-            return;
-        }
+        });
+        return;
+    }
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                            object:nil
-                                                          userInfo:dict];
-    }];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
+                                                        object:nil
+                                                      userInfo:dict];
 }
 
 - (void)_updateAppLabels {
@@ -213,25 +212,6 @@
 
     CGImageRelease(cgImage);
     return blurredAndDarkenedImage;
-}
-
-- (void)_fetchArtwork:(void (^)(UIImage *))completion {
-    MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
-        NSDictionary *dict = (__bridge NSDictionary *)information;
-        if ([dict[@"kMRMediaRemoteNowPlayingInfoArtworkIdentifier"] isEqualToString:_artworkIdentifier])
-            return;
-
-        NSData *imageData = dict[@"kMRMediaRemoteNowPlayingInfoArtworkData"];
-        if (!imageData) { 
-            _artworkIdentifier = nil;
-            return completion(nil);
-        }
-
-        _artworkIdentifier = dict[@"kMRMediaRemoteNowPlayingInfoArtworkIdentifier"];
-
-        HBLogDebug(@"We got the information: %@ – %@", dict[@"kMRMediaRemoteNowPlayingInfoTitle"], dict[@"kMRMediaRemoteNowPlayingInfoArtist"]);
-        completion([UIImage imageWithData:imageData]);
-    });
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {

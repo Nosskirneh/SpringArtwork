@@ -4,6 +4,7 @@
 #import "SAManager.h"
 #import "Common.h"
 #import "DockManagement.h"
+#import "Artwork.h"
 
 
 %group Spotify
@@ -121,12 +122,26 @@
     }
 
     %end
+
+
+    /* Forward MPArtworkCatalog to our own implementation.
+       This can be done with MediaRemote instead, but that
+       doesn't give high resolution images all the time. */
+    %hook PanelViewController
+
+    - (void)setArtworkCatalog:(MPArtworkCatalog *)catalog {
+        %orig;
+
+        [manager updateArtworkWithCatalog:catalog];
+    }
+
+    %end
 %end
 
 
-// When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
-// appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
-// The solution is to hide the UIImageView and instead always show the transition MTMaterialView.
+/* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
+   appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
+   The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
 %group SwitcherBackdrop_iOS11
 %hook SBUIController
 
@@ -203,7 +218,10 @@
 
         [manager setup];
         %init(SpringBoard);
-        %init();
+        Class c = %c(MRPlatterViewController);
+        if (!c)
+            c = %c(MediaControlsPanelViewController);
+        %init(PanelViewController = c);
 
         if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
             %init(newiOS11);
