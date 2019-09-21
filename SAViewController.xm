@@ -26,6 +26,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (self == [super init]) {
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
+        [player _setPreventsSleepDuringVideoPlayback:NO];
         setNoInterruptionMusic(player);
 
         self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);

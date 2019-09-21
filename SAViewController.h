@@ -14,4 +14,5 @@
 
 @interface AVPlayer (Private)
 - (AVAudioSessionMediaPlayerOnly *)playerAVAudioSession;
+- (void)_setPreventsSleepDuringVideoPlayback:(BOOL)preventSleep;
 @end
