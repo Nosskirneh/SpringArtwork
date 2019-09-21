@@ -31,6 +31,8 @@
 #pragma mark Public
 
 - (void)setup {
+    _screenTurnedOn = YES;
+
     CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
     rocketbootstrap_distributedmessagingcenter_apply(c);
     [c runServerOnCurrentThread];
@@ -266,9 +268,7 @@
     NSString *urlString = dict[kCanvasURL];
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
-
-        if (_insideApp || !_screenTurnedOn)
-            _isDirty = YES;
+        _isDirty = _insideApp || !_screenTurnedOn;
 
         [self _sendCanvasUpdatedNotification];
     }
