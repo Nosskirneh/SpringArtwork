@@ -95,6 +95,7 @@
     %end
 
 
+    /* Register shake gesture to play/pause canvas video */
     %hook UIApplication
 
     - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
@@ -111,6 +112,8 @@
     %end
 
 
+    /* Set the text color of the app icon labels according
+       to the colorInfo in our implementation */
     %hook SBIconLegibilityLabelView
 
     - (void)updateIconLabelWithSettings:(id)settings
@@ -174,7 +177,7 @@
 %end
 
 
-// Lockscreen (NC pulldown)
+// Lockscreen ("NC pulldown")
 %hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, retain) SAViewController *canvasNormalViewController;
 %property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
