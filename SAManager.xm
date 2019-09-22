@@ -201,12 +201,6 @@
         _mode = Artwork;
     }
 
-    /* After a track with canvas URL, Spotify will for some reason send the previous track
-       artwork together but the current song's metadata. There's no way to solve it other
-       than ignoring the first call. If they decide to change it, we need to update here. */
-    if (_previousMode == Canvas)
-        return;
-
     HBLogDebug(@"identifier: %@, artworkIdentifier: %@", identifier, artworkIdentifier);
 
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
@@ -214,12 +208,19 @@
             float width = [UIScreen mainScreen].nativeBounds.size.width;
             [[controller contentItemArtworkForContentItemIdentifier:identifier artworkIdentifier:artworkIdentifier size:CGSizeMake(width, width)]
                 onCompletion:^void(UIImage *image) {
+                    if ([self _isSameAsPreviousArtwork:image])
+                        return;
+
                     [self _updateArtworkWithImage:image];
                     _artworkIdentifier = artworkIdentifier;
                 }
             ];
         }
     ];
+}
+
+- (BOOL)_isSameAsPreviousArtwork:(UIImage *)candidate {
+    return [UIImagePNGRepresentation(_artworkImage) isEqualToData:UIImagePNGRepresentation(candidate)];
 }
 
 /* Hopefully there are some pattern to recognize. We might have to analyze the image data god forbid :/ */
