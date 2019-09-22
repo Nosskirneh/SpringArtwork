@@ -2,8 +2,14 @@
 #import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
+#import <AVFoundation/AVAsset.h>
+#import <AVFoundation/AVAssetImageGenerator.h>
 
 #define ANIMATION_DURATION 0.75
+
+@interface NSValue (Missing)
++ (NSValue *)valueWithCMTime:(CMTime)time;
+@end
 
 extern SAManager *manager;
 
@@ -14,6 +20,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 @implementation SAViewController {
+    UIImageView *_canvasContainerImageView;
     AVPlayerLayer *_canvasLayer;
     UIView *_artworkContainer;
     UIImageView *_artworkImageView;
@@ -46,9 +53,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _backgroundArtworkImageView.layer.opacity = 0.0;
         [_artworkContainer addSubview:_backgroundArtworkImageView];
 
+        _canvasContainerImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
+        _canvasContainerImageView.contentMode = UIViewContentModeScaleAspectFill;
+
         _canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
         _canvasLayer.frame = self.view.frame;
+        [_canvasContainerImageView.layer addSublayer:_canvasLayer];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_artworkUpdated:)
@@ -169,7 +180,23 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_changeCanvasURL:(NSURL *)url isDirty:(BOOL)isDirty {
-    AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithURL:url];
+    AVAsset *asset = [AVAsset assetWithURL:url];
+
+    if (isDirty) {
+        _canvasContainerImageView.image = nil;
+        [self _replaceItemWithAsset:asset autoPlay:NO];
+    } else {
+        /* Create a thumbnail and add it as placeholder to the
+           _canvasContainerImageView to prevent flash to background wallpaper */
+        [self _thumbnailFromAsset:asset withCompletion:^(UIImage *image) {
+            _canvasContainerImageView.image = image;
+            [self _replaceItemWithAsset:asset autoPlay:YES];
+        }];
+    }
+}
+
+- (void)_replaceItemWithAsset:(AVAsset *)asset autoPlay:(BOOL)autoPlay {
+    AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithAsset:asset];
 
     AVPlayer *player = _canvasLayer.player;
     [player replaceCurrentItemWithPlayerItem:newItem];
@@ -177,27 +204,48 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                              selector:@selector(_replayMovie:)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:player.currentItem];
-    if (!isDirty)
+    if (autoPlay)
         [player play];
 }
 
+- (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0ul), ^{
+        AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+
+        [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
+                                             completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+            __block UIImage *thumb;
+            if (result == AVAssetImageGeneratorSucceeded) {
+                thumb = [UIImage imageWithCGImage:image];
+            } else {
+                HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
+                completion(nil);
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                 completion(thumb);
+            });
+        }];
+    });
+
+}
+
 - (BOOL)_fadeCanvasLayerIn {
-    if (_canvasLayer.superlayer)
+    if (_canvasContainerImageView.superview)
         return NO;
 
-    [self.view.layer addSublayer:_canvasLayer];
+    [self.view addSubview:_canvasContainerImageView];
     [self _showCanvasLayer:YES];
     return YES;
 }
 
 - (BOOL)_fadeCanvasLayerOut {
-    if (!_canvasLayer.superlayer)
+    if (!_canvasContainerImageView.superview)
         return NO;
 
     [self _showCanvasLayer:NO completion:^() {
         AVPlayer *player = _canvasLayer.player;
         [player pause];
-        [_canvasLayer removeFromSuperlayer];
+        [_canvasContainerImageView removeFromSuperview];
     }];
     return YES;
 }
@@ -207,7 +255,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
-    [self _performLayerOpacityAnimation:_canvasLayer show:show completion:completion];
+    [self _performLayerOpacityAnimation:_canvasContainerImageView.layer show:show completion:completion];
 }
 
 - (void)_performLayerOpacityAnimation:(CALayer *)layer show:(BOOL)show completion:(void (^)(void))completion {
