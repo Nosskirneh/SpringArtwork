@@ -8,6 +8,7 @@
 - (BOOL)_fadeCanvasLayerIn;
 - (BOOL)_fadeCanvasLayerOut;
 - (void)_performLayerOpacityAnimation:(CALayer *)layer show:(BOOL)show completion:(void (^)(void))completion;
+- (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player;
 @end
 
 @interface SADockViewController : SAViewController

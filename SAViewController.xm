@@ -73,25 +73,34 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         if (url)
             [self _canvasUpdatedWithURLString:url isDirty:YES];
 
-        if (![(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication]) {
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(_togglePlayPause:)
-                                                         name:kTogglePlayPause
-                                                       object:nil];
-        }
+        [manager addNewViewController:self];
+
     }
     return self;
 }
 
-#pragma mark Private
-
-- (void)_replayMovie:(NSNotification *)notification {
-    HBLogDebug(@"_replayMovie");
-    [_canvasLayer.player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
+- (void)replayVideo {
+    AVPlayer *player = _canvasLayer.player;
+    [player seekToTime:kCMTimeZero completionHandler:^(BOOL seeked) {
         if (seeked)
-            [_canvasLayer.player play];
+            [player play];
     }];
 }
+
+- (void)togglePlayPauseWithState:(BOOL)playState {
+    AVPlayer *player = _canvasLayer.player;
+    playState ? [player play] : [player pause];
+}
+
+- (void)togglePlayPause {
+    AVPlayer *player = _canvasLayer.player;
+    if (player.rate == 0 || player.error)
+        [player play];
+    else
+        [player pause];
+}
+
+#pragma mark Private
 
 - (void)_artworkUpdated:(NSNotification *)notification {
     NSDictionary *userInfo = notification.userInfo;
@@ -190,11 +199,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
-    AVPlayer *player = _canvasLayer.player;
-    if (player.currentItem)
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:AVPlayerItemDidPlayToEndTimeNotification
-                                                      object:player.currentItem];
+    [self _preparePlayerForChange:_canvasLayer.player];
 
     if (url) {
         [self _fadeCanvasLayerIn];
@@ -202,6 +207,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     } else {
         [self _fadeCanvasLayerOut];
     }
+}
+
+- (void)_preparePlayerForChange:(AVPlayer *)player {
+    return;
 }
 
 - (void)_changeCanvasURL:(NSURL *)url isDirty:(BOOL)isDirty {
@@ -224,13 +233,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithAsset:asset];
 
     AVPlayer *player = _canvasLayer.player;
-    [player replaceCurrentItemWithPlayerItem:newItem];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_replayMovie:)
-                                                 name:AVPlayerItemDidPlayToEndTimeNotification
-                                               object:player.currentItem];
+    [self _replaceItemWithItem:newItem player:player];
     if (autoPlay)
         [player play];
+}
+
+- (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
+    [player replaceCurrentItemWithPlayerItem:item];
 }
 
 - (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
@@ -268,8 +277,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return NO;
 
     [self _showCanvasLayer:NO completion:^() {
-        AVPlayer *player = _canvasLayer.player;
-        [player pause];
+        [_canvasLayer.player pause];
         [_canvasContainerImageView removeFromSuperview];
     }];
     return YES;
@@ -307,21 +315,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [layer addAnimation:animation forKey:@"timeViewFadeIn"];
     layer.opacity = to;
     [CATransaction commit];
-}
-
-- (void)_togglePlayPause:(NSNotification *)notification {
-    AVPlayer *player = _canvasLayer.player;
-
-    NSNumber *playState = notification.userInfo[kPlayState];
-    if (playState) {
-        [playState boolValue] ? [player play] : [player pause];
-        return;
-    }
-
-    if (player.rate == 0 || player.error)
-        [player play];
-    else
-        [player pause];
 }
 
 @end

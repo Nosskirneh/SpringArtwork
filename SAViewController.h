@@ -5,6 +5,9 @@
 
 @interface SAViewController : UIViewController
 - (id)initWithTargetView:(UIView *)view;
+- (void)replayVideo;
+- (void)togglePlayPauseWithState:(BOOL)playState;
+- (void)togglePlayPause;
 @end
 
 

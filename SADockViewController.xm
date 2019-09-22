@@ -1,10 +1,19 @@
 #import "SADockViewController.h"
 #import "DockManagement.h"
+#import "SAManager.h"
+
+extern SAManager *manager;
 
 // Only the homescreen controller is allowed to change the dock,
 // otherwise the two will do it simultaneously which obviously causes issues
 @implementation SADockViewController {
     BOOL _skipDock;
+}
+
+- (id)initWithTargetView:(UIView *)targetView {
+    if (self == [super initWithTargetView:targetView])
+        [manager setDockViewController:self];
+    return self;
 }
 
 #pragma mark Private
@@ -50,9 +59,26 @@
     return YES;
 }
 
+- (void)_preparePlayerForChange:(AVPlayer *)player {
+    if (player.currentItem)
+        [[NSNotificationCenter defaultCenter] removeObserver:manager
+                                                        name:AVPlayerItemDidPlayToEndTimeNotification
+                                                      object:player.currentItem];
+}
+
 - (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
     _skipDock = changeOfContent;
+
     [super _canvasUpdatedWithURLString:url isDirty:isDirty changeOfContent:changeOfContent];
+}
+
+- (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
+    [super _replaceItemWithItem:item player:player];
+
+    [[NSNotificationCenter defaultCenter] addObserver:manager
+                                             selector:@selector(_videoEnded:)
+                                                 name:AVPlayerItemDidPlayToEndTimeNotification
+                                               object:item];
 }
 
 - (BOOL)_fadeCanvasLayerIn {

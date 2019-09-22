@@ -1,5 +1,6 @@
 #import "SAColorHelper.h"
 #import "Artwork.h"
+#import "SADockViewController.h"
 
 typedef enum Mode {
     None,
@@ -23,6 +24,8 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 - (void)setup;
+- (void)addNewViewController:(SAViewController *)viewController;
+- (void)setDockViewController:(SADockViewController *)dockViewController;
 - (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isCanvasActive;

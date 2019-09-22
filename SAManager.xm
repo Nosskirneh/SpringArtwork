@@ -29,6 +29,9 @@
     BOOL _isDirty;
     Mode _mode;
     Mode _previousMode;
+
+    NSMutableArray *_viewControllers;
+    SADockViewController *_dockViewController;
 }
 
 #pragma mark Public
@@ -52,6 +55,8 @@
                                                object:nil];
 
     [self _registerEventsForCanvasMode];
+
+    _viewControllers = [NSMutableArray new];
 }
 
 - (BOOL)isCanvasActive {
@@ -67,15 +72,29 @@
         return;
 
     [_hapticGenerator impactOccurred];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
-                                                        object:nil];
+    for (SAViewController *vc in _viewControllers)
+        [vc togglePlayPause];
+
     if (_playing)
         _manuallyPaused = YES;
 
     _playing = !_playing;
 }
 
+- (void)addNewViewController:(SAViewController *)viewController {
+    [_viewControllers addObject:viewController];
+}
+
+- (void)setDockViewController:(SADockViewController *)dockViewController {
+    _dockViewController = dockViewController;
+}
+
 #pragma mark Private
+
+- (void)_videoEnded {
+    for (SAViewController *vc in _viewControllers)
+        [vc replayVideo];
+}
 
 - (void)_registerEventsForCanvasMode {
     [self _registerScreenEvent];
@@ -100,23 +119,19 @@
                 return;
 
             if (!_insideApp) //|| [self  ])
-                [self _sendCanvasPlayPauseNotificationWithState:_screenTurnedOn];
+                [self _setCanvasPlayPauseState:_screenTurnedOn];
        });
 
     return result == NOTIFY_STATUS_OK;
 }
 
-- (void)_sendCanvasPlayPauseNotificationWithState:(BOOL)newState {
+- (void)_setCanvasPlayPauseState:(BOOL)newState {
     if (_isDirty)
         _isDirty = NO;
 
-    NSDictionary *info = @{
-        kPlayState : @(newState)
-    };
+    for (SAViewController *vc in _viewControllers)
+        [vc togglePlayPauseWithState:newState];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:kTogglePlayPause
-                                                        object:nil
-                                                      userInfo:info];
     _manuallyPaused = NO;
     _playing = _canvasURL != nil;
 }
@@ -146,7 +161,7 @@
     if (![self isCanvasActive] || (!_playing && _manuallyPaused))
         return;
 
-    [self _sendCanvasPlayPauseNotificationWithState:!_insideApp];
+    [self _setCanvasPlayPauseState:!_insideApp];
 }
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
