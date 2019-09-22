@@ -192,6 +192,7 @@
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
+    _artworkIdentifier = artworkIdentifier;
 
     if (_mode == Artwork)
         _previousMode = None;
