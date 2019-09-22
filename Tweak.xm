@@ -4,6 +4,7 @@
 #import "SAManager.h"
 #import "Common.h"
 #import "DockManagement.h"
+#import "Labels.h"
 
 
 %group Spotify
@@ -119,6 +120,20 @@
         if (parameters && manager.colorInfo)
             parameters.textColor = manager.colorInfo.textColor;
 
+        %orig;
+    }
+
+    %end
+
+
+    /* Set the lockscreen date and time labels according
+       to the colorInfo in our implementation */
+    %hook SBFLockScreenDateView
+
+    - (void)setLegibilitySettings:(_UILegibilitySettings *)settings {
+        SAColorInfo *info = manager.colorInfo;
+        if (info)
+            settings.primaryColor = info.textColor;
         %orig;
     }
 

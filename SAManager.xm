@@ -8,6 +8,7 @@
 #import <SpringBoard/SBMediaController.h>
 #import <MediaRemote/MediaRemote.h>
 #import "DockManagement.h"
+#import "Labels.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -230,7 +231,7 @@
                 [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                                     object:nil
                                                                   userInfo:dict];
-                [self _updateAppLabels];
+                [self _updateLabels];
             });
         });
         return;
@@ -239,6 +240,26 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                         object:nil
                                                       userInfo:dict];
+}
+
+- (void)_updateLabels {
+    [self _updateAppLabels];
+    [self _updateLockscreenDate];
+}
+
+- (void)_updateLockscreenDate {
+    SBFLockScreenDateView *dateView = ((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController.dateViewController.view;
+    UIColor *textColor = self.colorInfo.textColor;
+    dateView.legibilitySettings.primaryColor = textColor;
+
+    SBUILegibilityLabel *label = [dateView _timeLabel];
+    [label _updateLegibilityView];
+    [label _updateLabelForLegibilitySettings];
+
+    SBFLockScreenDateSubtitleDateView *subtitleView = MSHookIvar<SBFLockScreenDateSubtitleDateView *>(dateView, "_dateSubtitleView");
+    label = MSHookIvar<SBUILegibilityLabel *>(subtitleView, "_label");
+    [label _updateLegibilityView];
+    [label _updateLabelForLegibilitySettings];
 }
 
 - (void)_updateAppLabels {
