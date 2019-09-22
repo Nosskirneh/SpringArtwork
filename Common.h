@@ -7,6 +7,7 @@ extern NSString *const kIsDirty;
 extern NSString *const kArtworkImage;
 extern NSString *const kBlurredImage;
 extern NSString *const kColor;
+extern NSString *const kChangeOfContent;
 extern NSString *const kUpdateArtwork;
 
 extern NSString *const kTogglePlayPause;

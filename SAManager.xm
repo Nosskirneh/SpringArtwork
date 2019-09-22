@@ -27,6 +27,8 @@
     // but we're not updating it because once the event occurred
     // the device was either at sleep or some app was in the foreground.
     BOOL _isDirty;
+    Mode _mode;
+    Mode _previousMode;
 }
 
 #pragma mark Public
@@ -53,7 +55,7 @@
 }
 
 - (BOOL)isCanvasActive {
-    return _canvasURL != nil;
+    return _mode == Canvas;
 }
 
 - (void)loadHaptic {
@@ -120,15 +122,18 @@
 }
 
 - (void)_sendCanvasUpdatedNotification {
-    NSMutableDictionary *dict = [NSMutableDictionary new];
+    NSMutableDictionary *userInfo = nil;
     if (_canvasURL) {
-        dict[kCanvasURL] = _canvasURL;
+        userInfo = [NSMutableDictionary new];
+        userInfo[kCanvasURL] = _canvasURL;
+        userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
+
         if (_isDirty)
-            dict[kIsDirty] = @YES;
+            userInfo[kIsDirty] = @YES;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                         object:nil
-                                                      userInfo:dict];
+                                                      userInfo:userInfo];
 }
 
 - (void)_currentAppChanged:(NSNotification *)notification {
@@ -168,7 +173,7 @@
 
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
     if (!contentItems && contentItems.count == 0)
-        return [self _updateArtworkWithImage:nil];
+        return;
 
     MRContentItem *contentItem = contentItems[0];
     NSDictionary *info = [contentItem dictionaryRepresentation];
@@ -182,10 +187,24 @@
     NSString *identifier = info[@"identifier"];
     NSDictionary *metadata = info[@"metadata"];
     if (!identifier || !metadata)
-        return [self _updateArtworkWithImage:nil];
+        return;
 
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
+        return;
+
+    if (_mode == Artwork)
+        _previousMode = None;
+    else {
+        if (_mode == Canvas)
+            _previousMode = Canvas;
+        _mode = Artwork;
+    }
+
+    /* After a track with canvas URL, Spotify will for some reason send the previous track
+       artwork together but the current song's metadata. There's no way to solve it other
+       than ignoring the first call. If they decide to change it, we need to update here. */
+    if (_previousMode == Canvas)
         return;
 
     HBLogDebug(@"identifier: %@, artworkIdentifier: %@", identifier, artworkIdentifier);
@@ -214,23 +233,24 @@
         return;
     _artworkImage = image;
 
-    NSMutableDictionary *dict = nil;
+    NSMutableDictionary *userInfo = nil;
     if (image) {
-        dict = [NSMutableDictionary new];
-        dict[kArtworkImage] = image;
+        userInfo = [NSMutableDictionary new];
+        userInfo[kArtworkImage] = image;
+        userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
 
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             _colorInfo = [SAColorHelper colorsForImage:image];
 
             if (NO/*blurMode*/) // TODO: Add settings for this
-                dict[kBlurredImage] = [self _blurredImage:image];
+                userInfo[kBlurredImage] = [self _blurredImage:image];
             else if (YES/*colorMode*/)
-                dict[kColor] = _colorInfo.backgroundColor;
+                userInfo[kColor] = _colorInfo.backgroundColor;
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                                     object:nil
-                                                                  userInfo:dict];
+                                                                  userInfo:userInfo];
                 [self _updateLabels];
             });
         });
@@ -239,7 +259,7 @@
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                         object:nil
-                                                      userInfo:dict];
+                                                      userInfo:userInfo];
 }
 
 - (void)_updateLabels {
@@ -287,9 +307,22 @@
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
+    if (!urlString) {
+        _canvasURL = nil;
+        return;
+    }
+
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
         _isDirty = _insideApp || !_screenTurnedOn;
+
+        if (_mode == Canvas)
+            _previousMode = None;
+        else {
+            if (_mode == Artwork)
+                _previousMode = Artwork;
+            _mode = Canvas;
+        }
 
         [self _sendCanvasUpdatedNotification];
     }

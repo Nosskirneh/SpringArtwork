@@ -25,6 +25,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIView *_artworkContainer;
     UIImageView *_artworkImageView;
     UIImageView *_backgroundArtworkImageView;
+
+    BOOL _animating;
+    void(^_completion)();
 }
 
 #pragma mark Public
@@ -91,42 +94,50 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_artworkUpdated:(NSNotification *)notification {
-    HBLogDebug(@"_artworkUpdated: %@", notification);
     NSDictionary *userInfo = notification.userInfo;
     if (userInfo) {
+        BOOL changeOfContent = userInfo[kChangeOfContent] && [userInfo[kChangeOfContent] boolValue];
         if (userInfo[kCanvasURL]) {
-            [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil stillPlaying:YES];
+            if (changeOfContent)
+                [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:changeOfContent];
             [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
         } else if (userInfo[kArtworkImage]) {
-            [self _canvasUpdatedWithURLString:nil isDirty:NO stillPlaying:YES];
-            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor]];
+            if (changeOfContent)
+                [self _canvasUpdatedWithURLString:nil isDirty:NO changeOfContent:changeOfContent];
+            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor] changeOfContent:changeOfContent];
         }
     } else {
+        [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:NO];
         [self _canvasUpdatedWithURLString:nil isDirty:NO];
     }
 }
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
-    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color stillPlaying:NO];
+    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:NO];
 }
 
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color stillPlaying:(BOOL)stillPlaying {
-    if (!artwork)
-        [self _hideArtworkViews];
-    else if ([self _isShowingArtworkView])
-        [self _animateArtworkChange:artwork blurredImage:blurredImage color:color];
-    else { // Not already visible, so we don't need to animate the image change, just the layer
-        [self _setArtwork:artwork blurredImage:blurredImage color:color];
-        [self _showArtworkViews];
+/* Check if this call came before the previous call.
+   In that case, we're still animating and will place this operation in the queue. */
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+    if (_animating) {
+        __weak typeof(self) weakSelf = self;
+        _completion = ^() {
+            [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
+        };
+    } else {
+        [self _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
     }
 }
 
-- (void)_setArtwork:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
-    _artworkImageView.image = artwork;
-    if (blurredImage)
-        _backgroundArtworkImageView.image = blurredImage;
-    else if (color)
-        _artworkContainer.backgroundColor = color;
+- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+    if (!artwork) {
+        [self _hideArtworkViews];
+    } else if (changeOfContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
+        [self _setArtwork:artwork blurredImage:blurredImage color:color];
+        [self _showArtworkViews];
+    } else {
+        [self _animateArtworkChange:artwork blurredImage:blurredImage color:color];
+    }
 }
 
 - (void)_animateArtworkChange:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
@@ -137,6 +148,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     ];
 }
 
+- (void)_setArtwork:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
+    _artworkImageView.image = artwork;
+    if (blurredImage)
+        _backgroundArtworkImageView.image = blurredImage;
+    else if (color)
+        _artworkContainer.backgroundColor = color;
+}
+
 - (BOOL)_isShowingArtworkView {
     return _artworkContainer.superview;
 }
@@ -145,8 +164,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if ([self _isShowingArtworkView])
         return NO;
 
+    _animating = YES;
     [self.view addSubview:_artworkContainer];
-    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:nil];
+    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^() {
+        _animating = NO;
+
+        if (_completion)
+            _completion();
+    }];
     return YES;
 }
 
@@ -161,10 +186,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty {
-    [self _canvasUpdatedWithURLString:url isDirty:isDirty stillPlaying:NO];
+    [self _canvasUpdatedWithURLString:url isDirty:isDirty changeOfContent:NO];
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty stillPlaying:(BOOL)stillPlaying {
+- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
     AVPlayer *player = _canvasLayer.player;
     if (player.currentItem)
         [[NSNotificationCenter defaultCenter] removeObserver:self

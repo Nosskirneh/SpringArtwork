@@ -31,9 +31,9 @@
     }];
 }
 
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color stillPlaying:(BOOL)stillPlaying {
-    _skipDock = stillPlaying;
-    [super _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color stillPlaying:stillPlaying];
+- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+    _skipDock = changeOfContent;
+    [super _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
 }
 
 - (BOOL)_showArtworkViews {
@@ -50,9 +50,9 @@
     return YES;
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty stillPlaying:(BOOL)stillPlaying {
-    _skipDock = stillPlaying;
-    [super _canvasUpdatedWithURLString:url isDirty:isDirty stillPlaying:stillPlaying];
+- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
+    _skipDock = changeOfContent;
+    [super _canvasUpdatedWithURLString:url isDirty:isDirty changeOfContent:changeOfContent];
 }
 
 - (BOOL)_fadeCanvasLayerIn {

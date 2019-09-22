@@ -1,6 +1,12 @@
 #import "SAColorHelper.h"
 #import "Artwork.h"
 
+typedef enum Mode {
+    None,
+    Canvas,
+    Artwork
+} Mode;
+
 typedef enum UIImpactFeedbackStyle : NSInteger {
     UIImpactFeedbackStyleHeavy,
     UIImpactFeedbackStyleLight,
