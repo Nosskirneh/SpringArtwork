@@ -34,6 +34,17 @@
 
 @end
 
+typedef union {
+    uint32_t raw;
+    unsigned char bytes[4];
+    struct {
+        char red;
+        char green;
+        char blue;
+        char alpha;
+    } __attribute__((packed)) pixels;
+} ComparePixel;
+
 // https://ideone.com/W4TVMn and
 // https://stackoverflow.com/questions/15962893/determine-primary-and-secondary-colors-of-a-uiimage
 @implementation SAColorHelper
@@ -134,7 +145,6 @@
     // 4. Distinguish the colors
     //    Orders the flexible colors by their occurrence
     //    then keeps them if they are sufficiently disimilar
- 
     NSMutableDictionary *colorCounter = [NSMutableDictionary new];
  
     // Count the occurences in the array
@@ -200,6 +210,16 @@
                          textColor:textColor];
 }
 
++ (NSString *)imageToString:(UIImage *)image {
+    NSData *data = UIImagePNGRepresentation(image);
+    return [data base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
+}
+
++ (UIImage *)stringToImage:(NSString *)string {
+    NSData *data = [[NSData alloc] initWithBase64EncodedString:string options:NSDataBase64DecodingIgnoreUnknownCharacters];
+    return [UIImage imageWithData:data];
+}
+
 + (BOOL)colorIsLight:(UIColor *)color {
     CGFloat colorBrightness = 0;
     CGColorSpaceRef colorSpace = CGColorGetColorSpace(color.CGColor);
@@ -217,6 +237,149 @@
 
 + (UIColor *)labelColorForBackgroundColor:(UIColor *)color {
     return [self colorIsLight:color] ? UIColor.blackColor : UIColor.whiteColor;
+}
+
++ (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second {
+    // if (CGSizeEqualToSize(first.size, second.size))
+    //     return [self _compareImage:first withImage:second tolerance:0];
+
+    if (first.size.width != second.size.width) {
+        // Transform into the same size, and compare them with higher tolerance
+        HBLogDebug(@"sizes before: (%f, %f), (%f, %f)", first.size.width, first.size.height, second.size.width, second.size.height);
+        if (first.size.width > second.size.width)
+            first = [self imageWithImage:first scaledToSize:second.size];
+        else
+            second = [self imageWithImage:second scaledToSize:first.size];
+
+        HBLogDebug(@"sizes afterward: (%f, %f), (%f, %f)", first.size.width, first.size.height, second.size.width, second.size.height);
+    }
+
+    return [self _compareImage:first withImage:second tolerance:0.1];
+}
+
++ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
+    //UIGraphicsBeginImageContext(newSize);
+    // In next line, pass 0.0 to use the current device's pixel scaling factor (and thus account for Retina resolution).
+    // Pass 1.0 to force exact pixel size.
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();    
+    UIGraphicsEndImageContext();
+    return newImage;
+}
+
++ (BOOL)_compareImage:(UIImage *)first withImage:(UIImage *)second tolerance:(CGFloat)tolerance {
+    NSAssert(CGSizeEqualToSize(first.size, second.size), @"Images must be same size.");
+
+    CGSize firstImageSize = CGSizeMake(CGImageGetWidth(first.CGImage), CGImageGetHeight(first.CGImage));
+    CGSize secondImageSize = CGSizeMake(CGImageGetWidth(second.CGImage), CGImageGetHeight(second.CGImage));
+
+    // The images have the equal size, so we could use the smallest amount of bytes because of byte padding
+    size_t minBytesPerRow = MIN(CGImageGetBytesPerRow(first.CGImage), CGImageGetBytesPerRow(second.CGImage));
+
+    size_t firstImageSizeBytes = firstImageSize.height * minBytesPerRow;
+    void *firstImagePixels = calloc(1, firstImageSizeBytes);
+    void *secondImagePixels = calloc(1, firstImageSizeBytes);
+
+    if (!firstImagePixels || !secondImagePixels) {
+        free(firstImagePixels);
+        free(secondImagePixels);
+        return NO;
+    }
+
+    CGContextRef firstImageContext = CGBitmapContextCreate(firstImagePixels,
+                                                           firstImageSize.width,
+                                                           firstImageSize.height,
+                                                           CGImageGetBitsPerComponent(first.CGImage),
+                                                           minBytesPerRow,
+                                                           CGImageGetColorSpace(first.CGImage),
+                                                           (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+
+    CGContextRef secondimageContext = CGBitmapContextCreate(secondImagePixels,
+                                                            secondImageSize.width,
+                                                            secondImageSize.height,
+                                                            CGImageGetBitsPerComponent(second.CGImage),
+                                                            minBytesPerRow,
+                                                            CGImageGetColorSpace(second.CGImage),
+                                                            (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    if (!firstImageContext || !secondimageContext) {
+        CGContextRelease(firstImageContext);
+        CGContextRelease(secondimageContext);
+        free(firstImagePixels);
+        free(secondImagePixels);
+        return NO;
+    }
+
+    CGContextDrawImage(firstImageContext, CGRectMake(0, 0, firstImageSize.width, firstImageSize.height), first.CGImage);
+    CGContextDrawImage(secondimageContext, CGRectMake(0, 0, secondImageSize.width, secondImageSize.height), second.CGImage);
+
+    CGContextRelease(firstImageContext);
+    CGContextRelease(secondimageContext);
+
+    BOOL imageEqual = YES;
+
+    // Do a fast compare if we can
+    if (tolerance == 0) {
+        imageEqual = (memcmp(firstImagePixels, secondImagePixels, firstImageSizeBytes) == 0);
+    } else {
+        // Go through each pixel in turn and see if it is different
+        const NSInteger pixelCount = firstImageSize.width * firstImageSize.height;
+
+        ComparePixel *p1 = firstImagePixels;
+        ComparePixel *p2 = secondImagePixels;
+
+        NSInteger numDiffPixels = 0;
+        NSInteger numMatchedPixels = 0;
+        const int checkTotal = 1500;
+        const long step = pixelCount / checkTotal;
+
+        NSInteger weightedDiffIncrement = 1;
+        NSInteger weightedMatchIncrement = 1;
+
+        for (int n = 0; n < pixelCount; n += step) {
+            // If this pixel is different, increment the pixel diff count and see
+            // if we have hit our limit.
+            if (p1->raw != p2->raw) {
+                numDiffPixels++;
+                weightedDiffIncrement *= 2;
+                weightedMatchIncrement = 1;
+
+                CGFloat diffPercent = (CGFloat)(numDiffPixels + weightedDiffIncrement - 1) / checkTotal;
+                #ifdef DEBUG
+                HBLogDebug(@"[pixel %d/%ld]: numDiffPixels: %ld (+%ld), diffPercent: %f, tolerance: %f",
+                           n, (long)pixelCount, (long)numDiffPixels, (long)weightedDiffIncrement, diffPercent, tolerance);
+                #endif
+                if (diffPercent > tolerance) {
+                    imageEqual = NO;
+                    break;
+                }
+            } else {
+                numMatchedPixels++;
+                weightedMatchIncrement *= 2;
+                weightedDiffIncrement = 1;
+
+                // If we have a match percentage already higher than the tolerance, return here
+                CGFloat currentlyMatchedPercentage = (CGFloat)(numMatchedPixels + weightedMatchIncrement - 1) / step;
+                #ifdef DEBUG
+                HBLogDebug(@"[pixel %d/%ld]: numMatchedPixels: %ld (+%ld), currentlyMatchedPercentage: %f, tolerance: %f",
+                           n, (long)pixelCount, (long)numMatchedPixels, (long)weightedMatchIncrement, currentlyMatchedPercentage, tolerance);
+                #endif
+                if (currentlyMatchedPercentage > tolerance) {
+                    imageEqual = YES;
+                    break;
+                }
+            }
+
+            p1 += step;
+            p2 += step;
+        }
+    }
+
+    free(firstImagePixels);
+    free(secondImagePixels);
+
+    HBLogDebug(@"imageEqual: %d", imageEqual);
+    return imageEqual;
 }
 
 @end

@@ -9,6 +9,7 @@
 #import <MediaRemote/MediaRemote.h>
 #import "DockManagement.h"
 #import "Labels.h"
+#import "PlaceholderImages.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -32,6 +33,7 @@
 
     NSMutableArray *_viewControllers;
     SADockViewController *_dockViewController;
+    UIImage *_placeholderImage;
 }
 
 #pragma mark Public
@@ -173,6 +175,8 @@
 
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil];
+    } else {
+        _placeholderImage = [SAColorHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
     }
 }
 
@@ -180,11 +184,7 @@
     if (_canvasURL)
         return;
 
-    // HBLogDebug(@"notification: %@", notification);
-
     NSDictionary *userInfo = notification.userInfo;
-    _MRNowPlayingClientProtobuf *processInfo = userInfo[@"kMRNowPlayingClientUserInfoKey"];
-    NSString *bundleID = processInfo.bundleIdentifier;
 
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
     if (!contentItems && contentItems.count == 0)
@@ -193,11 +193,6 @@
     MRContentItem *contentItem = contentItems[0];
     NSDictionary *info = [contentItem dictionaryRepresentation];
     // HBLogDebug(@"info: %@", info);
-
-    if ([self _isPlaceholderImageForBundleID:bundleID info:info]) {
-        HBLogDebug(@"skipping placeholder...");
-        return;
-    }
 
     NSString *identifier = info[@"identifier"];
     NSDictionary *metadata = info[@"metadata"];
@@ -222,26 +217,44 @@
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
         onCompletion:^void(MPCMediaRemoteController *controller) {
             float width = [UIScreen mainScreen].nativeBounds.size.width;
-            [[controller contentItemArtworkForContentItemIdentifier:identifier artworkIdentifier:artworkIdentifier size:CGSizeMake(width, width)]
-                onCompletion:^void(UIImage *image) {
-                    if ([self _isSameAsPreviousArtwork:image])
-                        return;
+            MPCFuture *request;
+            if ([controller respondsToSelector:@selector(contentItemArtworkForContentItemIdentifier:artworkIdentifier:size:)])
+                request = [controller contentItemArtworkForContentItemIdentifier:identifier
+                                                               artworkIdentifier:artworkIdentifier
+                                                                            size:CGSizeMake(width, width)];
+            else
+                request = [controller contentItemArtworkForContentItemIdentifier:identifier
+                                                                            size:CGSizeMake(width, width)];
+            [request onCompletion:^void(UIImage *image) {
+                // HBLogDebug(@"base64: %@, image: %@", [SAColorHelper imageToString:image], image);
+                HBLogDebug(@"image: %@", image);
 
-                    [self _updateArtworkWithImage:image];
-                    _artworkIdentifier = artworkIdentifier;
+                if ([self _candidateSameAsPreviousArtwork:image])
+                    return;
+
+                if ([self _candidatePlaceholderImage:image]) {
+                    HBLogDebug(@"skipping placeholder...");
+                    return;
                 }
-            ];
+
+                [self _updateArtworkWithImage:image];
+                _artworkIdentifier = artworkIdentifier;
+            }];
         }
     ];
 }
 
-- (BOOL)_isSameAsPreviousArtwork:(UIImage *)candidate {
+- (BOOL)_candidateSameAsPreviousArtwork:(UIImage *)candidate {
     return [UIImagePNGRepresentation(_artworkImage) isEqualToData:UIImagePNGRepresentation(candidate)];
 }
 
-/* Hopefully there are some pattern to recognize. We might have to analyze the image data god forbid :/ */
-- (BOOL)_isPlaceholderImageForBundleID:(NSString *)bundleID info:(NSDictionary *)info {
-    // return [bundleID isEqualToString:kSpotifyBundleID] && ...);
+- (BOOL)_candidatePlaceholderImage:(UIImage *)candidate {
+    // All placeholder images are squared
+    if (candidate.size.width != candidate.size.height)
+        return NO;
+
+    if (_placeholderImage)
+        return [SAColorHelper compareImage:candidate withImage:_placeholderImage];
     return NO;
 }
 

@@ -7,4 +7,7 @@
 
 @interface SAColorHelper : NSObject
 + (SAColorInfo *)colorsForImage:(UIImage *)image;
++ (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second;
++ (NSString *)imageToString:(UIImage *)image;
++ (UIImage *)stringToImage:(NSString *)string;
 @end
