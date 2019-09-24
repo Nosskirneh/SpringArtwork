@@ -76,7 +76,7 @@ extern SAManager *manager;
     [super _replaceItemWithItem:item player:player];
 
     [[NSNotificationCenter defaultCenter] addObserver:manager
-                                             selector:@selector(_videoEnded:)
+                                             selector:@selector(_videoEnded)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:item];
 }
