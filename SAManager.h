@@ -19,13 +19,17 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)impactOccurred;
 @end
 
-@interface SAManager : NSObject
+@protocol SAViewControllerManager
+- (void)addNewViewController:(SAViewController *)viewController;
+- (void)setDockViewController:(SADockViewController *)dockViewController;
+- (void)_videoEnded;
+@end
+
+@interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) NSString *canvasURL;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 - (void)setup;
-- (void)addNewViewController:(SAViewController *)viewController;
-- (void)setDockViewController:(SADockViewController *)dockViewController;
 - (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isCanvasActive;

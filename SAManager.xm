@@ -28,6 +28,7 @@
     // but we're not updating it because once the event occurred
     // the device was either at sleep or some app was in the foreground.
     BOOL _isDirty;
+
     Mode _mode;
     Mode _previousMode;
 
