@@ -1,5 +1,6 @@
 #define SA_IDENTIFIER @"se.nosskirneh.springartwork"
 #define kSpotifyBundleID @"com.spotify.client"
+#define kDeezerBundleID @"com.deezer.Deezer"
 
 extern NSString *const kCanvasURLMessage;
 extern NSString *const kCanvasURL;

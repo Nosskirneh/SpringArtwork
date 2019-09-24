@@ -171,13 +171,18 @@
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
-    if (![bundleID isEqualToString:kSpotifyBundleID]) {
+    if ([bundleID isEqualToString:kSpotifyBundleID]) {
+        _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+    } else {
         _canvasURL = nil;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil];
-    } else {
-        _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+
+        if ([bundleID isEqualToString:kDeezerBundleID])
+            _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
+        else
+            _placeholderImage = nil;
     }
 }
 
