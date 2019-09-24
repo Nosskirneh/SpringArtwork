@@ -223,8 +223,8 @@
                                                                artworkIdentifier:artworkIdentifier
                                                                             size:CGSizeMake(width, width)];
             else
-                request = [controller contentItemArtworkForContentItemIdentifier:identifier
-                                                                            size:CGSizeMake(width, width)];
+                request = [controller contentItemArtworkForIdentifier:identifier
+                                                                 size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
                 // HBLogDebug(@"base64: %@, image: %@", [SAColorHelper imageToString:image], image);
                 HBLogDebug(@"image: %@", image);

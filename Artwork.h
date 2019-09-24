@@ -22,6 +22,6 @@
                                         artworkIdentifier:(NSString *)artworkIdentifier
                                                      size:(CGSize)size;
 // iOS 11.1.2 and below
-- (MPCFuture *)contentItemArtworkForContentItemIdentifier:(NSString *)identifier
-                                                     size:(CGSize)size;
+- (MPCFuture *)contentItemArtworkForIdentifier:(NSString *)identifier
+                                          size:(CGSize)size;
 @end
