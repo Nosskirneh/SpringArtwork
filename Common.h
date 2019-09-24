@@ -9,6 +9,3 @@ extern NSString *const kBlurredImage;
 extern NSString *const kColor;
 extern NSString *const kChangeOfContent;
 extern NSString *const kUpdateArtwork;
-
-extern NSString *const kTogglePlayPause;
-extern NSString *const kPlayState;

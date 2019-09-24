@@ -6,6 +6,3 @@ NSString *const kBlurredImage = @"blurredImage";
 NSString *const kColor = @"color";
 NSString *const kChangeOfContent = @"changeOfContent";
 NSString *const kUpdateArtwork = @"se.nosskirneh.springartwork/updateArtwork";
-
-NSString *const kTogglePlayPause = @"togglePlayPause";
-NSString *const kPlayState = @"playState";
