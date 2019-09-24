@@ -1,4 +1,4 @@
-#import "SAColorHelper.h"
+#import "SAImageHelper.h"
 #import "Artwork.h"
 #import "SADockViewController.h"
 

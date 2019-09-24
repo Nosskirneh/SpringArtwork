@@ -177,7 +177,7 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                             object:nil];
     } else {
-        _placeholderImage = [SAColorHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+        _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
     }
 }
 
@@ -193,7 +193,6 @@
 
     MRContentItem *contentItem = contentItems[0];
     NSDictionary *info = [contentItem dictionaryRepresentation];
-    // HBLogDebug(@"info: %@", info);
 
     NSString *identifier = info[@"identifier"];
     NSDictionary *metadata = info[@"metadata"];
@@ -227,16 +226,14 @@
                 request = [controller contentItemArtworkForIdentifier:identifier
                                                                  size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
-                // HBLogDebug(@"base64: %@, image: %@", [SAColorHelper imageToString:image], image);
+                // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
                 HBLogDebug(@"image: %@", image);
 
                 if ([self _candidateSameAsPreviousArtwork:image])
                     return;
 
-                if ([self _candidatePlaceholderImage:image]) {
-                    HBLogDebug(@"skipping placeholder...");
+                if ([self _candidatePlaceholderImage:image])
                     return;
-                }
 
                 [self _updateArtworkWithImage:image];
                 _artworkIdentifier = artworkIdentifier;
@@ -255,7 +252,7 @@
         return NO;
 
     if (_placeholderImage)
-        return [SAColorHelper compareImage:candidate withImage:_placeholderImage];
+        return [SAImageHelper compareImage:candidate withImage:_placeholderImage];
     return NO;
 }
 
@@ -271,7 +268,7 @@
         userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
 
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            _colorInfo = [SAColorHelper colorsForImage:image];
+            _colorInfo = [SAImageHelper colorsForImage:image];
 
             if (NO/*blurMode*/) // TODO: Add settings for this
                 userInfo[kBlurredImage] = [self _blurredImage:image];

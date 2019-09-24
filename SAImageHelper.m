@@ -1,4 +1,4 @@
-#import "SAColorHelper.h"
+#import "SAImageHelper.h"
 
 @interface SAColorInfo (Private)
 + (id)infoWithBackgroundColor:(UIColor *)backgroundColor
@@ -47,7 +47,7 @@ typedef union {
 
 // https://ideone.com/W4TVMn and
 // https://stackoverflow.com/questions/15962893/determine-primary-and-secondary-colors-of-a-uiimage
-@implementation SAColorHelper
+@implementation SAImageHelper
 
 + (SAColorInfo *)colorsForImage:(UIImage *)image {
     const float dimension = 10;

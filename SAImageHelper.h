@@ -5,7 +5,7 @@
 @property (nonatomic, retain, readonly) UIColor *secondaryColor;
 @end
 
-@interface SAColorHelper : NSObject
+@interface SAImageHelper : NSObject
 + (SAColorInfo *)colorsForImage:(UIImage *)image;
 + (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second;
 + (NSString *)imageToString:(UIImage *)image;
