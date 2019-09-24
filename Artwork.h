@@ -17,5 +17,11 @@
 
 @interface MPCMediaRemoteController : NSObject
 + (MPCFuture *)controllerForPlayerPath:(MPCPlayerPath *)path;
-- (MPCFuture *)contentItemArtworkForContentItemIdentifier:(NSString *)identifier artworkIdentifier:(NSString *)artworkIdentifier size:(CGSize)size;
+// iOS 11.3.1 and above
+- (MPCFuture *)contentItemArtworkForContentItemIdentifier:(NSString *)identifier
+                                        artworkIdentifier:(NSString *)artworkIdentifier
+                                                     size:(CGSize)size;
+// iOS 11.1.2 and below
+- (MPCFuture *)contentItemArtworkForContentItemIdentifier:(NSString *)identifier
+                                                     size:(CGSize)size;
 @end
