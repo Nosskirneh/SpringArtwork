@@ -1,9 +1,9 @@
 Package: se.nosskirneh.springartwork
 Name: SpringArtwork
-Depends: mobilesubstrate
+Depends: mobilesubstrate, com.rpetrich.rocketbootstrap (>> 1.0.6) | firmware (<< 12.0), firmware (>= 11.0), preferenceloader
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: Set current artwork as your wallpaper
+Description: Make your wallpaper awesome!
 Maintainer: Andreas Henriksson
 Author: Andreas Henriksson
 Section: Tweaks
