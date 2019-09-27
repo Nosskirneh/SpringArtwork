@@ -16,7 +16,7 @@
     return [[SAColorInfo alloc] infoWithBackgroundColor:backgroundColor
                                            primaryColor:primaryColor
                                          secondaryColor:secondaryColor
-                                 textColor:textColor];
+                                              textColor:textColor];
 }
 
 - (id)infoWithBackgroundColor:(UIColor *)backgroundColor
@@ -28,6 +28,8 @@
         _primaryColor = primaryColor;
         _secondaryColor = secondaryColor;
         _textColor = textColor;
+
+        _hasDarkTextColor = ![SAImageHelper colorIsLight:textColor];
     }
     return self;
 }

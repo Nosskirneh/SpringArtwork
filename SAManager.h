@@ -1,5 +1,5 @@
 #import "SAImageHelper.h"
-#import "Artwork.h"
+#import "SpringBoard.h"
 #import "SADockViewController.h"
 
 typedef enum Mode {

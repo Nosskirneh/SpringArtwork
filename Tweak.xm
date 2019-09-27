@@ -3,8 +3,6 @@
 #import "SADockViewController.h"
 #import "SAManager.h"
 #import "Common.h"
-#import "DockManagement.h"
-#import "Labels.h"
 
 
 %group Spotify
@@ -135,6 +133,60 @@
         if (info)
             settings.primaryColor = info.textColor;
         %orig;
+    }
+
+    %end
+
+
+    /* App labels */
+    %hook SBIconViewMap
+
+    - (void)_recycleIconView:(SBIconView *)iconView {
+        %orig;
+
+        iconView.legibilitySettings = self.legibilitySettings;
+        [iconView _updateLabel];
+    }
+
+    %end
+
+
+    /* Statusbar */
+    /* Fix for fake statusbar which is visible when bringing down the lockscreen from
+       the homescreen. This is not perfect since it still has a black shadow that then
+       jumps to a white one, but it's better than a complete white status bar. */
+    %hook SBDashBoardViewController
+
+    - (id)_createFakeStatusBar {
+        UIStatusBar *orig = %orig;
+
+        SAColorInfo *info = manager.colorInfo;
+        if (info)
+            orig.foregroundColor = info.textColor;
+
+        return orig;
+    }
+
+    %end
+
+    %hook SBAppStatusBarSettingsAssertion
+
+    - (void)modifySettingsWithBlock:(void (^)(SBMutableAppStatusBarSettings *))completion {
+        SAColorInfo *info = manager.colorInfo;
+        if (!info)
+            return %orig;
+
+        int style = info.hasDarkTextColor ? 2 : 1;
+        __block _UILegibilitySettings *_settings = [_UILegibilitySettings sharedInstanceForStyle:style];
+
+        void(^newCompletion)(SBMutableAppStatusBarSettings *) = ^(SBMutableAppStatusBarSettings *settings) {
+            if (completion)
+                completion(settings);
+
+            [settings setLegibilitySettings:_settings];
+        };
+
+        %orig(newCompletion);
     }
 
     %end

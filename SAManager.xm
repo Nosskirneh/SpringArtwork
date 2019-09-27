@@ -7,8 +7,7 @@
 #import "ApplicationProcesses.h"
 #import <SpringBoard/SBMediaController.h>
 #import <MediaRemote/MediaRemote.h>
-#import "DockManagement.h"
-#import "Labels.h"
+#import "Artwork.h"
 #import "PlaceholderImages.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
@@ -298,6 +297,20 @@
 - (void)_updateLabels {
     [self _updateAppLabels];
     [self _updateLockscreenDate];
+    [self _updateStatusBar];
+}
+
+- (void)_updateStatusBar {
+    SBAppStatusBarAssertionManager *assertionManager = [%c(SBAppStatusBarAssertionManager) sharedInstance];
+
+    void (^completion)(SBAppStatusBarSettingsAssertion *) = ^(SBAppStatusBarSettingsAssertion *assertion) {
+        [assertion modifySettingsWithBlock:nil]; // This method is hooked in Tweak.xm and will change the color from there.
+    };
+
+    [assertionManager _enumerateAssertionsToLevel:0 withBlock:completion];
+    [assertionManager _enumerateAssertionsToLevel:5 withBlock:completion];
+    [assertionManager _enumerateAssertionsToLevel:6 withBlock:completion];
+    [assertionManager _enumerateAssertionsToLevel:10 withBlock:completion];
 }
 
 - (void)_updateLockscreenDate {
@@ -317,9 +330,8 @@
 
 - (void)_updateAppLabels {
     SBIconViewMap *viewMap = ((SBIconController *)[%c(SBIconController) sharedInstance]).homescreenIconViewMap;
-    [viewMap enumerateMappedIconViewsUsingBlock:^(SBIconView *iconView) {
-        [iconView _updateLabel];
-    }];
+    int style = _colorInfo.hasDarkTextColor ? 2 : 1;
+    viewMap.legibilitySettings = [_UILegibilitySettings sharedInstanceForStyle:style];
 }
 
 - (UIImage *)_blurredImage:(UIImage *)image {
