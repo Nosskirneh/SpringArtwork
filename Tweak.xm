@@ -69,6 +69,10 @@
         return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
     }
 
+    SBDashBoardViewController *getDashBoardViewController() {
+        return ((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController;
+    }
+
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -112,11 +116,15 @@
 
     %end
 
-
+    /* Lockscreen */
     %hook SBDashBoardLegibilityProvider
 
     - (_UILegibilitySettings *)currentLegibilitySettings {
         %log;
+
+        if (manager.enabledMode == HomescreenMode)
+            return %orig;
+
         SAColorInfo *info = manager.colorInfo;
         if (info)
             return legibilitySettingsForDarkText(info.hasDarkTextColor);
@@ -127,26 +135,16 @@
     %end
 
 
-    /* App labels */
-    %hook SBIconViewMap
-
-    - (void)_recycleIconView:(SBIconView *)iconView {
-        %orig;
-
-        iconView.legibilitySettings = self.legibilitySettings;
-        [iconView _updateLabel];
-    }
-
-    %end
-
-
-    /* Statusbar */
+    /* Lockscreen statusbar */
     /* Fix for fake statusbar which is visible when bringing down the lockscreen from
        the homescreen. This is not perfect since it still has a black shadow that then
        jumps to a white one, but it's better than a complete white status bar. */
     %hook SBDashBoardViewController
 
     - (id)_createFakeStatusBar {
+        if (manager.enabledMode == HomescreenMode)
+            return %orig;
+
         UIStatusBar *orig = %orig;
 
         SAColorInfo *info = manager.colorInfo;
@@ -157,27 +155,53 @@
     }
 
     %end
+    // ---
 
+    /* Homescreen app labels */
+    %hook SBIconViewMap
+
+    - (void)_recycleIconView:(SBIconView *)iconView {
+        %orig;
+
+        if (manager.enabledMode != LockscreenMode) {
+            iconView.legibilitySettings = self.legibilitySettings;
+            [iconView _updateLabel];
+        }
+    }
+
+    %end
+    // ---
+
+    /* Both LS & HS */
     %hook SBAppStatusBarSettingsAssertion
 
+    %property (nonatomic, retain) _UILegibilitySettings *sa_legibilitySettings;
+
     - (void)modifySettingsWithBlock:(void (^)(SBMutableAppStatusBarSettings *))completion {
-        SAColorInfo *info = manager.colorInfo;
-        if (!info)
+        if (!self.sa_legibilitySettings)
             return %orig;
 
-        __block _UILegibilitySettings *_settings = legibilitySettingsForDarkText(info.hasDarkTextColor);
+        // TODO:
+        /*
+        if ((manager.enabledMode == HomescreenMode && self.level == LockscreenAssertionLevel) ||
+            (manager.enabledMode == LockscreenMode && self.level == HomescreenAssertionLevel))
+            return %orig;
+        */
 
-        void(^newCompletion)(SBMutableAppStatusBarSettings *) = ^(SBMutableAppStatusBarSettings *settings) {
+        __block _UILegibilitySettings *_settings = self.sa_legibilitySettings;
+
+        void(^newCompletion)(SBMutableAppStatusBarSettings *) = ^(SBMutableAppStatusBarSettings *statusBarSettings) {
             if (completion)
-                completion(settings);
+                completion(statusBarSettings);
 
-            [settings setLegibilitySettings:_settings];
+            [statusBarSettings setLegibilitySettings:_settings];
         };
 
         %orig(newCompletion);
     }
 
     %end
+    // ---
 %end
 
 

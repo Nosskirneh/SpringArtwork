@@ -25,10 +25,17 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)_videoEnded;
 @end
 
+typedef enum EnabledMode {
+    BothMode,
+    LockscreenMode,
+    HomescreenMode
+} EnabledMode;
+
 @interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) NSString *canvasURL;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
+@property (nonatomic, assign, readonly) EnabledMode enabledMode;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;

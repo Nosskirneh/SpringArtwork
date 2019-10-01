@@ -46,7 +46,12 @@
 + (id)sharedInstanceForStyle:(NSInteger)style;
 @end
 
+@interface SBDashBoardLegibilityProvider : NSObject
+- (_UILegibilitySettings *)currentLegibilitySettings;
+@end
+
 @interface SBDashBoardViewController : UIViewController
+@property (nonatomic, retain) SBDashBoardLegibilityProvider *legibilityProvider;
 - (void)_updateActiveAppearanceForReason:(id)reason;
 @end
 
@@ -71,8 +76,23 @@
 @end
 
 
+typedef enum {
+    HomescreenAssertionLevel,
+    FolderAssertionLevel,
+    ForegroundAppAssertionLevel,
+    ForegroundAppAnimationAssertionLevel,
+    AppSwitcherAssertionLevel,
+    FullscreenAlertAssertionLevel,
+    FullscreenAlertAnimationAssertionLevel,
+    PowerDownAssertionLevel,
+    LoginWindowAssertionLevel,
+    InvalidAssertionLevel
+} AssertionLevel;
+
 
 @interface SBAppStatusBarSettingsAssertion : NSObject
+@property (nonatomic, readonly) AssertionLevel level;
+@property (nonatomic, retain) _UILegibilitySettings *sa_legibilitySettings;
 @property (nonatomic, copy, readonly) SBMutableAppStatusBarSettings *settings;
 - (void)modifySettingsWithBlock:(void (^)(SBMutableAppStatusBarSettings *))arg1;
 @end
@@ -118,7 +138,8 @@
 @end
 
 @interface SBIconController : NSObject
-@property (nonatomic,readonly) SBIconViewMap *homescreenIconViewMap;
+@property (nonatomic, readonly) SBIconViewMap *homescreenIconViewMap;
+@property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
 - (UIView *)contentView;

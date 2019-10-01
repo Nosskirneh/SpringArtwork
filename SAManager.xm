@@ -14,6 +14,8 @@
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
 
+extern SBDashBoardViewController *getDashBoardViewController();
+extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 @implementation SAManager {
     int _notifyTokenForDidChangeDisplayStatus;
@@ -59,6 +61,8 @@
     [self _registerEventsForCanvasMode];
 
     _viewControllers = [NSMutableArray new];
+
+    _enabledMode = BothMode;
 }
 
 - (BOOL)isCanvasActive {
@@ -283,7 +287,7 @@
                 [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                                     object:nil
                                                                   userInfo:userInfo];
-                [self _updateLabels];
+                [self _overrideLabels];
             });
         });
         return;
@@ -294,33 +298,97 @@
                                                       userInfo:userInfo];
 }
 
-- (void)_updateLabels {
-    [self _updateAppLabels];
-    [self _updateLockscreenDate];
-    [self _updateStatusBar];
+- (void)_overrideLabels {
+    _UILegibilitySettings *settings = legibilitySettingsForDarkText(_colorInfo.hasDarkTextColor);
+
+    if (_enabledMode != LockscreenMode)
+        [self _setAppLabelsLegibilitySettings:settings];
+    [self _overrideStatusBar:settings];
+    if (_enabledMode != HomescreenMode)
+        [self _updateLockscreenLabels];
 }
 
-- (void)_updateStatusBar {
+- (void)_revertLabels {
+    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomeScreenLegibilitySettings]];
+    [self _revertStatusBar];
+    if (_enabledMode != HomescreenMode)
+        [self _updateLockscreenLabels];
+}
+
+- (_UILegibilitySettings *)_getOriginalHomeScreenLegibilitySettings {
+    return ((SBIconController *)[%c(SBIconController) sharedInstance]).legibilitySettings;
+}
+
+- (_UILegibilitySettings *)_getOriginalLockScreenLegibilitySettings {
+    return [getDashBoardViewController().legibilityProvider currentLegibilitySettings];
+}
+
+- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings {
+    SBIconViewMap *viewMap = ((SBIconController *)[%c(SBIconController) sharedInstance]).homescreenIconViewMap;
+    viewMap.legibilitySettings = settings;
+}
+
+- (void)_overrideStatusBar:(_UILegibilitySettings *)settings {
+    _UILegibilitySettings *homescreenSettings = nil;
+    _UILegibilitySettings *lockscreenSettings = nil;
+    if (_enabledMode == BothMode)
+        lockscreenSettings = homescreenSettings = settings;
+    else if (_enabledMode == LockscreenMode)
+        lockscreenSettings = settings;
+    else
+        homescreenSettings = settings;
+
+    [self _setStatusBarHomescreenSettings:homescreenSettings lockscreenSettings:lockscreenSettings];
+}
+
+- (void)_revertStatusBar {
+    _UILegibilitySettings *originalHomescreenSettings = nil;
+    _UILegibilitySettings *originalLockscreenSettings = nil;
+
+    if (_enabledMode == BothMode)
+        originalLockscreenSettings = originalHomescreenSettings = [self _getOriginalHomeScreenLegibilitySettings];
+    else if (_enabledMode == LockscreenMode)
+        originalLockscreenSettings = [self _getOriginalLockScreenLegibilitySettings];
+    else
+        originalHomescreenSettings = [self _getOriginalHomeScreenLegibilitySettings];
+
+    [self _setStatusBarHomescreenSettings:originalHomescreenSettings lockscreenSettings:originalLockscreenSettings];
+}
+
+- (void)_setStatusBarHomescreenSettings:(_UILegibilitySettings *)homescreenSettings
+                     lockscreenSettings:(_UILegibilitySettings *)lockscreenSettings {
     SBAppStatusBarAssertionManager *assertionManager = [%c(SBAppStatusBarAssertionManager) sharedInstance];
 
-    void (^completion)(SBAppStatusBarSettingsAssertion *) = ^(SBAppStatusBarSettingsAssertion *assertion) {
+    void (^homescreenCompletion)(SBAppStatusBarSettingsAssertion *) = nil;
+    void (^lockscreenCompletion)(SBAppStatusBarSettingsAssertion *) = nil;
+
+    if (homescreenSettings)
+         homescreenCompletion = [self _assertionCompletionWithSettings:homescreenSettings];
+
+    if (homescreenSettings == lockscreenSettings)
+        lockscreenCompletion = homescreenCompletion;
+    else if (lockscreenSettings)
+        lockscreenCompletion = [self _assertionCompletionWithSettings:lockscreenSettings];
+
+    if (_enabledMode == BothMode) {
+        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel withBlock:homescreenCompletion];
+        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel withBlock:lockscreenCompletion];
+    } else if (_enabledMode == LockscreenMode) {
+        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel withBlock:lockscreenCompletion];
+    } else {
+        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel withBlock:homescreenCompletion];
+    }
+}
+
+- (void (^)(SBAppStatusBarSettingsAssertion *))_assertionCompletionWithSettings:(_UILegibilitySettings *)settings {
+    return ^(SBAppStatusBarSettingsAssertion *assertion) {
+        assertion.sa_legibilitySettings = settings;
         [assertion modifySettingsWithBlock:nil]; // This method is hooked in Tweak.xm and will change the color from there.
     };
-
-    [assertionManager _enumerateAssertionsToLevel:0 withBlock:completion];
-    [assertionManager _enumerateAssertionsToLevel:5 withBlock:completion];
-    [assertionManager _enumerateAssertionsToLevel:6 withBlock:completion];
-    [assertionManager _enumerateAssertionsToLevel:10 withBlock:completion];
 }
 
-- (void)_updateLockscreenDate {
-    [((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController _updateActiveAppearanceForReason:nil];
-}
-
-- (void)_updateAppLabels {
-    SBIconViewMap *viewMap = ((SBIconController *)[%c(SBIconController) sharedInstance]).homescreenIconViewMap;
-    int style = _colorInfo.hasDarkTextColor ? 2 : 1;
-    viewMap.legibilitySettings = [_UILegibilitySettings sharedInstanceForStyle:style];
+- (void)_updateLockscreenLabels {
+    [getDashBoardViewController() _updateActiveAppearanceForReason:nil];
 }
 
 - (UIImage *)_blurredImage:(UIImage *)image {
