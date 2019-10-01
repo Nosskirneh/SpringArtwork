@@ -210,7 +210,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
-    _artworkIdentifier = artworkIdentifier;
 
     if (_mode == Artwork)
         _previousMode = None;
@@ -238,7 +237,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 HBLogDebug(@"image: %@", image);
 
                 if ([self _candidateSameAsPreviousArtwork:image])
-                    return;
+                    return [self _updateArtworkWithImage:_artworkImage];
 
                 if ([self _candidatePlaceholderImage:image])
                     return;
