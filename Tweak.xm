@@ -181,12 +181,9 @@
         if (!self.sa_legibilitySettings)
             return %orig;
 
-        // TODO:
-        /*
-        if ((manager.enabledMode == HomescreenMode && self.level == LockscreenAssertionLevel) ||
+        if ((manager.enabledMode == HomescreenMode && self.level == FullscreenAlertAnimationAssertionLevel) ||
             (manager.enabledMode == LockscreenMode && self.level == HomescreenAssertionLevel))
             return %orig;
-        */
 
         __block _UILegibilitySettings *_settings = self.sa_legibilitySettings;
 
