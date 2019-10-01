@@ -65,6 +65,10 @@
 %group SpringBoard
     SAManager *manager;
 
+    _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText) {
+        return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
+    }
+
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -109,31 +113,16 @@
     %end
 
 
-    /* Set the text color of the app icon labels according
-       to the colorInfo in our implementation */
-    %hook SBIconLegibilityLabelView
+    %hook SBDashBoardLegibilityProvider
 
-    - (void)updateIconLabelWithSettings:(id)settings
-                        imageParameters:(SBMutableIconLabelImageParameters *)parameters {
-        if (parameters && manager.colorInfo)
-            parameters.textColor = manager.colorInfo.textColor;
-
-        %orig;
-    }
-
-    %end
-
-
-    /* Set the lockscreen date and time labels according
-       to the colorInfo in our implementation */
-    %hook SBFLockScreenDateView
-
-    - (void)setLegibilitySettings:(_UILegibilitySettings *)settings {
+    - (_UILegibilitySettings *)currentLegibilitySettings {
+        %log;
         SAColorInfo *info = manager.colorInfo;
         if (info)
-            settings.primaryColor = info.textColor;
-        %orig;
-    }
+            return legibilitySettingsForDarkText(info.hasDarkTextColor);
+
+        return %orig;
+    }    
 
     %end
 
@@ -176,8 +165,7 @@
         if (!info)
             return %orig;
 
-        int style = info.hasDarkTextColor ? 2 : 1;
-        __block _UILegibilitySettings *_settings = [_UILegibilitySettings sharedInstanceForStyle:style];
+        __block _UILegibilitySettings *_settings = legibilitySettingsForDarkText(info.hasDarkTextColor);
 
         void(^newCompletion)(SBMutableAppStatusBarSettings *) = ^(SBMutableAppStatusBarSettings *settings) {
             if (completion)

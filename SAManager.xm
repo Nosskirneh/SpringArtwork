@@ -314,18 +314,7 @@
 }
 
 - (void)_updateLockscreenDate {
-    SBFLockScreenDateView *dateView = ((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController.dateViewController.view;
-    UIColor *textColor = self.colorInfo.textColor;
-    dateView.legibilitySettings.primaryColor = textColor;
-
-    SBUILegibilityLabel *label = [dateView _timeLabel];
-    [label _updateLegibilityView];
-    [label _updateLabelForLegibilitySettings];
-
-    SBFLockScreenDateSubtitleDateView *subtitleView = MSHookIvar<SBFLockScreenDateSubtitleDateView *>(dateView, "_dateSubtitleView");
-    label = MSHookIvar<SBUILegibilityLabel *>(subtitleView, "_label");
-    [label _updateLegibilityView];
-    [label _updateLabelForLegibilitySettings];
+    [((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController _updateActiveAppearanceForReason:nil];
 }
 
 - (void)_updateAppLabels {
