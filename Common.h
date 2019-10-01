@@ -4,6 +4,8 @@
 
 extern NSString *const kCanvasURLMessage;
 extern NSString *const kCanvasURL;
+extern NSString *const kCanvasAsset;
+extern NSString *const kCanvasThumbnail;
 extern NSString *const kIsDirty;
 extern NSString *const kArtworkImage;
 extern NSString *const kBlurredImage;

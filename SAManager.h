@@ -32,7 +32,7 @@ typedef enum EnabledMode {
 } EnabledMode;
 
 @interface SAManager : NSObject<SAViewControllerManager>
-@property (nonatomic, retain, readonly) NSString *canvasURL;
+@property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;

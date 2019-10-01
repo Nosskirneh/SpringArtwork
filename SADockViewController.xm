@@ -40,9 +40,15 @@ extern SAManager *manager;
     }];
 }
 
-- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork
+                            blurredImage:(UIImage *)blurredImage
+                                   color:(UIColor *)color
+                         changeOfContent:(BOOL)changeOfContent {
     _skipDock = changeOfContent;
-    [super _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
+    [super _noCheck_ArtworkUpdatedWithImage:artwork
+                               blurredImage:blurredImage
+                                      color:color
+                            changeOfContent:changeOfContent];
 }
 
 - (BOOL)_showArtworkViews {
@@ -66,10 +72,13 @@ extern SAManager *manager;
                                                       object:player.currentItem];
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty
+                      thumbnail:(UIImage *)thumbnail
+                changeOfContent:(BOOL)changeOfContent {
     _skipDock = changeOfContent;
 
-    [super _canvasUpdatedWithURLString:url isDirty:isDirty changeOfContent:changeOfContent];
+    [super _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changeOfContent:changeOfContent];
 }
 
 - (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {

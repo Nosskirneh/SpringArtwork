@@ -2,14 +2,8 @@
 #import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
-#import <AVFoundation/AVAsset.h>
-#import <AVFoundation/AVAssetImageGenerator.h>
 
 #define ANIMATION_DURATION 0.75
-
-@interface NSValue (Missing)
-+ (NSValue *)valueWithCMTime:(CMTime)time;
-@end
 
 extern SAManager *manager;
 
@@ -69,9 +63,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                                      name:kUpdateArtwork
                                                    object:nil];
         
-        NSString *url = manager.canvasURL;
-        if (url)
-            [self _canvasUpdatedWithURLString:url isDirty:YES];
+        AVAsset *asset = manager.canvasAsset;
+        if (asset)
+            [self _canvasUpdatedWithAsset:asset isDirty:YES];
 
         [manager addNewViewController:self];
 
@@ -106,18 +100,18 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     NSDictionary *userInfo = notification.userInfo;
     if (userInfo) {
         BOOL changeOfContent = userInfo[kChangeOfContent] && [userInfo[kChangeOfContent] boolValue];
-        if (userInfo[kCanvasURL]) {
+        if (userInfo[kCanvasAsset]) {
             if (changeOfContent)
                 [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:changeOfContent];
-            [self _canvasUpdatedWithURLString:userInfo[kCanvasURL] isDirty:userInfo[kIsDirty] != nil];
+            [self _canvasUpdatedWithAsset:userInfo[kCanvasAsset] isDirty:userInfo[kIsDirty] != nil thumbnail:userInfo[kCanvasThumbnail]];
         } else if (userInfo[kArtworkImage]) {
             if (changeOfContent)
-                [self _canvasUpdatedWithURLString:nil isDirty:NO changeOfContent:changeOfContent];
+                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changeOfContent:changeOfContent];
             [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor] changeOfContent:changeOfContent];
         }
     } else {
         [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:NO];
-        [self _canvasUpdatedWithURLString:nil isDirty:NO];
+        [self _canvasUpdatedWithAsset:nil isDirty:NO];
     }
 }
 
@@ -194,16 +188,26 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return YES;
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty {
-    [self _canvasUpdatedWithURLString:url isDirty:isDirty changeOfContent:NO];
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty {
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changeOfContent:NO];
 }
 
-- (void)_canvasUpdatedWithURLString:(NSString *)url isDirty:(BOOL)isDirty changeOfContent:(BOOL)changeOfContent {
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty
+                      thumbnail:(UIImage *)thumbnail {
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changeOfContent:NO];
+}
+
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty
+                      thumbnail:(UIImage *)thumbnail
+                changeOfContent:(BOOL)changeOfContent {
     [self _preparePlayerForChange:_canvasLayer.player];
 
-    if (url) {
+    if (asset) {
         [self _fadeCanvasLayerIn];
-        [self _changeCanvasURL:[NSURL URLWithString:url] isDirty:isDirty];
+        [self _changeCanvasAsset:asset isDirty:isDirty thumbnail:thumbnail];
     } else {
         [self _fadeCanvasLayerOut];
     }
@@ -213,19 +217,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return;
 }
 
-- (void)_changeCanvasURL:(NSURL *)url isDirty:(BOOL)isDirty {
-    AVAsset *asset = [AVAsset assetWithURL:url];
-
+- (void)_changeCanvasAsset:(AVAsset *)asset isDirty:(BOOL)isDirty thumbnail:(UIImage *)thumbnail {
     if (isDirty) {
         _canvasContainerImageView.image = nil;
         [self _replaceItemWithAsset:asset autoPlay:NO];
     } else {
         /* Create a thumbnail and add it as placeholder to the
            _canvasContainerImageView to prevent flash to background wallpaper */
-        [self _thumbnailFromAsset:asset withCompletion:^(UIImage *image) {
-            _canvasContainerImageView.image = image;
-            [self _replaceItemWithAsset:asset autoPlay:YES];
-        }];
+        _canvasContainerImageView.image = thumbnail;
+        [self _replaceItemWithAsset:asset autoPlay:YES];
     }
 }
 
@@ -240,27 +240,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
     [player replaceCurrentItemWithPlayerItem:item];
-}
-
-- (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0ul), ^{
-        AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-
-        [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
-                                             completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
-            __block UIImage *thumb;
-            if (result == AVAssetImageGeneratorSucceeded) {
-                thumb = [UIImage imageWithCGImage:image];
-            } else {
-                HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
-                completion(nil);
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                 completion(thumb);
-            });
-        }];
-    });
-
 }
 
 - (BOOL)_fadeCanvasLayerIn {

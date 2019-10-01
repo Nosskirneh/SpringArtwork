@@ -1,5 +1,7 @@
 NSString *const kCanvasURLMessage = @"se.nosskirneh.springartwork/canvasUpdated";
 NSString *const kCanvasURL = @"canvasURL";
+NSString *const kCanvasAsset = @"canvasAsset";
+NSString *const kCanvasThumbnail = @"canvasThumbnail";
 NSString *const kIsDirty = @"isDirty";
 NSString *const kArtworkImage = @"artworkImage";
 NSString *const kBlurredImage = @"blurredImage";

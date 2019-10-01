@@ -9,10 +9,17 @@
 #import <MediaRemote/MediaRemote.h>
 #import "Artwork.h"
 #import "PlaceholderImages.h"
+#import <AVFoundation/AVAsset.h>
+#import <AVFoundation/AVAssetImageGenerator.h>
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
+
+
+@interface NSValue (Missing)
++ (NSValue *)valueWithCMTime:(CMTime)time;
+@end
 
 extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
@@ -25,6 +32,8 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSString *_artworkIdentifier;
     BOOL _insideApp;
     BOOL _screenTurnedOn;
+
+    NSString *_canvasURL;
     // isDirty marks that there has been a change of canvasURL,
     // but we're not updating it because once the event occurred
     // the device was either at sleep or some app was in the foreground.
@@ -146,12 +155,23 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSMutableDictionary *userInfo = nil;
     if (_canvasURL) {
         userInfo = [NSMutableDictionary new];
-        userInfo[kCanvasURL] = _canvasURL;
+        userInfo[kCanvasAsset] = _canvasAsset;
         userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
 
         if (_isDirty)
             userInfo[kIsDirty] = @YES;
+        else {
+            [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
+                userInfo[kCanvasThumbnail] = image;
+                [self _sendUpdateArtworkNotification:userInfo];
+            }];
+            return;
+        }
     }
+    [self _sendUpdateArtworkNotification:userInfo];
+}
+
+- (void)_sendUpdateArtworkNotification:(NSDictionary *)userInfo {
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
                                                         object:nil
                                                       userInfo:userInfo];
@@ -178,9 +198,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
     } else {
         _canvasURL = nil;
+        _canvasAsset = nil;
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                            object:nil];
+        [self _sendUpdateArtworkNotification:nil];
 
         if ([bundleID isEqualToString:kDeezerBundleID])
             _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
@@ -249,6 +269,26 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     ];
 }
 
+- (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0ul), ^{
+        AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+
+        [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
+                                             completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+            __block UIImage *thumb;
+            if (result == AVAssetImageGeneratorSucceeded) {
+                thumb = [UIImage imageWithCGImage:image];
+            } else {
+                HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
+                completion(nil);
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                 completion(thumb);
+            });
+        }];
+    });
+}
+
 - (BOOL)_candidateSameAsPreviousArtwork:(UIImage *)candidate {
     return [UIImagePNGRepresentation(_artworkImage) isEqualToData:UIImagePNGRepresentation(candidate)];
 }
@@ -283,18 +323,14 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 userInfo[kColor] = _colorInfo.backgroundColor;
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                                    object:nil
-                                                                  userInfo:userInfo];
+                [self _sendUpdateArtworkNotification:userInfo];
                 [self _overrideLabels];
             });
         });
         return;
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                        object:nil
-                                                      userInfo:userInfo];
+    [self _sendUpdateArtworkNotification:userInfo];
 }
 
 - (void)_overrideLabels {
@@ -410,11 +446,13 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
         _canvasURL = nil;
+        _canvasAsset = nil;
         return;
     }
 
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
+        _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
         _isDirty = _insideApp || !_screenTurnedOn;
 
         if (_mode == Canvas)
