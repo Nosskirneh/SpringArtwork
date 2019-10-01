@@ -7,4 +7,3 @@ NSString *const kArtworkImage = @"artworkImage";
 NSString *const kBlurredImage = @"blurredImage";
 NSString *const kColor = @"color";
 NSString *const kChangeOfContent = @"changeOfContent";
-NSString *const kUpdateArtwork = @"se.nosskirneh.springartwork/updateArtwork";

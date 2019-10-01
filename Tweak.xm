@@ -90,9 +90,9 @@
 
         BOOL homescreen = shared || variant == 1;
         if (homescreen)
-            self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView];
+            self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager];
         else
-            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView];
+            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager];
 
         return wallpaperView;
     }
@@ -246,7 +246,7 @@
 - (void)_createFadeOutWallpaperEffectView {
     %orig;
 
-    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView];
+    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView manager:manager];
 }
 %end
 
@@ -254,7 +254,7 @@
 - (void)_createPanelWallpaperEffectViewIfNeeded {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
 }
 %end
 
@@ -262,7 +262,7 @@
 - (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
 }
 %end
 %end

@@ -34,10 +34,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     BOOL _screenTurnedOn;
 
     NSString *_canvasURL;
-    // isDirty marks that there has been a change of canvasURL,
-    // but we're not updating it because once the event occurred
-    // the device was either at sleep or some app was in the foreground.
-    BOOL _isDirty;
 
     Mode _mode;
     Mode _previousMode;
@@ -128,12 +124,13 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
             uint64_t state;
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
+            [self _updateIsDirty];
 
             // If the user manually paused the video, do not resume on screen turn on event
             if (![self isCanvasActive] || (!_playing && _manuallyPaused))
                 return;
 
-            if (!_insideApp) //|| [self  ])
+            if (!_insideApp)
                 [self _setCanvasPlayPauseState:_screenTurnedOn];
        });
 
@@ -152,29 +149,22 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_sendCanvasUpdatedNotification {
-    NSMutableDictionary *userInfo = nil;
-    if (_canvasURL) {
-        userInfo = [NSMutableDictionary new];
-        userInfo[kCanvasAsset] = _canvasAsset;
-        userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
+    if (_canvasURL && ![self isDirty]) {
+        [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
+            _canvasThumbnail = image;
+            [self _sendUpdateArtworkNotification:NO];
 
-        if (_isDirty)
-            userInfo[kIsDirty] = @YES;
-        else {
-            [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
-                userInfo[kCanvasThumbnail] = image;
-                [self _sendUpdateArtworkNotification:userInfo];
-            }];
-            return;
-        }
+            _colorInfo = [SAImageHelper colorsForImage:image];
+            [self _overrideLabels];
+        }];
+        return;
     }
-    [self _sendUpdateArtworkNotification:userInfo];
+    [self _sendUpdateArtworkNotification:YES];
 }
 
-- (void)_sendUpdateArtworkNotification:(NSDictionary *)userInfo {
-    [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateArtwork
-                                                        object:nil
-                                                      userInfo:userInfo];
+- (void)_sendUpdateArtworkNotification:(BOOL)content {
+    for (SAViewController *vc in _viewControllers)
+        [vc artworkUpdated:content ? self : nil];
 }
 
 - (void)_currentAppChanged:(NSNotification *)notification {
@@ -182,6 +172,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
                                         app.internalProcessState : app.processState;
     _insideApp = processState.foreground && processState.visibility != ForegroundObscured;
+    [self _updateIsDirty];
 
     // If the user manually paused the video, do not resume when app enters background
     if (![self isCanvasActive] || (!_playing && _manuallyPaused))
@@ -200,7 +191,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         _canvasURL = nil;
         _canvasAsset = nil;
 
-        [self _sendUpdateArtworkNotification:nil];
+        [self _sendUpdateArtworkNotification:NO];
 
         if ([bundleID isEqualToString:kDeezerBundleID])
             _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
@@ -303,34 +294,33 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     return NO;
 }
 
+- (BOOL)changedContent {
+    return _previousMode != None && _mode != _previousMode;
+}
+
 - (void)_updateArtworkWithImage:(UIImage *)image {
     if (_canvasURL) // Need to check again, since retrieving the image was done async
         return;
     _artworkImage = image;
 
-    NSMutableDictionary *userInfo = nil;
     if (image) {
-        userInfo = [NSMutableDictionary new];
-        userInfo[kArtworkImage] = image;
-        userInfo[kChangeOfContent] = @(_previousMode != None && _mode != _previousMode);
-
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             _colorInfo = [SAImageHelper colorsForImage:image];
 
             if (NO/*blurMode*/) // TODO: Add settings for this
-                userInfo[kBlurredImage] = [self _blurredImage:image];
+                _blurredImage = [self _blurredImage:image];
             else if (YES/*colorMode*/)
-                userInfo[kColor] = _colorInfo.backgroundColor;
+                // userInfo[kColor] = _colorInfo.backgroundColor;
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
-                [self _sendUpdateArtworkNotification:userInfo];
+                [self _sendUpdateArtworkNotification:YES];
                 [self _overrideLabels];
             });
         });
         return;
     }
 
-    [self _sendUpdateArtworkNotification:userInfo];
+    [self _sendUpdateArtworkNotification:NO];
 }
 
 - (void)_overrideLabels {
@@ -442,6 +432,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     return blurredAndDarkenedImage;
 }
 
+- (void)_updateIsDirty {
+    _isDirty = _insideApp || !_screenTurnedOn;
+}
+
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
@@ -453,7 +447,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
-        _isDirty = _insideApp || !_screenTurnedOn;
+        [self _updateIsDirty];
 
         if (_mode == Canvas)
             _previousMode = None;

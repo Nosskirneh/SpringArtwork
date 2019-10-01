@@ -5,8 +5,6 @@
 
 #define ANIMATION_DURATION 0.75
 
-extern SAManager *manager;
-
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
     NSError *error = nil;
@@ -26,7 +24,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 #pragma mark Public
 
-- (id)initWithTargetView:(UIView *)targetView {
+- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
     if (self == [super init]) {
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
@@ -57,11 +55,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
         _canvasLayer.frame = self.view.frame;
         [_canvasContainerImageView.layer addSublayer:_canvasLayer];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_artworkUpdated:)
-                                                     name:kUpdateArtwork
-                                                   object:nil];
         
         AVAsset *asset = manager.canvasAsset;
         if (asset)
@@ -96,46 +89,45 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 #pragma mark Private
 
-- (void)_artworkUpdated:(NSNotification *)notification {
-    NSDictionary *userInfo = notification.userInfo;
-    if (userInfo) {
-        BOOL changeOfContent = userInfo[kChangeOfContent] && [userInfo[kChangeOfContent] boolValue];
-        if (userInfo[kCanvasAsset]) {
-            if (changeOfContent)
-                [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:changeOfContent];
-            [self _canvasUpdatedWithAsset:userInfo[kCanvasAsset] isDirty:userInfo[kIsDirty] != nil thumbnail:userInfo[kCanvasThumbnail]];
-        } else if (userInfo[kArtworkImage]) {
-            if (changeOfContent)
-                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changeOfContent:changeOfContent];
-            [self _artworkUpdatedWithImage:userInfo[kArtworkImage] blurredImage:userInfo[kBlurredImage] color:userInfo[kColor] changeOfContent:changeOfContent];
+- (void)artworkUpdated:(SAManager *)manager {
+    if (manager) {
+        BOOL changedContent = [manager changedContent];
+        if (manager.canvasAsset) {
+            if (changedContent)
+                [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
+            [self _canvasUpdatedWithAsset:manager.canvasAsset isDirty:manager.isDirty thumbnail:manager.canvasThumbnail];
+        } else if (manager.artworkImage) {
+            if (changedContent)
+                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
+            [self _artworkUpdatedWithImage:manager.artworkImage blurredImage:manager.blurredImage color:manager.colorInfo.backgroundColor changedContent:changedContent];
         }
     } else {
-        [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changeOfContent:NO];
+        [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:NO];
         [self _canvasUpdatedWithAsset:nil isDirty:NO];
     }
 }
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
-    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:NO];
+    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:NO];
 }
 
 /* Check if this call came before the previous call.
    In that case, we're still animating and will place this operation in the queue. */
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changedContent:(BOOL)changedContent {
     if (_animating) {
         __weak typeof(self) weakSelf = self;
         _completion = ^() {
-            [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
+            [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:changedContent];
         };
     } else {
-        [self _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changeOfContent:changeOfContent];
+        [self _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:changedContent];
     }
 }
 
-- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changeOfContent:(BOOL)changeOfContent {
+- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changedContent:(BOOL)changedContent {
     if (!artwork) {
         [self _hideArtworkViews];
-    } else if (changeOfContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
+    } else if (changedContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
         [self _setArtwork:artwork blurredImage:blurredImage color:color];
         [self _showArtworkViews];
     } else {
@@ -190,19 +182,19 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changeOfContent:NO];
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changedContent:NO];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changeOfContent:NO];
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:NO];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
-                changeOfContent:(BOOL)changeOfContent {
+                  changedContent:(BOOL)changedContent {
     [self _preparePlayerForChange:_canvasLayer.player];
 
     if (asset) {

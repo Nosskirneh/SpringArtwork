@@ -35,9 +35,17 @@ typedef enum EnabledMode {
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
+@property (nonatomic, retain, readonly) UIImage *blurredImage;
+@property (nonatomic, retain, readonly) UIImage *canvasThumbnail;
+
+/* isDirty marks that there has been a change of canvasURL,
+   but we're not updating it because once the event occurred
+   the device was either at sleep or some app was in the foreground. */
+@property (nonatomic, assign, readonly) BOOL isDirty;
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;
 - (BOOL)isCanvasActive;
+- (BOOL)changedContent;
 @end

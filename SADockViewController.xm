@@ -5,14 +5,18 @@
 extern SAManager *manager;
 
 // Only the homescreen controller is allowed to change the dock,
-// otherwise the two will do it simultaneously which obviously causes issues
+// otherwise the two will do it simultaneously which obviously causes issues.
+// This class is also responsible for subscribing to the repeat event.
 @implementation SADockViewController {
     BOOL _skipDock;
+    SAManager *_manager;
 }
 
-- (id)initWithTargetView:(UIView *)targetView {
-    if (self == [super initWithTargetView:targetView])
+- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
+    if (self == [super initWithTargetView:targetView manager:manager]) {
+        _manager = manager;
         [manager setDockViewController:self];
+    }
     return self;
 }
 
@@ -43,12 +47,12 @@ extern SAManager *manager;
 - (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork
                             blurredImage:(UIImage *)blurredImage
                                    color:(UIColor *)color
-                         changeOfContent:(BOOL)changeOfContent {
-    _skipDock = changeOfContent;
+                          changedContent:(BOOL)changedContent {
+    _skipDock = changedContent;
     [super _noCheck_ArtworkUpdatedWithImage:artwork
                                blurredImage:blurredImage
                                       color:color
-                            changeOfContent:changeOfContent];
+                            changedContent:changedContent];
 }
 
 - (BOOL)_showArtworkViews {
@@ -67,7 +71,7 @@ extern SAManager *manager;
 
 - (void)_preparePlayerForChange:(AVPlayer *)player {
     if (player.currentItem)
-        [[NSNotificationCenter defaultCenter] removeObserver:manager
+        [[NSNotificationCenter defaultCenter] removeObserver:_manager
                                                         name:AVPlayerItemDidPlayToEndTimeNotification
                                                       object:player.currentItem];
 }
@@ -75,16 +79,16 @@ extern SAManager *manager;
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
-                changeOfContent:(BOOL)changeOfContent {
-    _skipDock = changeOfContent;
+                changedContent:(BOOL)changedContent {
+    _skipDock = changedContent;
 
-    [super _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changeOfContent:changeOfContent];
+    [super _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:changedContent];
 }
 
 - (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
     [super _replaceItemWithItem:item player:player];
 
-    [[NSNotificationCenter defaultCenter] addObserver:manager
+    [[NSNotificationCenter defaultCenter] addObserver:_manager
                                              selector:@selector(_videoEnded)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:item];

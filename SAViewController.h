@@ -4,10 +4,11 @@
 #import <AVFoundation/AVAudioSession.h>
 
 @interface SAViewController : UIViewController
-- (id)initWithTargetView:(UIView *)view;
+- (id)initWithTargetView:(UIView *)view manager:(id)manager;
 - (void)replayVideo;
 - (void)togglePlayPauseWithState:(BOOL)playState;
 - (void)togglePlayPause;
+- (void)artworkUpdated:(id)manager;
 @end
 
 
