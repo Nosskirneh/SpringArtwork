@@ -124,7 +124,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
             uint64_t state;
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
-            [self _updateIsDirty];
 
             // If the user manually paused the video, do not resume on screen turn on event
             if (![self isCanvasActive] || (!_playing && _manuallyPaused))
@@ -138,9 +137,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_setCanvasPlayPauseState:(BOOL)newState {
-    if (_isDirty)
-        _isDirty = NO;
-
     for (SAViewController *vc in _viewControllers)
         [vc togglePlayPauseWithState:newState];
 
@@ -152,7 +148,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (_canvasURL && ![self isDirty]) {
         [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
             _canvasThumbnail = image;
-            [self _sendUpdateArtworkNotification:NO];
+            [self _sendUpdateArtworkNotification:YES];
 
             _colorInfo = [SAImageHelper colorsForImage:image];
             [self _overrideLabels];
@@ -172,7 +168,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
                                         app.internalProcessState : app.processState;
     _insideApp = processState.foreground && processState.visibility != ForegroundObscured;
-    [self _updateIsDirty];
 
     // If the user manually paused the video, do not resume when app enters background
     if (![self isCanvasActive] || (!_playing && _manuallyPaused))
@@ -309,7 +304,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
             if (NO/*blurMode*/) // TODO: Add settings for this
                 _blurredImage = [self _blurredImage:image];
-            else if (YES/*colorMode*/)
+            // else if (YES/*colorMode*/)
                 // userInfo[kColor] = _colorInfo.backgroundColor;
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -432,8 +427,8 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     return blurredAndDarkenedImage;
 }
 
-- (void)_updateIsDirty {
-    _isDirty = _insideApp || !_screenTurnedOn;
+- (BOOL)isDirty {
+    return !_screenTurnedOn || [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
@@ -447,7 +442,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
-        [self _updateIsDirty];
 
         if (_mode == Canvas)
             _previousMode = None;

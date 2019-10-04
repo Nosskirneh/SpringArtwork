@@ -120,8 +120,6 @@
     %hook SBDashBoardLegibilityProvider
 
     - (_UILegibilitySettings *)currentLegibilitySettings {
-        %log;
-
         if (manager.enabledMode == HomescreenMode)
             return %orig;
 

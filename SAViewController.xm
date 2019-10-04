@@ -87,15 +87,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [player pause];
 }
 
-#pragma mark Private
-
 - (void)artworkUpdated:(SAManager *)manager {
     if (manager) {
         BOOL changedContent = [manager changedContent];
         if (manager.canvasAsset) {
             if (changedContent)
                 [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
-            [self _canvasUpdatedWithAsset:manager.canvasAsset isDirty:manager.isDirty thumbnail:manager.canvasThumbnail];
+            [self _canvasUpdatedWithAsset:manager.canvasAsset isDirty:[manager isDirty] thumbnail:manager.canvasThumbnail];
         } else if (manager.artworkImage) {
             if (changedContent)
                 [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
@@ -106,6 +104,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [self _canvasUpdatedWithAsset:nil isDirty:NO];
     }
 }
+
+#pragma mark Private
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
     [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:NO];
@@ -217,7 +217,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         /* Create a thumbnail and add it as placeholder to the
            _canvasContainerImageView to prevent flash to background wallpaper */
         _canvasContainerImageView.image = thumbnail;
-        [self _replaceItemWithAsset:asset autoPlay:YES];
+
+        /* For some reason this small delay is needed to make the view update before replacing the AV item */
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
+            [self _replaceItemWithAsset:asset autoPlay:YES];
+        });
     }
 }
 
