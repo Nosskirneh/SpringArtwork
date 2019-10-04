@@ -242,7 +242,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
                 HBLogDebug(@"image: %@", image);
 
-                if ([self _candidateSameAsPreviousArtwork:image])
+                if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent])
                     return [self _updateArtworkWithImage:_artworkImage];
 
                 if ([self _candidatePlaceholderImage:image])
