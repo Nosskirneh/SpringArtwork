@@ -194,7 +194,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
         [self _sendUpdateArtworkNotification:NO];
 
-        if ([bundleID isEqualToString:kDeezerBundleID])
+        if (!bundleID)
+            [self _revertLabels];
+        else if ([bundleID isEqualToString:kDeezerBundleID])
             _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
         else
             _placeholderImage = nil;
