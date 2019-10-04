@@ -150,8 +150,14 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
             _canvasThumbnail = image;
             [self _sendUpdateArtworkNotification:YES];
 
-            _colorInfo = [SAImageHelper colorsForImage:image];
-            [self _overrideLabels];
+            // Heavy work such as analyzing images should be done in the background
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                _colorInfo = [SAImageHelper colorsForImage:image];
+
+                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                    [self _overrideLabels];
+                });
+            });
         }];
         return;
     }
