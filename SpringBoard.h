@@ -118,7 +118,15 @@ typedef enum {
 }
 @end
 
-@interface SBRootFolderView : UIView
+@interface SBIconListPageControl : NSObject
+- (void)setLegibilitySettings:(_UILegibilitySettings *)settings;
+@end
+
+@interface SBFolderView : UIView
+@property (nonatomic, retain) SBIconListPageControl *pageControl;
+@end
+
+@interface SBRootFolderView : SBFolderView
 - (SBDockView *)dockView;
 @end
 
@@ -144,4 +152,3 @@ typedef enum {
 - (SBRootFolderController *)_rootFolderController;
 - (UIView *)contentView;
 @end
-

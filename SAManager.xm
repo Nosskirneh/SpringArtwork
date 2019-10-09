@@ -426,8 +426,11 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings {
-    SBIconViewMap *viewMap = ((SBIconController *)[%c(SBIconController) sharedInstance]).homescreenIconViewMap;
+    SBIconController *iconController = ((SBIconController *)[%c(SBIconController) sharedInstance]);
+    SBIconViewMap *viewMap = iconController.homescreenIconViewMap;
     viewMap.legibilitySettings = settings;
+
+    [[iconController _rootFolderController].contentView.pageControl setLegibilitySettings:settings];
 }
 
 - (void)_overrideStatusBar:(_UILegibilitySettings *)settings {
