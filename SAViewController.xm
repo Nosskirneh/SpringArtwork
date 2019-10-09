@@ -93,11 +93,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         if (manager.canvasAsset) {
             if (changedContent)
                 [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
-            [self _canvasUpdatedWithAsset:manager.canvasAsset isDirty:[manager isDirty] thumbnail:manager.canvasThumbnail];
+            [self _canvasUpdatedWithAsset:manager.canvasAsset
+                                  isDirty:[manager isDirty]
+                                thumbnail:manager.canvasThumbnail];
         } else if (manager.artworkImage) {
             if (changedContent)
                 [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
-            [self _artworkUpdatedWithImage:manager.artworkImage blurredImage:manager.blurredImage color:manager.colorInfo.backgroundColor changedContent:changedContent];
+            [self _artworkUpdatedWithImage:manager.artworkImage
+                              blurredImage:manager.blurredImage
+                                     color:manager.useBackgroundColor ? manager.colorInfo.backgroundColor : nil
+                            changedContent:changedContent];
         }
     } else {
         [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:NO];

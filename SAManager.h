@@ -34,6 +34,7 @@ typedef enum EnabledMode {
 @interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
+@property (nonatomic, assign, readonly) BOOL useBackgroundColor;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 @property (nonatomic, retain, readonly) UIImage *blurredImage;
 @property (nonatomic, retain, readonly) UIImage *canvasThumbnail;

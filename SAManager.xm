@@ -24,6 +24,13 @@
 extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
+
+typedef enum ArtworkBackgroundMode {
+    BlackBars,
+    Blurred,
+    Color
+} ArtworkBackgroundMode;
+
 @implementation SAManager {
     int _notifyTokenForDidChangeDisplayStatus;
     BOOL _manuallyPaused;
@@ -37,6 +44,8 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
     Mode _mode;
     Mode _previousMode;
+
+    ArtworkBackgroundMode _artworkBackgroundMode;
 
     NSMutableArray *_viewControllers;
     SADockViewController *_dockViewController;
@@ -67,7 +76,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
     _viewControllers = [NSMutableArray new];
 
+    // TODO:
+    // Read these from preferences
     _enabledMode = BothMode;
+    _artworkBackgroundMode = Color;
 }
 
 - (BOOL)isCanvasActive {
@@ -201,6 +213,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         else
             _placeholderImage = nil;
     }
+    _bundleID = bundleID;
 }
 
 - (void)_nowPlayingChanged:(NSNotification *)notification {
@@ -299,6 +312,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 - (BOOL)changedContent {
     return _previousMode != None && _mode != _previousMode;
+}
+
+- (BOOL)useBackgroundColor {
+    return !_canvasURL && _artworkBackgroundMode == Color;
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
