@@ -39,6 +39,7 @@ typedef enum ArtworkBackgroundMode {
 
     NSString *_trackIdentifier;
     NSString *_artworkIdentifier;
+    NSString *_canvasArtworkIdentifier;
 
     BOOL _insideApp;
     BOOL _screenTurnedOn;
@@ -259,9 +260,6 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (void)_nowPlayingChanged:(NSNotification *)notification {
-    if (_canvasURL)
-        return;
-
     NSDictionary *userInfo = notification.userInfo;
 
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
@@ -277,6 +275,12 @@ typedef enum ArtworkBackgroundMode {
         return;
 
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
+    if (_canvasURL) {
+        _canvasArtworkIdentifier = artworkIdentifier;
+        return;
+    } else if ([_canvasArtworkIdentifier isEqualToString:artworkIdentifier])
+        return;
+
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
 
