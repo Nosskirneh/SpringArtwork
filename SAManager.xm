@@ -499,6 +499,9 @@ typedef enum ArtworkBackgroundMode {
         _canvasURL = nil;
         _canvasAsset = nil;
         return;
+    } else {
+        _trackIdentifier = nil;
+        _artworkIdentifier = nil;
     }
 
     if (![urlString isEqualToString:_canvasURL]) {
