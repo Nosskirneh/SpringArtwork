@@ -36,7 +36,10 @@ typedef enum ArtworkBackgroundMode {
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
+
+    NSString *_trackIdentifier;
     NSString *_artworkIdentifier;
+
     BOOL _insideApp;
     BOOL _screenTurnedOn;
 
@@ -268,51 +271,64 @@ typedef enum ArtworkBackgroundMode {
     MRContentItem *contentItem = contentItems[0];
     NSDictionary *info = [contentItem dictionaryRepresentation];
 
-    NSString *identifier = info[@"identifier"];
+    NSString *trackIdentifier = info[@"identifier"];
     NSDictionary *metadata = info[@"metadata"];
-    if (!identifier || !metadata)
+    if (!trackIdentifier || !metadata)
         return;
 
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
 
-    if (_mode == Artwork)
-        _previousMode = None;
-    else {
-        if (_mode == Canvas)
-            _previousMode = Canvas;
-        _mode = Artwork;
-    }
-
-    HBLogDebug(@"identifier: %@, artworkIdentifier: %@", identifier, artworkIdentifier);
+    HBLogDebug(@"trackIdentifier: %@, artworkIdentifier: %@", trackIdentifier, artworkIdentifier);
 
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
         onCompletion:^void(MPCMediaRemoteController *controller) {
             float width = [UIScreen mainScreen].nativeBounds.size.width;
             MPCFuture *request;
             if ([controller respondsToSelector:@selector(contentItemArtworkForContentItemIdentifier:artworkIdentifier:size:)])
-                request = [controller contentItemArtworkForContentItemIdentifier:identifier
+                request = [controller contentItemArtworkForContentItemIdentifier:trackIdentifier
                                                                artworkIdentifier:artworkIdentifier
                                                                             size:CGSizeMake(width, width)];
             else
-                request = [controller contentItemArtworkForIdentifier:identifier
+                request = [controller contentItemArtworkForIdentifier:trackIdentifier
                                                                  size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
                 HBLogDebug(@"image: %@", image);
 
-                if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent])
+                if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
+                    [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
                     return [self _updateArtworkWithImage:_artworkImage];
+                }
 
                 if ([self _candidatePlaceholderImage:image])
                     return;
+
+                [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
+                _trackIdentifier = trackIdentifier;
 
                 [self _updateArtworkWithImage:image];
                 _artworkIdentifier = artworkIdentifier;
             }];
         }
     ];
+}
+
+- (void)_updateModeToArtworkWithTrackIdentifier:(NSString *)trackIdentifier {
+    HBLogDebug(@"t1: %@, t2: %@", _trackIdentifier, trackIdentifier);
+    if (_mode == Artwork && ![_trackIdentifier isEqualToString:trackIdentifier]) {
+        HBLogDebug(@"setting previous to none");
+        _previousMode = None;
+    }
+    else {
+        HBLogDebug(@"setting mode to artwork");
+        if (_mode == Canvas) {
+            HBLogDebug(@"setting previous to canvas");
+            _previousMode = Canvas;
+        }
+        _mode = Artwork;
+    }
 }
 
 - (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
@@ -505,14 +521,20 @@ typedef enum ArtworkBackgroundMode {
     }
 
     if (![urlString isEqualToString:_canvasURL]) {
+        HBLogDebug(@"updating with URL: %@", urlString);
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
 
-        if (_mode == Canvas)
+        if (_mode == Canvas) {
+            HBLogDebug(@"setting previous to none");
             _previousMode = None;
+        }
         else {
-            if (_mode == Artwork)
+            if (_mode == Artwork) {
+                HBLogDebug(@"setting previous to artwork");
                 _previousMode = Artwork;
+            }
+            HBLogDebug(@"setting mode to canvas");
             _mode = Canvas;
         }
 
