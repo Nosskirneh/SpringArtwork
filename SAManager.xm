@@ -166,11 +166,11 @@ typedef enum ArtworkBackgroundMode {
     _playing = _canvasURL != nil;
 }
 
-- (void)_sendCanvasUpdatedNotification {
+- (void)_sendCanvasUpdatedEvent {
     if (_canvasURL && ![self isDirty]) {
         [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
             _canvasThumbnail = image;
-            [self _sendUpdateArtworkNotification:YES];
+            [self _sendUpdateArtworkEvent:YES];
 
             // Heavy work such as analyzing images should be done in the background
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -183,10 +183,10 @@ typedef enum ArtworkBackgroundMode {
         }];
         return;
     }
-    [self _sendUpdateArtworkNotification:YES];
+    [self _sendUpdateArtworkEvent:YES];
 }
 
-- (void)_sendUpdateArtworkNotification:(BOOL)content {
+- (void)_sendUpdateArtworkEvent:(BOOL)content {
     for (SAViewController *vc in _viewControllers)
         [vc artworkUpdated:content ? self : nil];
 }
@@ -243,7 +243,7 @@ typedef enum ArtworkBackgroundMode {
         _canvasURL = nil;
         _canvasAsset = nil;
 
-        [self _sendUpdateArtworkNotification:NO];
+        [self _sendUpdateArtworkEvent:NO];
 
         if (!bundleID)
             [self _revertLabels];
@@ -368,18 +368,16 @@ typedef enum ArtworkBackgroundMode {
 
             if (NO/*blurMode*/) // TODO: Add settings for this
                 _blurredImage = [self _blurredImage:image];
-            // else if (YES/*colorMode*/)
-                // userInfo[kColor] = _colorInfo.backgroundColor;
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
-                [self _sendUpdateArtworkNotification:YES];
+                [self _sendUpdateArtworkEvent:YES];
                 [self _overrideLabels];
             });
         });
         return;
     }
 
-    [self _sendUpdateArtworkNotification:NO];
+    [self _sendUpdateArtworkEvent:NO];
 }
 
 - (void)_overrideLabels {
@@ -515,7 +513,7 @@ typedef enum ArtworkBackgroundMode {
             _mode = Canvas;
         }
 
-        [self _sendCanvasUpdatedNotification];
+        [self _sendCanvasUpdatedEvent];
     }
 }
 

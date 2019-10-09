@@ -112,13 +112,18 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 #pragma mark Private
 
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork
+                    blurredImage:(UIImage *)blurredImage
+                           color:(UIColor *)color {
     [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:NO];
 }
 
 /* Check if this call came before the previous call.
    In that case, we're still animating and will place this operation in the queue. */
-- (void)_artworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changedContent:(BOOL)changedContent {
+- (void)_artworkUpdatedWithImage:(UIImage *)artwork
+                    blurredImage:(UIImage *)blurredImage
+                           color:(UIColor *)color
+                  changedContent:(BOOL)changedContent {
     if (_animating) {
         __weak typeof(self) weakSelf = self;
         _completion = ^() {
@@ -129,10 +134,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color changedContent:(BOOL)changedContent {
+- (void)_noCheck_ArtworkUpdatedWithImage:(UIImage *)artwork
+                            blurredImage:(UIImage *)blurredImage
+                                   color:(UIColor *)color
+                          changedContent:(BOOL)changedContent {
     if (!artwork) {
         [self _hideArtworkViews];
-    } else if (changedContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
+        return;
+    }
+
+    if (changedContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
         [self _setArtwork:artwork blurredImage:blurredImage color:color];
         [self _showArtworkViews];
     } else {
