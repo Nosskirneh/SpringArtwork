@@ -42,6 +42,16 @@ typedef enum ArtworkBackgroundMode {
 
     NSString *_canvasURL;
 
+    /* The ones below exist because of Spotify Connect. If playing through
+       Connect and then exiting the app, the now playing app will be removed.
+       However, when opening the app again, it registers Spotify once again.
+       It's just that there are no artwork or canvas events being fired by
+       that point. */
+    NSString *_bundleID;
+    NSString *_previousSpotifyURL;
+    AVAsset *_previousSpotifyAsset;
+    UIImage *_previousSpotifyArtworkImage;
+
     Mode _mode;
     Mode _previousMode;
 
@@ -194,13 +204,42 @@ typedef enum ArtworkBackgroundMode {
     [self _setCanvasPlayPauseState:!_insideApp];
 }
 
+- (void)_checkForRestoreSpotifyConnectIssue {
+    HBLogDebug(@"should restore SPT? ai: %@, cu: %@", _artworkImage, _canvasURL);
+    if (!_artworkImage && !_canvasURL && (_previousSpotifyURL || _previousSpotifyArtworkImage)) {
+        HBLogDebug(@"RESTORING...");
+        _canvasURL = _previousSpotifyURL;
+        _canvasAsset = _previousSpotifyAsset;
+        _artworkImage = _previousSpotifyArtworkImage;
+
+        [self _sendUpdateArtworkEvent:YES];
+        [self _overrideLabels];
+
+        _previousSpotifyURL = nil;
+        _previousSpotifyAsset = nil;
+        _previousSpotifyArtworkImage = nil;
+    }
+}
+
+- (void)_checkForStoreSpotifyConnectIssue:(NSString *)newBundleID {
+    if (!newBundleID && [_bundleID isEqualToString:kSpotifyBundleID]) {
+        HBLogDebug(@"STORING SPOTIFY INFO...");
+        _previousSpotifyURL = _canvasURL;
+        _previousSpotifyAsset = _canvasAsset;
+        _previousSpotifyArtworkImage = _artworkImage;
+    }
+}
+
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
     if ([bundleID isEqualToString:kSpotifyBundleID]) {
         _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+        [self _checkForRestoreSpotifyConnectIssue];
     } else {
+        [self _checkForStoreSpotifyConnectIssue:bundleID];
+
         _canvasURL = nil;
         _canvasAsset = nil;
 
