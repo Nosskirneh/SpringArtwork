@@ -39,7 +39,7 @@ typedef enum ArtworkBackgroundMode {
 
     NSString *_trackIdentifier;
     NSString *_artworkIdentifier;
-    NSString *_canvasArtworkIdentifier;
+    UIImage *_canvasArtworkImage;
 
     BOOL _insideApp;
     BOOL _screenTurnedOn;
@@ -275,12 +275,6 @@ typedef enum ArtworkBackgroundMode {
         return;
 
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
-    if (_canvasURL) {
-        _canvasArtworkIdentifier = artworkIdentifier;
-        return;
-    } else if ([_canvasArtworkIdentifier isEqualToString:artworkIdentifier])
-        return;
-
     if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
 
@@ -299,15 +293,21 @@ typedef enum ArtworkBackgroundMode {
                                                                  size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
+                if ([self _candidatePlaceholderImage:image])
+                    return;
+
                 HBLogDebug(@"image: %@", image);
+
+                if (_canvasURL) {
+                    _canvasArtworkImage = image;
+                    return;
+                } else if ([SAImageHelper compareImage:_canvasArtworkImage withImage:image])
+                    return;
 
                 if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
                     [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
                     return [self _updateArtworkWithImage:_artworkImage];
                 }
-
-                if ([self _candidatePlaceholderImage:image])
-                    return;
 
                 [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
                 _trackIdentifier = trackIdentifier;
