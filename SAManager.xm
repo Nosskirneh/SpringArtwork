@@ -378,8 +378,6 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
-    if (_canvasURL) // Need to check again, since retrieving the image was done async
-        return;
     _artworkImage = image;
 
     if (image) {
