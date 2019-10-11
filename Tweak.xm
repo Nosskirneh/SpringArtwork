@@ -102,16 +102,24 @@
         manager.isSharedWallpaper = shared;
         if (shared) {
             if (manager.enabledMode == LockscreenMode)
-                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                           manager:manager
+                                                                                          inCharge:YES];
             else
-                self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+                self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView
+                                                                                               manager:manager
+                                                                                              inCharge:YES];
         } else {
             BOOL homescreen = variant == 1;
             if (homescreen) {
                 if (manager.enabledMode != LockscreenMode)
-                    self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+                    self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView
+                                                                                                   manager:manager
+                                                                                                  inCharge:YES];
             } else if (manager.enabledMode != HomescreenMode)
-                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                           manager:manager
+                                                                                          inCharge:YES];
         }
 
         return wallpaperView;
@@ -275,7 +283,7 @@
 %end
 
 
-// Lockscreen ("NC pulldown")
+/* Lockscreen ("NC pulldown") */
 %hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, retain) SAViewController *canvasNormalViewController;
 %property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
@@ -284,7 +292,8 @@
 - (void)_createFadeOutWallpaperEffectView {
     %orig;
 
-    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView manager:manager];
+    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView
+                                                                            manager:manager];
 }
 %end
 
@@ -292,7 +301,8 @@
 - (void)_createPanelWallpaperEffectViewIfNeeded {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView
+                                                                           manager:manager];
 }
 %end
 
@@ -300,7 +310,8 @@
 - (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView
+                                                                           manager:manager];
 }
 %end
 %end
@@ -366,6 +377,7 @@
 
 %end
 %end
+// ---
 
 
 static void initLockscreen() {
