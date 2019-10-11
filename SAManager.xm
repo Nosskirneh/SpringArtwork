@@ -87,7 +87,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     // TODO:
     // Read these from preferences
     _enabledMode = BothMode;
-    _artworkBackgroundMode = AutoColor;
+    _artworkBackgroundMode = MatchingColor;
 }
 
 - (BOOL)isCanvasActive {
@@ -369,7 +369,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (BOOL)useBackgroundColor {
-    return !_canvasURL && _artworkBackgroundMode == AutoColor;
+    return !_canvasURL && _artworkBackgroundMode == MatchingColor;
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {

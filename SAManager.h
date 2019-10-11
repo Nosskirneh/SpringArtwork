@@ -8,7 +8,7 @@ typedef enum Mode {
 } Mode;
 
 typedef enum ArtworkBackgroundMode {
-    AutoColor,
+    MatchingColor,
     Blurred,
     StaticColor
 } ArtworkBackgroundMode;

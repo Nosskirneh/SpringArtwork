@@ -47,8 +47,8 @@
             <string>artworkBackgroundMode</string>
             <key>validTitles</key>
             <array>
-                <string>Auto color</string>
-                <string>Blurred edges</string>
+                <string>Matching color</string>
+                <string>Blurred</string>
                 <string>Static color</string>
             </array>
             <key>validValues</key>
@@ -83,6 +83,37 @@
             </dict>
             <key>label</key>
             <string>Static color</string>
+        </dict>
+
+
+        <!-- Artwork width percentage -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Artwork width percentage</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>label</key>
+            <string>Corner radius</string>
+            <key>defaults</key>
+            <string>se.nosskirneh.springartwork</string>
+            <key>key</key>
+            <string>artworkWidthPercentage</string>
+            <key>isSegmented</key>
+            <true/>
+            <key>segmentCount</key>
+            <integer>10</integer>
+            <key>showValue</key>
+            <true/>
+            <key>min</key>
+            <integer>20</integer>
+            <key>max</key>
+            <integer>100</integer>
+            <key>default</key>
+            <string>100</string>
         </dict>
     </array>
     <key>title</key>
