@@ -4,3 +4,6 @@ NSString *const kEnabledMode = @"enabledMode";
 // Normal artwork
 NSString *const kArtworkBackgroundMode = @"artworkBackgroundMode";
 NSString *const kStaticColor = @"staticColor";
+
+// Video artwork
+NSString *const kCanvasEnabled = @"canvasEnabled";

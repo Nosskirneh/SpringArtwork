@@ -1,5 +1,4 @@
 #import "SASettingsListController.h"
-#import "../../TwitterStuff/Prompt.h"
 
 
 @interface SAVideoListController : SASettingsListController

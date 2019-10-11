@@ -24,7 +24,7 @@
         [specifiers addObject:spec];
         [self addApplicationsToList:specifiers systemApps:NO];
 
-        _specifiers = [NSArray arrayWithArray:specifiers];
+        _specifiers = specifiers;
     }
 
 	return _specifiers;
