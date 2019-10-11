@@ -10,5 +10,9 @@
 #define kDefault @"default"
 
 
+// General
 extern NSString *const kEnabledMode;
+
+// Normal artwork
+extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;

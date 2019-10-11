@@ -45,7 +45,7 @@
             <key>defaults</key>
             <string>se.nosskirneh.springartwork</string>
             <key>key</key>
-            <string>enabledMode</string>
+            <string>artworkBackgroundMode</string>
             <key>validTitles</key>
             <array>
                 <string>Auto color</string>

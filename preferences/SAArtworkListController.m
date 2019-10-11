@@ -18,7 +18,7 @@
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:kEnabledMode])
+    if ([key isEqualToString:kArtworkBackgroundMode])
         [super setEnabled:[preferences[key] intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
 
@@ -27,7 +27,7 @@
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:kEnabledMode])
+    if ([key isEqualToString:kArtworkBackgroundMode])
         [super setEnabled:[value intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
 
