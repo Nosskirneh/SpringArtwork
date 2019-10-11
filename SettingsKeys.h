@@ -10,6 +10,7 @@
 #define kDefault @"default"
 #define kCell @"cell"
 
+extern const char *kSpotifySettingsChanged;
 
 // General
 extern NSString *const kEnabledMode;

@@ -1,3 +1,5 @@
+const char *kSpotifySettingsChanged = "se.nosskirneh.springartwork/spotifySettingsChanged";
+
 // General
 NSString *const kEnabledMode = @"enabledMode";
 

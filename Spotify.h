@@ -43,3 +43,8 @@ typedef enum SpotifyServiceScope {
 @interface NSDictionary (SPTTypeSafety)
 - (NSURL *)spt_URLForKey:(NSString *)key;
 @end
+
+
+@interface SPTNowPlayingBarContainerViewController : UIViewController
+@property (nonatomic, assign) BOOL sa_onlyOnWifi;
+@end

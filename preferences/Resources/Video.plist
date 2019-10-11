@@ -45,7 +45,7 @@ Disabled: Always download video artwork.
             <key>label</key>
             <string>Data saver</string>
             <key>PostNotification</key>
-            <string>se.nosskirneh.springartwork/preferencesChanged</string>
+            <string>se.nosskirneh.springartwork/spotifySettingsChanged</string>
         </dict>
     </array>
     <key>title</key>

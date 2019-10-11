@@ -1,5 +1,5 @@
 #import "SASettingsListController.h"
-#import "notifyDefines.h"
+#import "../notifyDefines.h"
 #import "../../DRM/respring.xm"
 
 @implementation SASettingsListController

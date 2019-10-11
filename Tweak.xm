@@ -4,6 +4,8 @@
 #import "SAManager.h"
 #import "Common.h"
 #import <AVFoundation/AVAsset.h>
+#import "notifyDefines.h"
+#import <notify.h>
 
 
 %group Spotify
@@ -49,6 +51,21 @@
 
     %hook SPTNowPlayingBarContainerViewController
 
+    %property (nonatomic, assign) BOOL sa_onlyOnWifi;
+
+    - (void)loadView {
+        %orig;
+
+        int token;
+        notify_register_dispatch(kSpotifySettingsChanged,
+            &token,
+            dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
+            ^(int t) {
+                NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+                self.sa_onlyOnWifi = preferences[kCanvasOnlyWiFi] && [preferences[kCanvasOnlyWiFi] boolValue];
+            });
+    }
+
     - (void)setCurrentTrack:(SPTPlayerTrack *)track {
         if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
@@ -58,7 +75,7 @@
                 sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
             } else {
                 // The compiler doesn't like when I specify AVURLAsset * as type for some reason...
-                [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:NO completion:^(id asset) {
+                [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:self.sa_onlyOnWifi completion:^(id asset) {
                     sendCanvasURL(((AVURLAsset *)asset).URL);
                 }];
             }
