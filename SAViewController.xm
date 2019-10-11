@@ -24,15 +24,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 #pragma mark Public
 
-- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
+- (id)initWithManager:(SAManager *)manager {
     if (self == [super init]) {
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
         [player _setPreventsSleepDuringVideoPlayback:NO];
         setNoInterruptionMusic(player);
-
-        self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
-        [targetView addSubview:self.view];
 
         _artworkContainer = [[UIView alloc] initWithFrame:self.view.frame];
 
@@ -64,6 +61,20 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     }
     return self;
+}
+
+- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
+    if (self == [self initWithManager:manager])
+        [self setTargetView:targetView];
+    return self;
+}
+
+- (void)setTargetView:(UIView *)targetView {
+    if (!targetView)
+        return [self.view removeFromSuperview];
+
+    self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
+    [targetView addSubview:self.view];
 }
 
 - (void)replayVideo {

@@ -50,7 +50,12 @@
 - (_UILegibilitySettings *)currentLegibilitySettings;
 @end
 
+@interface SBDashBoardView : UIView
+@property (nonatomic, retain) SAViewController *canvasViewController;
+@end
+
 @interface SBDashBoardViewController : UIViewController
+@property (nonatomic, retain) SBDashBoardView *view;
 @property (nonatomic, retain) SBDashBoardLegibilityProvider *legibilityProvider;
 - (void)_updateActiveAppearanceForReason:(id)reason;
 @end

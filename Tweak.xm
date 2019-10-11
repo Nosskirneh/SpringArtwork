@@ -111,6 +111,30 @@
     %end
 
 
+    /* Lockscreen background when transitioning to camera */
+    %hook SBDashBoardViewController
+
+    - (void)loadView {
+        %orig;
+
+        self.view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
+    }
+
+    %end
+
+    %hook SBDashBoardView
+    %property (nonatomic, retain) SAViewController *canvasViewController;
+
+    - (void)setWallpaperEffectView:(UIView *)effectView {
+        %orig;
+
+        [self.canvasViewController setTargetView:effectView];
+    }
+
+    %end
+    // ---
+
+
     /* Register shake gesture to play/pause canvas video */
     %hook UIApplication
 
