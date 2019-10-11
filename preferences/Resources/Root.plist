@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>headerCellClass</key>
+            <string>SASettingsHeaderCell</string>
+        </dict>
+
+        <!-- Settings -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Settings</string>
+        </dict>
+
+        <!-- Other -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Other</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>cellClass</key>
+            <string>SAColorButtonCell</string>
+            <key>action</key>
+            <string>myTweaks</string>
+            <key>label</key>
+            <string>Check out my other tweaks</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>cellClass</key>
+            <string>SAColorButtonCell</string>
+            <key>action</key>
+            <string>sendEmail</string>
+            <key>label</key>
+            <string>Email me</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>footerAlignment</key>
+            <integer>1</integer>
+            <key>footerText</key>
+            <string>© 2019 Andreas Henriksson</string>
+        </dict>
+    </array>
+
+    <key>title</key>
+    <string>SpringArtwork</string>
+</dict>
+</plist>
