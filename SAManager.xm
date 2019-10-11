@@ -294,6 +294,11 @@ typedef enum ArtworkBackgroundMode {
                 request = [controller contentItemArtworkForIdentifier:trackIdentifier
                                                                  size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
+                if (!image) {
+                    HBLogError(@"No artwork for this track!");
+                    return;
+                }
+
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
                 if ([self _candidatePlaceholderImage:image])
                     return;
@@ -303,7 +308,7 @@ typedef enum ArtworkBackgroundMode {
                 if (_canvasURL) {
                     _canvasArtworkImage = image;
                     return;
-                } else if ([SAImageHelper compareImage:_canvasArtworkImage withImage:image])
+                } else if (_canvasArtworkImage && [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
                     return;
 
                 if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
