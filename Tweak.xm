@@ -199,6 +199,12 @@
     // ---
 %end
 
+%group SBIconViewMap_iOS12
+%hook SBIconViewMap
+%property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
+%end
+%end
+
 
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
@@ -293,5 +299,8 @@
             %init(SwitcherBackdrop_iOS12);
         else
             %init(SwitcherBackdrop_iOS11);
+
+        if (![%c(SBIconViewMap) instancesRespondToSelector:@selector(legibilitySettings)])
+            %init(SBIconViewMap_iOS12);
     }
 }
