@@ -1,3 +1,5 @@
 packages
 *.log
 .theos/
+.DS_Store
+*.txt
