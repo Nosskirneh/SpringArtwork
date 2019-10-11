@@ -8,14 +8,17 @@
 #define kIconImage @"iconImage"
 #define kKey @"key"
 #define kDefault @"default"
+#define kCell @"cell"
 
 
 // General
 extern NSString *const kEnabledMode;
 
 // Normal artwork
+extern NSString *const kArtworkEnabled;
 extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;
 
 // Video artwork
 extern NSString *const kCanvasEnabled;
+extern NSString *const kCanvasOnlyWiFi;

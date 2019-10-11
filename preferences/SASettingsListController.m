@@ -1,5 +1,4 @@
 #import "SASettingsListController.h"
-#import "../SettingsKeys.h"
 #import "notifyDefines.h"
 #import "../../DRM/respring.xm"
 
@@ -46,7 +45,10 @@
 }
 
 - (void)setEnabled:(BOOL)enabled forSpecifier:(PSSpecifier *)specifier {
-	NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
+    if ([[specifier propertyForKey:kCell] isEqualToString:@"PSGroupCell"])
+        return;
+
+    NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
     UITableViewCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
     if (cell) {
         cell.userInteractionEnabled = enabled;
@@ -59,6 +61,12 @@
                 controlCell.control.enabled = enabled;
         }
     }
+}
+
+- (void)setEnabled:(BOOL)enabled forSpecifiersAfterSpecifier:(PSSpecifier *)specifier {
+    long long index = [self indexOfSpecifier:specifier];
+    for (int i = index + 1; i < _specifiers.count; i++)
+        [self setEnabled:enabled forSpecifier:_specifiers[i]];
 }
 
 - (void)viewWillAppear:(BOOL)animated {

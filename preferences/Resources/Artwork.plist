@@ -4,7 +4,6 @@
 <dict>
     <key>items</key>
     <array>
-
         <dict>
             <key>cell</key>
             <string>PSSwitchCell</string>

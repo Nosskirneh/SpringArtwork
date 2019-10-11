@@ -18,8 +18,37 @@
             <key>PostNotification</key>
             <string>se.nosskirneh.springartwork/preferencesChanged</string>
         </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>By default, Spotfiy only downloads the video when having the player visible.
+
+Enabled: If the video is not already downloaded, only download it on WiFi.
+Disabled: Always download video artwork.
+            </string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>key</key>
+            <string>canvasOnlyWiFi</string>
+            <key>label</key>
+            <string>Data saver</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/preferencesChanged</string>
+        </dict>
     </array>
     <key>title</key>
-    <string>Toasts</string>
+    <string>Video artwork</string>
 </dict>
 </plist>
