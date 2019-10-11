@@ -194,7 +194,6 @@
     if (!manager.isSharedWallpaper)
         return;
 
-    // TODO: shorten this when you know it works
     BOOL hide = ((self.appearState == Lockscreen && manager.enabledMode == HomescreenMode) ||
                  (self.appearState == Homescreen && manager.enabledMode == LockscreenMode));
     manager.inChargeController.view.hidden = hide;
@@ -290,7 +289,6 @@
 
 /* Lockscreen ("NC pulldown") */
 %hook SBCoverSheetPrimarySlidingViewController
-
 %group newiOS11
 - (void)_createFadeOutWallpaperEffectView {
     %orig;
