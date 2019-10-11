@@ -342,7 +342,11 @@ typedef enum ArtworkBackgroundMode {
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
 
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
-                                         completionHandler:^(CMTime requestedTime, CGImageRef cgImage, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+                                         completionHandler:^(CMTime requestedTime,
+                                                             CGImageRef cgImage,
+                                                             CMTime actualTime,
+                                                             AVAssetImageGeneratorResult result,
+                                                             NSError *error) {
         if (result == AVAssetImageGeneratorSucceeded) {
             completion([UIImage imageWithCGImage:cgImage]);
         } else {
@@ -471,19 +475,24 @@ typedef enum ArtworkBackgroundMode {
         lockscreenCompletion = [self _assertionCompletionWithSettings:lockscreenSettings];
 
     if (_enabledMode == BothMode) {
-        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel withBlock:homescreenCompletion];
-        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel withBlock:lockscreenCompletion];
+        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel
+                                            withBlock:homescreenCompletion];
+        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel
+                                            withBlock:lockscreenCompletion];
     } else if (_enabledMode == LockscreenMode) {
-        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel withBlock:lockscreenCompletion];
+        [assertionManager _enumerateAssertionsToLevel:FullscreenAlertAnimationAssertionLevel
+                                            withBlock:lockscreenCompletion];
     } else {
-        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel withBlock:homescreenCompletion];
+        [assertionManager _enumerateAssertionsToLevel:HomescreenAssertionLevel
+                                            withBlock:homescreenCompletion];
     }
 }
 
 - (void (^)(SBAppStatusBarSettingsAssertion *))_assertionCompletionWithSettings:(_UILegibilitySettings *)settings {
     return ^(SBAppStatusBarSettingsAssertion *assertion) {
         assertion.sa_legibilitySettings = settings;
-        [assertion modifySettingsWithBlock:nil]; // This method is hooked in Tweak.xm and will change the color from there.
+        // This method is hooked in Tweak.xm and will change the color from there.
+        [assertion modifySettingsWithBlock:nil];
     };
 }
 

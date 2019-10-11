@@ -122,7 +122,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
             if (changedContent)
                 afterThumbnailCompletion = ^() {
-                    [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
+                    [self _artworkUpdatedWithImage:nil
+                                      blurredImage:nil
+                                             color:nil
+                                    changedContent:changedContent];
                 };
 
             [self _canvasUpdatedWithAsset:manager.canvasAsset
@@ -135,10 +138,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                      color:manager.useBackgroundColor ? manager.colorInfo.backgroundColor : nil
                             changedContent:changedContent];
             if (changedContent)
-                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
+                [self _canvasUpdatedWithAsset:nil
+                                      isDirty:NO
+                                    thumbnail:nil
+                               changedContent:changedContent];
         }
     } else {
-        [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:NO];
+        [self _noCheck_ArtworkUpdatedWithImage:nil
+                                  blurredImage:nil
+                                         color:nil
+                                changedContent:NO];
         [self _canvasUpdatedWithAsset:nil isDirty:NO];
     }
 }
@@ -148,7 +157,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
                     blurredImage:(UIImage *)blurredImage
                            color:(UIColor *)color {
-    [self _artworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:NO];
+    [self _artworkUpdatedWithImage:artwork
+                      blurredImage:blurredImage
+                             color:color
+                    changedContent:NO];
 }
 
 /* Check if this call came before the previous call.
@@ -160,10 +172,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (_animating) {
         __weak typeof(self) weakSelf = self;
         _completion = ^() {
-            [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:changedContent];
+            [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork
+                                          blurredImage:blurredImage
+                                                 color:color
+                                        changedContent:changedContent];
         };
     } else {
-        [self _noCheck_ArtworkUpdatedWithImage:artwork blurredImage:blurredImage color:color changedContent:changedContent];
+        [self _noCheck_ArtworkUpdatedWithImage:artwork
+                                  blurredImage:blurredImage
+                                         color:color
+                                changedContent:changedContent];
     }
 }
 
@@ -176,7 +194,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return;
     }
 
-    if (changedContent || ![self _isShowingArtworkView]) { // Not already visible, so we don't need to animate the image change, just the layer
+    // Not already visible, so we don't need to animate the image change, just the layer
+    if (changedContent || ![self _isShowingArtworkView]) {
         [self _setArtwork:artwork blurredImage:blurredImage color:color];
         [self _showArtworkViews];
     } else {
@@ -184,15 +203,22 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (void)_animateArtworkChange:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
-    [UIView transitionWithView:_artworkImageView duration:ANIMATION_DURATION options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+- (void)_animateArtworkChange:(UIImage *)artwork
+                 blurredImage:(UIImage *)blurredImage
+                        color:(UIColor *)color {
+    [UIView transitionWithView:_artworkImageView
+                      duration:ANIMATION_DURATION
+                       options:UIViewAnimationOptionTransitionCrossDissolve
+                    animations:^{
             [self _setArtwork:artwork blurredImage:blurredImage color:color];
         }
         completion:nil
     ];
 }
 
-- (void)_setArtwork:(UIImage *)artwork blurredImage:(UIImage *)blurredImage color:(UIColor *)color {
+- (void)_setArtwork:(UIImage *)artwork
+       blurredImage:(UIImage *)blurredImage
+              color:(UIColor *)color {
     _artworkImageView.image = artwork;
     if (blurredImage)
         _backgroundArtworkImageView.image = blurredImage;
@@ -231,21 +257,32 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changedContent:NO afterThumbnail:nil];
+    [self _canvasUpdatedWithAsset:asset
+                          isDirty:isDirty
+                        thumbnail:nil
+                   changedContent:NO
+                   afterThumbnail:nil];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
                  changedContent:(BOOL)changedContent {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:changedContent afterThumbnail:nil];
+    [self _canvasUpdatedWithAsset:asset
+                          isDirty:isDirty
+                        thumbnail:thumbnail
+                   changedContent:changedContent
+                   afterThumbnail:nil];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
                  afterThumbnail:(void (^)())afterThumbnailCompletion {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:NO afterThumbnail:afterThumbnailCompletion];
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty
+                        thumbnail:thumbnail
+                   changedContent:NO
+                   afterThumbnail:afterThumbnailCompletion];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
@@ -257,7 +294,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     if (asset) {
         [self _fadeCanvasLayerIn];
-        [self _changeCanvasAsset:asset isDirty:isDirty thumbnail:thumbnail afterThumbnail:afterThumbnailCompletion];
+        [self _changeCanvasAsset:asset
+                         isDirty:isDirty
+                       thumbnail:thumbnail
+                  afterThumbnail:afterThumbnailCompletion];
     } else {
         [self _fadeCanvasLayerOut];
     }
@@ -337,10 +377,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
-    [self _performLayerOpacityAnimation:_canvasContainerImageView.layer show:show completion:completion];
+    [self _performLayerOpacityAnimation:_canvasContainerImageView.layer
+                                   show:show
+                             completion:completion];
 }
 
-- (void)_performLayerOpacityAnimation:(CALayer *)layer show:(BOOL)show completion:(void (^)(void))completion {
+- (void)_performLayerOpacityAnimation:(CALayer *)layer
+                                 show:(BOOL)show
+                           completion:(void (^)(void))completion {
     float from;
     float to;
     if (show) {

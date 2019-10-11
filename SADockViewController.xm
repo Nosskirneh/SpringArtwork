@@ -29,7 +29,9 @@ extern SAManager *manager;
     if (!hide)
         background.hidden = NO;
 
-    [self _performLayerOpacityAnimation:background.layer show:!hide completion:^() {
+    [self _performLayerOpacityAnimation:background.layer
+                                   show:!hide
+                             completion:^() {
         if (hide)
             background.hidden = YES;
     }];
@@ -66,7 +68,10 @@ extern SAManager *manager;
                 changedContent:(BOOL)changedContent {
     _skipDock = changedContent;
 
-    [super _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:changedContent];
+    [super _canvasUpdatedWithAsset:asset
+                           isDirty:isDirty
+                         thumbnail:thumbnail
+                    changedContent:changedContent];
 }
 
 - (BOOL)_fadeCanvasLayerIn {
