@@ -144,6 +144,7 @@
 
     %end
 
+
     /* Both LS & HS */
     %hook SBAppStatusBarSettingsAssertion
 

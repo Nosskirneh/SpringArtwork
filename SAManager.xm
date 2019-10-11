@@ -55,6 +55,7 @@ typedef enum ArtworkBackgroundMode {
     NSString *_previousSpotifyURL;
     AVAsset *_previousSpotifyAsset;
     UIImage *_previousSpotifyArtworkImage;
+    // ---
 
     Mode _mode;
     Mode _previousMode;
