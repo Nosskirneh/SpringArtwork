@@ -176,13 +176,13 @@ typedef enum ArtworkBackgroundMode {
             _canvasThumbnail = image;
             [self _sendUpdateArtworkEvent:YES];
 
-            // Heavy work such as analyzing images should be done in the background
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                _colorInfo = [SAImageHelper colorsForImage:image];
+            if (!image)
+                return;
 
-                dispatch_async(dispatch_get_main_queue(), ^(void) {
-                    [self _overrideLabels];
-                });
+            _colorInfo = [SAImageHelper colorsForImage:image];
+
+            dispatch_async(dispatch_get_main_queue(), ^(void) {
+                [self _overrideLabels];
             });
         }];
         return;
@@ -191,8 +191,10 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (void)_sendUpdateArtworkEvent:(BOOL)content {
-    for (SAViewController *vc in _viewControllers)
-        [vc artworkUpdated:content ? self : nil];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        for (SAViewController *vc in _viewControllers)
+            [vc artworkUpdated:content ? self : nil];
+    });
 }
 
 - (void)_currentAppChanged:(NSNotification *)notification {
@@ -336,23 +338,17 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (void)_thumbnailFromAsset:(AVAsset *)asset withCompletion:(void(^)(UIImage *))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0ul), ^{
-        AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+    AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
 
-        [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
-                                             completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
-            __block UIImage *thumb;
-            if (result == AVAssetImageGeneratorSucceeded) {
-                thumb = [UIImage imageWithCGImage:image];
-            } else {
-                HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
-                completion(nil);
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                 completion(thumb);
-            });
-        }];
-    });
+    [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:kCMTimeZero]]
+                                         completionHandler:^(CMTime requestedTime, CGImageRef cgImage, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+        if (result == AVAssetImageGeneratorSucceeded) {
+            completion([UIImage imageWithCGImage:cgImage]);
+        } else {
+            HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
+            completion(nil);
+        }
+    }];
 }
 
 - (BOOL)_candidateSameAsPreviousArtwork:(UIImage *)candidate {

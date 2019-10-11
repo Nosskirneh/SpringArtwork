@@ -91,18 +91,24 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (manager) {
         BOOL changedContent = [manager changedContent];
         if (manager.canvasAsset) {
+            void (^afterThumbnailCompletion)() = nil;
+
             if (changedContent)
-                [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
+                afterThumbnailCompletion = ^() {
+                    [self _artworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:changedContent];
+                };
+
             [self _canvasUpdatedWithAsset:manager.canvasAsset
                                   isDirty:[manager isDirty]
-                                thumbnail:manager.canvasThumbnail];
+                                thumbnail:manager.canvasThumbnail
+                           afterThumbnail:afterThumbnailCompletion];
         } else if (manager.artworkImage) {
-            if (changedContent)
-                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
             [self _artworkUpdatedWithImage:manager.artworkImage
                               blurredImage:manager.blurredImage
                                      color:manager.useBackgroundColor ? manager.colorInfo.backgroundColor : nil
                             changedContent:changedContent];
+            if (changedContent)
+                [self _canvasUpdatedWithAsset:nil isDirty:NO thumbnail:nil changedContent:changedContent];
         }
     } else {
         [self _noCheck_ArtworkUpdatedWithImage:nil blurredImage:nil color:nil changedContent:NO];
@@ -198,24 +204,33 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changedContent:NO];
-}
-
-- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
-                        isDirty:(BOOL)isDirty
-                      thumbnail:(UIImage *)thumbnail {
-    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:NO];
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:nil changedContent:NO afterThumbnail:nil];
 }
 
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
-                  changedContent:(BOOL)changedContent {
+                 changedContent:(BOOL)changedContent {
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:changedContent afterThumbnail:nil];
+}
+
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty
+                      thumbnail:(UIImage *)thumbnail
+                 afterThumbnail:(void (^)())afterThumbnailCompletion {
+    [self _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:NO afterThumbnail:afterThumbnailCompletion];
+}
+
+- (void)_canvasUpdatedWithAsset:(AVAsset *)asset
+                        isDirty:(BOOL)isDirty
+                      thumbnail:(UIImage *)thumbnail
+                 changedContent:(BOOL)changedContent
+                 afterThumbnail:(void (^)())afterThumbnailCompletion {
     [self _preparePlayerForChange:_canvasLayer.player];
 
     if (asset) {
         [self _fadeCanvasLayerIn];
-        [self _changeCanvasAsset:asset isDirty:isDirty thumbnail:thumbnail];
+        [self _changeCanvasAsset:asset isDirty:isDirty thumbnail:thumbnail afterThumbnail:afterThumbnailCompletion];
     } else {
         [self _fadeCanvasLayerOut];
     }
@@ -225,20 +240,24 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return;
 }
 
-- (void)_changeCanvasAsset:(AVAsset *)asset isDirty:(BOOL)isDirty thumbnail:(UIImage *)thumbnail {
-    if (isDirty) {
+- (void)_changeCanvasAsset:(AVAsset *)asset
+                   isDirty:(BOOL)isDirty
+                 thumbnail:(UIImage *)thumbnail
+            afterThumbnail:(void (^)())afterThumbnailCompletion {
+    if (isDirty || !thumbnail) {
         _canvasContainerImageView.image = nil;
         [self _replaceItemWithAsset:asset autoPlay:NO];
+        if (afterThumbnailCompletion)
+            afterThumbnailCompletion();
     } else {
         /* Create a thumbnail and add it as placeholder to the
            _canvasContainerImageView to prevent flash to background wallpaper */
         _canvasContainerImageView.image = thumbnail;
 
-        /* For some reason this small delay is needed to make the view update before replacing the AV item */
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC));
-        dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
-            [self _replaceItemWithAsset:asset autoPlay:YES];
-        });
+        if (afterThumbnailCompletion)
+            afterThumbnailCompletion();
+
+        [self _replaceItemWithAsset:asset autoPlay:YES];
     }
 }
 
