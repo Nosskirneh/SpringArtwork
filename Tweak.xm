@@ -426,9 +426,8 @@ static void initHomescreen() {
             /* Enable lockscreen? */
             if (manager.enabledMode != HomescreenMode)
                 initLockscreen();
-
             /* Enable homescreen? */
-            if (manager.enabledMode != LockscreenMode)
+            else if (manager.enabledMode != LockscreenMode)
                 initHomescreen();
         } else {
             initLockscreen();
