@@ -26,9 +26,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 
 typedef enum ArtworkBackgroundMode {
-    BlackBars,
+    Color,
     Blurred,
-    Color
+    BlackBars
 } ArtworkBackgroundMode;
 
 @implementation SAManager {

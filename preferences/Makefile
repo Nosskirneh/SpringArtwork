@@ -5,9 +5,10 @@ TARGET_IPHONEOS_DEPLOYMENT_VERSION = 9.2
 ARCHS = arm64 #arm64e
 
 BUNDLE_NAME = SpringArtworkPrefs
-$(BUNDLE_NAME)_FILES = SARootListController.m ../../DRM/PFStatusBarAlert/PFStatusBarAlert.mm ../../TwitterStuff/Prompt.m ../SettingsKeys.m
+$(BUNDLE_NAME)_FILES = SARootListController.m $(wildcard *.m) ../../DRM/PFStatusBarAlert/PFStatusBarAlert.mm ../../TwitterStuff/Prompt.m ../SettingsKeys.m
 $(BUNDLE_NAME)_CFLAGS = -fobjc-arc
 $(BUNDLE_NAME)_INSTALL_PATH = /Library/PreferenceBundles
+$(BUNDLE_NAME)_LIBRARIES = colorpicker
 $(BUNDLE_NAME)_FRAMEWORKS = SafariServices
 $(BUNDLE_NAME)_PRIVATE_FRAMEWORKS = Preferences
 

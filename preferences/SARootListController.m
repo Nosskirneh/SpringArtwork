@@ -1,29 +1,19 @@
 #import <Preferences/Preferences.h>
+#import "SASettingsListController.h"
 #import <UIKit/UITableViewLabel.h>
 #import "../Common.h"
 #import "../DRMOptions.mm"
 #import "../../DRM/PFStatusBarAlert/PFStatusBarAlert.h"
-#import <spawn.h>
 #import "../../TwitterStuff/Prompt.h"
 #import "../SettingsKeys.h"
-#import "notifyDefines.h"
 
-#define SAColor [UIColor colorWithRed:0.35 green:0.0 blue:0.5 alpha:1.0] // #580080E6
-#define preferencesFrameworkPath @"/System/Library/PrivateFrameworks/Preferences.framework"
-#define kPostNotification @"PostNotification"
 
-@interface SARootListController : PSListController <PFStatusBarAlertDelegate, DRMDelegate> {
-    UIWindow *settingsView;
-}
+@interface SARootListController : SASettingsListController <PFStatusBarAlertDelegate, DRMDelegate>
 @property (nonatomic, strong) PFStatusBarAlert *statusAlert;
 @property (nonatomic, weak) UIAlertAction *okAction;
 @property (nonatomic, weak) NSString *okRegex;
 @property (nonatomic, strong) UIAlertController *giveawayAlertController;
 @end
-
-#define kIconImage @"iconImage"
-#define kKey @"key"
-#define kDefault @"default"
 
 @implementation SARootListController
 
@@ -47,37 +37,12 @@
     NSMutableArray *mspecs = (NSMutableArray *)[_specifiers mutableCopy];
     _specifiers = addDRMSpecifiers(mspecs, self, licensePath$bs(), kPrefPath, package$bs(), licenseFooterText$bs(), trialFooterText$bs());
 
-
     return _specifiers;
 }
 
 - (void)loadView {
     [super loadView];
     presentFollowAlert(kPrefPath, self);
-}
-
-- (id)readPreferenceValue:(PSSpecifier *)specifier {
-    NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-    NSString *key = [specifier propertyForKey:kKey];
-
-    if (preferences[key])
-        return preferences[key];
-
-    return specifier.properties[kDefault];
-}
-
-- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
-    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if (!preferences) preferences = [[NSMutableDictionary alloc] init];
-    NSString *key = [specifier propertyForKey:kKey];
-
-    [preferences setObject:value forKey:key];
-    [preferences writeToFile:kPrefPath atomically:YES];
-    
-    if (specifier.properties[kPostNotification]) {
-        CFStringRef post = (CFStringRef)CFBridgingRetain(specifier.properties[kPostNotification]);
-        notify(post);
-    }
 }
 
 - (void)respring {
@@ -116,18 +81,11 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-
-    // Tint
-    settingsView = [[UIApplication sharedApplication] keyWindow];
-    settingsView.tintColor = SAColor;
-
     [self reloadSpecifiers];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    settingsView = [[UIApplication sharedApplication] keyWindow];
-    settingsView.tintColor = nil;
 
     if (self.statusAlert)
         [self.statusAlert hideOverlay];

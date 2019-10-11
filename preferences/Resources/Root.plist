@@ -12,6 +12,7 @@
             <string>SASettingsHeaderCell</string>
         </dict>
 
+
         <!-- Settings -->
         <dict>
             <key>cell</key>
@@ -19,6 +20,58 @@
             <key>label</key>
             <string>Settings</string>
         </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSSegmentCell</string>
+            <key>defaults</key>
+            <string>se.nosskirneh.springartwork</string>
+            <key>key</key>
+            <string>enabledMode</string>
+            <key>validTitles</key>
+            <array>
+                <string>Lockscreen</string>
+                <string>Both</string>
+                <string>Homescreen</string>
+            </array>
+            <key>validValues</key>
+            <array>
+                <string>1</string>
+                <string>0</string>
+                <string>2</string>
+            </array>
+            <key>default</key>
+            <string>0</string>
+        </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSLinkCell</string>
+            <key>detail</key>
+            <string>SAArtworkListController</string>
+            <key>isController</key>
+            <true/>
+            <key>icon</key>
+            <string>artwork.png</string>
+            <key>label</key>
+            <string>Normal artwork</string>
+        </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSLinkCell</string>
+            <key>detail</key>
+            <string>SAVideoListController</string>
+            <key>isController</key>
+            <true/>
+            <key>icon</key>
+            <string>spotify.png</string>
+            <key>label</key>
+            <string>Video artwork</string>
+        </dict>
+
 
         <!-- Other -->
         <dict>

@@ -1,5 +1,4 @@
-#define SA_IDENTIFIER @"se.nosskirneh.springartwork"
-#define kPrefPath [NSString stringWithFormat:@"%@/Library/Preferences/%@.plist", NSHomeDirectory(), SA_IDENTIFIER]
+#import "SettingsKeys.h"
 
 #define kSpotifyBundleID @"com.spotify.client"
 #define kDeezerBundleID @"com.deezer.Deezer"
