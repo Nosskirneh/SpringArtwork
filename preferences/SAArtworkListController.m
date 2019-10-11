@@ -18,18 +18,18 @@
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:@"enabledMode"])
+    if ([key isEqualToString:kEnabledMode])
         [super setEnabled:[preferences[key] intValue] == StaticColor
-             forSpecifier:[self specifierForID:@"staticColor"]];
+             forSpecifier:[self specifierForID:kStaticColor]];
 
     return [super readPreferenceValue:specifier];
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:@"enabledMode"])
+    if ([key isEqualToString:kEnabledMode])
         [super setEnabled:[value intValue] == StaticColor
-             forSpecifier:[self specifierForID:@"staticColor"]];
+             forSpecifier:[self specifierForID:kStaticColor]];
 
     [super setPreferenceValue:value specifier:specifier];
 }

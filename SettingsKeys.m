@@ -1,1 +1,2 @@
-NSString *const kControlCenter = @"controlcenter";
+NSString *const kEnabledMode = @"enabledMode";
+NSString *const kStaticColor = @"staticColor";

@@ -10,4 +10,5 @@
 #define kDefault @"default"
 
 
-extern NSString *const kControlCenter;
+extern NSString *const kEnabledMode;
+extern NSString *const kStaticColor;
