@@ -328,7 +328,6 @@
 %end
 
 
-
 %group Homescreen
     /* Homescreen app labels */
     %hook SBIconViewMap

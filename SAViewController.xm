@@ -29,6 +29,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (id)initWithManager:(SAManager *)manager {
     if (self == [super init]) {
+        _manager = manager;
+
         AVPlayer *player = [[AVPlayer alloc] init];
         player.muted = YES;
         [player _setPreventsSleepDuringVideoPlayback:NO];
@@ -262,10 +264,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_preparePlayerForChange:(AVPlayer *)player {
-    if (_inCharge && player.currentItem)
+    if (_inCharge && player.currentItem) {
         [[NSNotificationCenter defaultCenter] removeObserver:_manager
                                                         name:AVPlayerItemDidPlayToEndTimeNotification
                                                       object:player.currentItem];
+    }
 }
 
 - (void)_changeCanvasAsset:(AVAsset *)asset
