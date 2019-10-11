@@ -9,15 +9,6 @@ extern SAManager *manager;
 // This class is also responsible for subscribing to the repeat event.
 @implementation SADockViewController {
     BOOL _skipDock;
-    SAManager *_manager;
-}
-
-- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
-    if (self == [super initWithTargetView:targetView manager:manager]) {
-        _manager = manager;
-        [manager setDockViewController:self];
-    }
-    return self;
 }
 
 #pragma mark Private
@@ -69,13 +60,6 @@ extern SAManager *manager;
     return YES;
 }
 
-- (void)_preparePlayerForChange:(AVPlayer *)player {
-    if (player.currentItem)
-        [[NSNotificationCenter defaultCenter] removeObserver:_manager
-                                                        name:AVPlayerItemDidPlayToEndTimeNotification
-                                                      object:player.currentItem];
-}
-
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
                         isDirty:(BOOL)isDirty
                       thumbnail:(UIImage *)thumbnail
@@ -83,15 +67,6 @@ extern SAManager *manager;
     _skipDock = changedContent;
 
     [super _canvasUpdatedWithAsset:asset isDirty:isDirty thumbnail:thumbnail changedContent:changedContent];
-}
-
-- (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
-    [super _replaceItemWithItem:item player:player];
-
-    [[NSNotificationCenter defaultCenter] addObserver:_manager
-                                             selector:@selector(_videoEnded)
-                                                 name:AVPlayerItemDidPlayToEndTimeNotification
-                                               object:item];
 }
 
 - (BOOL)_fadeCanvasLayerIn {

@@ -1,6 +1,5 @@
 #import "SAImageHelper.h"
 #import "SpringBoard.h"
-#import "SADockViewController.h"
 
 typedef enum Mode {
     None,
@@ -21,7 +20,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 @protocol SAViewControllerManager
 - (void)addNewViewController:(SAViewController *)viewController;
-- (void)setDockViewController:(SADockViewController *)dockViewController;
 - (void)_videoEnded;
 @end
 
@@ -40,6 +38,8 @@ typedef enum EnabledMode {
 @property (nonatomic, retain, readonly) UIImage *canvasThumbnail;
 
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
+@property (nonatomic, retain) SAViewController *inChargeController;
+@property (nonatomic, assign) BOOL isSharedWallpaper;
 - (void)setup;
 - (void)togglePlayManually;
 - (void)loadHaptic;

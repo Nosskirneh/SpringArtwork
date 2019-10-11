@@ -12,6 +12,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 @implementation SAViewController {
+    SAManager *_manager;
+    BOOL _inCharge;
+
     UIImageView *_canvasContainerImageView;
     AVPlayerLayer *_canvasLayer;
     UIView *_artworkContainer;
@@ -58,14 +61,25 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             [self _canvasUpdatedWithAsset:asset isDirty:YES];
 
         [manager addNewViewController:self];
-
     }
+
     return self;
 }
 
 - (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
     if (self == [self initWithManager:manager])
         [self setTargetView:targetView];
+    return self;
+}
+
+- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager inCharge:(BOOL)inCharge {
+    if (self == [self initWithManager:manager]) {
+        _inCharge = inCharge;
+        if (inCharge)
+            manager.inChargeController = self;
+
+        [self setTargetView:targetView];
+    }
     return self;
 }
 
@@ -248,7 +262,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_preparePlayerForChange:(AVPlayer *)player {
-    return;
+    if (_inCharge && player.currentItem)
+        [[NSNotificationCenter defaultCenter] removeObserver:_manager
+                                                        name:AVPlayerItemDidPlayToEndTimeNotification
+                                                      object:player.currentItem];
 }
 
 - (void)_changeCanvasAsset:(AVAsset *)asset
@@ -283,6 +300,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
     [player replaceCurrentItemWithPlayerItem:item];
+
+    if (_inCharge) {
+        [[NSNotificationCenter defaultCenter] addObserver:_manager
+                                                 selector:@selector(_videoEnded)
+                                                     name:AVPlayerItemDidPlayToEndTimeNotification
+                                                   object:item];
+    }
 }
 
 - (BOOL)_fadeCanvasLayerIn {

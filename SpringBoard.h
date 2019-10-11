@@ -8,7 +8,13 @@
 @end
 
 
+typedef enum AppearState {
+    Lockscreen = 1,
+    Homescreen = 3
+} AppearState;
+
 @interface SBCoverSheetPrimarySlidingViewController : UIViewController
+@property (nonatomic, assign) AppearState appearState;
 @property (nonatomic, retain) SAViewController *canvasNormalViewController;
 @property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
 @property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12

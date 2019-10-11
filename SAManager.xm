@@ -62,7 +62,6 @@ typedef enum ArtworkBackgroundMode {
     ArtworkBackgroundMode _artworkBackgroundMode;
 
     NSMutableArray *_viewControllers;
-    SADockViewController *_dockViewController;
     UIImage *_placeholderImage;
 }
 
@@ -120,10 +119,6 @@ typedef enum ArtworkBackgroundMode {
 
 - (void)addNewViewController:(SAViewController *)viewController {
     [_viewControllers addObject:viewController];
-}
-
-- (void)setDockViewController:(SADockViewController *)dockViewController {
-    _dockViewController = dockViewController;
 }
 
 #pragma mark Private

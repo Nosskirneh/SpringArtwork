@@ -99,40 +99,25 @@
                                                      options:(unsigned long long)options {
         UIView *wallpaperView = %orig;
 
-        BOOL homescreen = shared || variant == 1;
-        if (homescreen)
-            self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager];
-        else
-            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager];
+        manager.isSharedWallpaper = shared;
+        if (shared) {
+            if (manager.enabledMode == LockscreenMode)
+                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+            else
+                self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+        } else {
+            BOOL homescreen = variant == 1;
+            if (homescreen) {
+                if (manager.enabledMode != LockscreenMode)
+                    self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+            } else if (manager.enabledMode != HomescreenMode)
+                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView manager:manager inCharge:YES];
+        }
 
         return wallpaperView;
     }
 
     %end
-
-
-    /* Lockscreen background when transitioning to camera */
-    %hook SBDashBoardViewController
-
-    - (void)loadView {
-        %orig;
-
-        self.view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
-    }
-
-    %end
-
-    %hook SBDashBoardView
-    %property (nonatomic, retain) SAViewController *canvasViewController;
-
-    - (void)setWallpaperEffectView:(UIView *)effectView {
-        %orig;
-
-        [self.canvasViewController setTargetView:effectView];
-    }
-
-    %end
-    // ---
 
 
     /* Register shake gesture to play/pause canvas video */
@@ -150,60 +135,6 @@
     }
 
     %end
-
-    /* Lockscreen */
-    %hook SBDashBoardLegibilityProvider
-
-    - (_UILegibilitySettings *)currentLegibilitySettings {
-        if (manager.enabledMode == HomescreenMode)
-            return %orig;
-
-        SAColorInfo *info = manager.colorInfo;
-        if (info)
-            return legibilitySettingsForDarkText(info.hasDarkTextColor);
-
-        return %orig;
-    }    
-
-    %end
-
-
-    /* Lockscreen statusbar */
-    /* Fix for fake statusbar which is visible when bringing down the lockscreen from
-       the homescreen. This is not perfect since it still has a black shadow that then
-       jumps to a white one, but it's better than a complete white status bar. */
-    %hook SBDashBoardViewController
-
-    - (id)_createFakeStatusBar {
-        if (manager.enabledMode == HomescreenMode)
-            return %orig;
-
-        UIStatusBar *orig = %orig;
-
-        SAColorInfo *info = manager.colorInfo;
-        if (info)
-            orig.foregroundColor = info.textColor;
-
-        return orig;
-    }
-
-    %end
-    // ---
-
-    /* Homescreen app labels */
-    %hook SBIconViewMap
-
-    - (void)_recycleIconView:(SBIconView *)iconView {
-        %orig;
-
-        if (manager.enabledMode != LockscreenMode) {
-            iconView.legibilitySettings = self.legibilitySettings;
-            [iconView _updateLabel];
-        }
-    }
-
-    %end
-    // ---
 
     /* Both LS & HS */
     %hook SBAppStatusBarSettingsAssertion
@@ -234,12 +165,173 @@
     // ---
 %end
 
+
+/* If only one of LS and HS is set and the wallpaper is shared, 
+   we need to hide/show depending on where the user is looking. */
+%group NotBoth
+%hook SBCoverSheetPrimarySlidingViewController
+%property (nonatomic, assign) AppearState appearState;
+
+- (void)_transitionToViewControllerAppearState:(AppearState)appearState
+                                      ifNeeded:(BOOL)needed
+                                forUserGesture:(BOOL)forUserGesture {
+    %orig;
+    self.appearState = appearState;
+}
+
+- (void)_finishTransitionToPresented:(BOOL)finish
+                            animated:(BOOL)animated
+                      withCompletion:(id)completion {
+    %orig;
+    if (!manager.isSharedWallpaper)
+        return;
+
+    // TODO: shorten this when you know it works
+    BOOL hide = ((self.appearState == Lockscreen && manager.enabledMode == HomescreenMode) ||
+                 (self.appearState == Homescreen && manager.enabledMode == LockscreenMode));
+    manager.inChargeController.view.hidden = hide;
+}
+
+- (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
+    %orig;
+
+    // Show when returning from LS?
+    if (manager.isSharedWallpaper &&
+        manager.enabledMode == HomescreenMode &&
+        fromLockscreen) {
+        manager.inChargeController.view.hidden = NO;
+    }
+}
+
+%end
+%end
+// ---
+
+
+%group Lockscreen
+    /* Lockscreen background when transitioning to camera */
+    %hook SBDashBoardViewController
+
+    - (void)loadView {
+        %orig;
+
+        self.view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
+    }
+
+    %end
+
+    %hook SBDashBoardView
+    %property (nonatomic, retain) SAViewController *canvasViewController;
+
+    - (void)setWallpaperEffectView:(UIView *)effectView {
+        %orig;
+
+        [self.canvasViewController setTargetView:effectView];
+    }
+
+    %end
+    // ---
+
+
+    /* Lockscreen text coloring */
+    %hook SBDashBoardLegibilityProvider
+
+    - (_UILegibilitySettings *)currentLegibilitySettings {
+        if (manager.enabledMode == HomescreenMode)
+            return %orig;
+
+        SAColorInfo *info = manager.colorInfo;
+        if (info)
+            return legibilitySettingsForDarkText(info.hasDarkTextColor);
+
+        return %orig;
+    }    
+
+    %end
+    // ---
+
+
+    /* Lockscreen statusbar */
+    /* Fix for fake statusbar which is visible when bringing down the lockscreen from
+       the homescreen. This is not perfect since it still has a black shadow that then
+       jumps to a white one, but it's better than a complete white status bar. */
+    %hook SBDashBoardViewController
+
+    - (UIStatusBar *)_createFakeStatusBar {
+        if (manager.enabledMode == HomescreenMode)
+            return %orig;
+
+        UIStatusBar *orig = %orig;
+
+        SAColorInfo *info = manager.colorInfo;
+        if (info)
+            orig.foregroundColor = info.textColor;
+
+        return orig;
+    }
+
+    %end
+    // ---
+%end
+
+
+// Lockscreen ("NC pulldown")
+%hook SBCoverSheetPrimarySlidingViewController
+%property (nonatomic, retain) SAViewController *canvasNormalViewController;
+%property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
+
+%group newiOS11
+- (void)_createFadeOutWallpaperEffectView {
+    %orig;
+
+    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView manager:manager];
+}
+%end
+
+%group wallpaperEffectView_newiOS11
+- (void)_createPanelWallpaperEffectViewIfNeeded {
+    %orig;
+
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
+}
+%end
+
+%group wallpaperEffectView_oldiOS11
+- (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
+    %orig;
+
+    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
+}
+%end
+%end
+// ---
+
+
+/* Homescreen down below */
 %group SBIconViewMap_iOS12
 %hook SBIconViewMap
 %property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
 %end
 %end
 
+
+
+%group Homescreen
+    /* Homescreen app labels */
+    %hook SBIconViewMap
+
+    - (void)_recycleIconView:(SBIconView *)iconView {
+        %orig;
+
+        if (manager.enabledMode != LockscreenMode) {
+            iconView.legibilitySettings = self.legibilitySettings;
+            [iconView _updateLabel];
+        }
+    }
+
+    %end
+    // ---
+%end
 
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
@@ -276,36 +368,29 @@
 %end
 
 
-// Lockscreen ("NC pulldown")
-%hook SBCoverSheetPrimarySlidingViewController
-%property (nonatomic, retain) SAViewController *canvasNormalViewController;
-%property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
+static void initLockscreen() {
+    %init(Lockscreen);
 
-%group newiOS11
-- (void)_createFadeOutWallpaperEffectView {
-    %orig;
+    if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
+        %init(newiOS11);
 
-    self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView manager:manager];
+    if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded)])
+        %init(wallpaperEffectView_newiOS11);
+    else
+        %init(wallpaperEffectView_oldiOS11);
 }
-%end
 
-%group wallpaperEffectView_newiOS11
-- (void)_createPanelWallpaperEffectViewIfNeeded {
-    %orig;
+static void initHomescreen() {
+    %init(Homescreen);
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
+    if (%c(SBHomeScreenBackdropView))
+        %init(SwitcherBackdrop_iOS12);
+    else
+        %init(SwitcherBackdrop_iOS11);
+
+    if (![%c(SBIconViewMap) instancesRespondToSelector:@selector(legibilitySettings)])
+        %init(SBIconViewMap_iOS12);
 }
-%end
-
-%group wallpaperEffectView_oldiOS11
-- (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
-    %orig;
-
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView manager:manager];
-}
-%end
-%end
-
 
 %ctor {
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
@@ -322,20 +407,19 @@
         %init(SpringBoard);
         %init;
 
-        if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
-            %init(newiOS11);
+        if (manager.enabledMode != BothMode) {
+            %init(NotBoth);
 
-        if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded)])
-            %init(wallpaperEffectView_newiOS11);
-        else
-            %init(wallpaperEffectView_oldiOS11);
+            /* Enable lockscreen? */
+            if (manager.enabledMode != HomescreenMode)
+                initLockscreen();
 
-        if (%c(SBHomeScreenBackdropView))
-            %init(SwitcherBackdrop_iOS12);
-        else
-            %init(SwitcherBackdrop_iOS11);
-
-        if (![%c(SBIconViewMap) instancesRespondToSelector:@selector(legibilitySettings)])
-            %init(SBIconViewMap_iOS12);
+            /* Enable homescreen? */
+            if (manager.enabledMode != LockscreenMode)
+                initHomescreen();
+        } else {
+            initLockscreen();
+            initHomescreen();
+        }
     }
 }
