@@ -45,6 +45,22 @@
     }
 }
 
+- (void)setEnabled:(BOOL)enabled forSpecifier:(PSSpecifier *)specifier {
+	NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
+    UITableViewCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
+    if (cell) {
+        cell.userInteractionEnabled = enabled;
+        cell.textLabel.enabled = enabled;
+        cell.detailTextLabel.enabled = enabled;
+        
+        if ([cell isKindOfClass:[PSControlTableCell class]]) {
+            PSControlTableCell *controlCell = (PSControlTableCell *)cell;
+            if (controlCell.control)
+                controlCell.control.enabled = enabled;
+        }
+    }
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 

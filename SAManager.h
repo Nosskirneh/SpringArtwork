@@ -7,6 +7,12 @@ typedef enum Mode {
     Artwork
 } Mode;
 
+typedef enum ArtworkBackgroundMode {
+    AutoColor,
+    Blurred,
+    StaticColor
+} ArtworkBackgroundMode;
+
 typedef enum UIImpactFeedbackStyle : NSInteger {
     UIImpactFeedbackStyleHeavy,
     UIImpactFeedbackStyleLight,

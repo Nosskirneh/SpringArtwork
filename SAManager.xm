@@ -25,12 +25,6 @@ extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 
-typedef enum ArtworkBackgroundMode {
-    Color,
-    Blurred,
-    BlackBars
-} ArtworkBackgroundMode;
-
 @implementation SAManager {
     int _notifyTokenForDidChangeDisplayStatus;
     BOOL _manuallyPaused;
@@ -93,7 +87,7 @@ typedef enum ArtworkBackgroundMode {
     // TODO:
     // Read these from preferences
     _enabledMode = BothMode;
-    _artworkBackgroundMode = Color;
+    _artworkBackgroundMode = AutoColor;
 }
 
 - (BOOL)isCanvasActive {
@@ -375,7 +369,7 @@ typedef enum ArtworkBackgroundMode {
 }
 
 - (BOOL)useBackgroundColor {
-    return !_canvasURL && _artworkBackgroundMode == Color;
+    return !_canvasURL && _artworkBackgroundMode == AutoColor;
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {

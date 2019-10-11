@@ -63,6 +63,8 @@
         </dict>
 
         <dict>
+            <key>id</key>
+            <string>staticColor</string>
             <key>cell</key>
             <string>PSLinkCell</string>
             <key>cellClass</key>
