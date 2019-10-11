@@ -280,13 +280,16 @@
 
     %end
     // ---
+
+    %hook SBCoverSheetPrimarySlidingViewController
+    %property (nonatomic, retain) SAViewController *canvasNormalViewController;
+    %property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
+    %end
 %end
 
 
 /* Lockscreen ("NC pulldown") */
 %hook SBCoverSheetPrimarySlidingViewController
-%property (nonatomic, retain) SAViewController *canvasNormalViewController;
-%property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
 
 %group newiOS11
 - (void)_createFadeOutWallpaperEffectView {
