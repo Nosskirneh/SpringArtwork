@@ -3,6 +3,7 @@
 #import "SADockViewController.h"
 #import "SAManager.h"
 #import "Common.h"
+#import <AVFoundation/AVAsset.h>
 
 
 %group Spotify
@@ -49,12 +50,22 @@
     %hook SPTNowPlayingBarContainerViewController
 
     - (void)setCurrentTrack:(SPTPlayerTrack *)track {
-        NSURL *localURL = nil;  
         if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
-            localURL = [getVideoURLAssetLoader() localURLForAssetURL:canvasURL];
+            SPTVideoURLAssetLoaderImplementation *assetLoader = getVideoURLAssetLoader();
+
+            if ([assetLoader hasLocalAssetForURL:canvasURL]) {
+                sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
+            } else {
+                // The compiler doesn't like when I specify AVURLAsset * as type for some reason...
+                [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:NO completion:^(id asset) {
+                    sendCanvasURL(((AVURLAsset *)asset).URL);
+                }];
+            }
+
+        } else {
+            sendCanvasURL(nil);
         }
-        sendCanvasURL(localURL);
         %orig;
     }
 

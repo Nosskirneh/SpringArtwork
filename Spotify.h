@@ -12,6 +12,8 @@
 
 @interface SPTVideoURLAssetLoaderImplementation : NSObject
 - (NSURL *)localURLForAssetURL:(NSURL *)url;
+- (void)loadAssetWithURL:(id)arg1 onlyOnWifi:(BOOL)arg2 completion:(id)arg3;
+- (BOOL)hasLocalAssetForURL:(id)arg1;
 @end
 
 @interface SPTNetworkServiceImplementation : NSObject<SPTService>
