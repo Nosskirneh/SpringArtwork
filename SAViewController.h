@@ -12,6 +12,7 @@
 - (void)togglePlayPauseWithState:(BOOL)playState;
 - (void)togglePlayPause;
 - (void)artworkUpdated:(id)manager;
+- (void)updateArtworkWidthPercentage:(int)percentage;
 @end
 
 

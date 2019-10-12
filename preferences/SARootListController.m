@@ -15,6 +15,10 @@
 @property (nonatomic, strong) UIAlertController *giveawayAlertController;
 @end
 
+@interface PSSegmentTableCell : PSControlTableCell 
+- (void)setValue:(id)value;
+@end
+
 @implementation SARootListController
 
 - (id)init {
@@ -64,6 +68,39 @@
 
 - (void)trial {
     trial(licensePath$bs(), package$bs(), self);
+}
+
+- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
+    NSString *key = [specifier propertyForKey:kKey];
+    if ([key isEqualToString:kEnabledMode]) {
+        UIAlertAction *respringAction = [UIAlertAction actionWithTitle:@"Yes"
+                                                                 style:UIAlertActionStyleDestructive
+                                                               handler:^(UIAlertAction *action) {
+                                            [super setPreferenceValue:value specifier:specifier];
+                                            respring(NO);
+                                        }];
+
+        UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"I'll respring later"
+                                                              style:UIAlertActionStyleDestructive
+                                                            handler:nil];
+
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Revert change"
+                                                                 style:UIAlertActionStyleCancel
+                                                               handler:^(UIAlertAction *action) {
+                                            NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
+                                            PSSegmentTableCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
+
+                                            NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+                                            EnabledMode mode = preferences && preferences[kEnabledMode] ? (EnabledMode)[preferences[kEnabledMode] intValue] :
+                                                                                                          BothMode;
+                                            [cell setValue:@(mode)];
+                                        }];
+        [super presentAlertWithTitle:@"Restart of SpringBoard"
+                             message:@"Changing this setting requires SpringBoard to be restarted. Do you wish to proceed?"
+                             actions:@[respringAction, cancelAction, laterAction]];
+        return;
+    }
+    [super setPreferenceValue:value specifier:specifier];
 }
 
 - (void)viewDidLoad {

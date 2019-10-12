@@ -24,8 +24,15 @@
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:kCanvasEnabled])
-        [super setEnabled:[value boolValue] forSpecifiersAfterSpecifier:specifier];
+    if ([key isEqualToString:kCanvasEnabled]) {
+        BOOL enableCanvas = [value boolValue];
+        [super setEnabled:enableCanvas forSpecifiersAfterSpecifier:specifier];
+
+        if (enableCanvas) {
+            [super presentOKAlertWithTitle:@"Restart of Spotify"
+                                   message:@"If Spotify was opened with this setting disabled, the app must be restarted for it to take effect."];
+        }
+    }
 
     [super setPreferenceValue:value specifier:specifier];
 }

@@ -1,17 +1,6 @@
 #import "SAImageHelper.h"
 #import "SpringBoard.h"
-
-typedef enum Mode {
-    None,
-    Canvas,
-    Artwork
-} Mode;
-
-typedef enum ArtworkBackgroundMode {
-    MatchingColor,
-    Blurred,
-    StaticColor
-} ArtworkBackgroundMode;
+#import "SettingsKeys.h"
 
 typedef enum UIImpactFeedbackStyle : NSInteger {
     UIImpactFeedbackStyleHeavy,
@@ -29,12 +18,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)_videoEnded;
 @end
 
-typedef enum EnabledMode {
-    BothMode,
-    LockscreenMode,
-    HomescreenMode
-} EnabledMode;
-
 @interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
@@ -46,7 +29,11 @@ typedef enum EnabledMode {
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
 @property (nonatomic, retain) SAViewController *inChargeController;
 @property (nonatomic, assign) BOOL isSharedWallpaper;
-- (void)setup;
+
+/* Settings properties */
+@property (nonatomic, assign, readonly) int artworkWidthPercentage;
+
+- (void)setupWithPreferences:(NSDictionary *)preferences;
 - (void)togglePlayManually;
 - (void)loadHaptic;
 /* isDirty marks that there has been a change of canvasURL,

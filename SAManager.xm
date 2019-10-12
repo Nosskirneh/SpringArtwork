@@ -11,6 +11,7 @@
 #import "PlaceholderImages.h"
 #import <AVFoundation/AVAsset.h>
 #import <AVFoundation/AVAssetImageGenerator.h>
+#import <libcolorpicker.h>
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -21,12 +22,18 @@
 + (NSValue *)valueWithCMTime:(CMTime)time;
 @end
 
+@interface CPDistributedMessagingCenter (Missing)
+- (void)unregisterForMessageName:(NSString *)name;
+@end
+
 extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 
 @implementation SAManager {
+    CPDistributedMessagingCenter *_rbs_center;
     int _notifyTokenForDidChangeDisplayStatus;
+
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
@@ -54,40 +61,41 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     Mode _mode;
     Mode _previousMode;
 
-    ArtworkBackgroundMode _artworkBackgroundMode;
-
     NSMutableArray *_viewControllers;
     UIImage *_placeholderImage;
+
+    BOOL _artworkEnabled;
+    ArtworkBackgroundMode _artworkBackgroundMode;
+    UIColor *_staticColor;
+    BOOL _canvasEnabled;
 }
 
 #pragma mark Public
 
-- (void)setup {
+- (void)setupWithPreferences:(NSDictionary *)preferences {
     _screenTurnedOn = YES;
 
-    CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
-    rocketbootstrap_distributedmessagingcenter_apply(c);
-    [c runServerOnCurrentThread];
-    [c registerForMessageName:kCanvasURLMessage target:self selector:@selector(_handleIncomingMessage:withUserInfo:)];
+    [self _fillPropertiesFromSettings:preferences];
 
+    if (_canvasEnabled)
+        [self _registerEventsForCanvasMode];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingAppChanged:)
                                                  name:kSBMediaNowPlayingAppChangedNotification
                                                object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nowPlayingChanged:)
-                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
-                                               object:nil];
-
-    [self _registerEventsForCanvasMode];
+    [self _subscribeToArtworkChanges];
 
     _viewControllers = [NSMutableArray new];
 
-    // TODO:
-    // Read these from preferences
-    _enabledMode = BothMode;
-    _artworkBackgroundMode = MatchingColor;
+    int token;
+    notify_register_dispatch(kSettingsChanged,
+        &token,
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
+        ^(int t) {
+            [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
+        });
 }
 
 - (BOOL)isCanvasActive {
@@ -123,13 +131,137 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         [vc replayVideo];
 }
 
+- (void)_fillPropertiesFromSettings:(NSDictionary *)preferences {
+    id current = preferences[kEnabledMode];
+    _enabledMode = current ? (EnabledMode)[current intValue] : BothMode;
+
+    current = preferences[kArtworkEnabled];
+    _artworkEnabled = !current || [current boolValue];
+
+    current = preferences[kArtworkBackgroundMode];
+    if (current) {
+        _artworkBackgroundMode = (ArtworkBackgroundMode)[current intValue];
+        if (_artworkBackgroundMode == StaticColor) {
+            current = preferences[kStaticColor];
+            _staticColor = current ? LCPParseColorString(current, nil) : UIColor.blackColor;
+        } else {
+            _staticColor = nil;
+        }
+    } else {
+        _artworkBackgroundMode = MatchingColor;
+    }
+
+    current = preferences[kArtworkWidthPercentage];
+    _artworkWidthPercentage = current ? [current intValue] : 100;
+
+    current = preferences[kCanvasEnabled];
+    _canvasEnabled = !current || [current boolValue];
+}
+
+- (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {
+    NSNumber *current = preferences[kArtworkEnabled];
+    if (current) {
+        BOOL artworkEnabled = [current boolValue];
+        if (artworkEnabled != _artworkEnabled) {
+            if (!artworkEnabled) {
+                _artworkIdentifier = nil;
+                _artworkImage = nil;
+                [self _unsubscribeToArtworkChanges];
+            } else {
+                [self _subscribeToArtworkChanges];
+            }
+        }
+    }
+
+    current = preferences[kCanvasEnabled];
+    if (current) {
+        BOOL canvasEnabled = [current boolValue];
+        if (canvasEnabled != _canvasEnabled) {
+            if (!canvasEnabled) {
+                _previousSpotifyURL = _canvasURL;
+                _previousSpotifyAsset = _canvasAsset;
+
+                _artworkImage = _canvasArtworkImage;
+                _canvasURL = nil;
+                _canvasAsset = nil;
+                _canvasThumbnail = nil;
+                _canvasArtworkImage = nil;
+                _colorInfo = [SAImageHelper colorsForImage:_artworkImage];
+
+                if (_mode == Canvas) {
+                    _mode = Artwork;
+                    _previousMode = Canvas;
+                }
+                [self _unregisterEventsForCanvasMode];
+            } else {
+                if (_previousSpotifyURL) {
+                    _canvasURL = _previousSpotifyURL;
+                    _canvasAsset = _previousSpotifyAsset;
+                    _canvasArtworkImage = _artworkImage;
+
+                    _mode = Canvas;
+                    _previousMode = Artwork;
+                }
+                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                    [self _registerEventsForCanvasMode];
+                });
+            }
+        }
+    }
+
+    current = preferences[kArtworkWidthPercentage];
+    if (current) {
+        int artworkWidthPercentage = [current intValue];
+        if (artworkWidthPercentage != _artworkWidthPercentage) {
+            for (SAViewController *vc in _viewControllers)
+                [vc updateArtworkWidthPercentage:artworkWidthPercentage];
+        }
+    }
+
+    [self _fillPropertiesFromSettings:preferences];
+    [self _sendUpdateArtworkEvent:YES];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [self _overrideLabels];
+    });
+}
+
+- (void)_subscribeToArtworkChanges {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_nowPlayingChanged:)
+                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
+                                               object:nil];
+}
+
+- (void)_unsubscribeToArtworkChanges {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
+                                                  object:nil];
+}
+
 - (void)_registerEventsForCanvasMode {
+    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
+    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
+    [_rbs_center runServerOnCurrentThread];
+    [_rbs_center registerForMessageName:kCanvasURLMessage target:self selector:@selector(_handleIncomingMessage:withUserInfo:)];
+
     [self _registerScreenEvent];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_currentAppChanged:)
                                                  name:kSBApplicationProcessStateDidChange
                                                object:nil];
+}
+
+- (void)_unregisterEventsForCanvasMode {
+    [_rbs_center unregisterForMessageName:kCanvasURLMessage];
+    [_rbs_center stopServer];
+    _rbs_center = nil;
+
+    [self _unregisterScreenEvent];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:kSBApplicationProcessStateDidChange
+                                                  object:nil];
 }
 
 - (BOOL)_registerScreenEvent {
@@ -150,6 +282,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
        });
 
     return result == NOTIFY_STATUS_OK;
+}
+
+- (BOOL)_unregisterScreenEvent {
+    return notify_cancel(_notifyTokenForDidChangeDisplayStatus) == NOTIFY_STATUS_OK;
 }
 
 - (void)_setCanvasPlayPauseState:(BOOL)newState {
@@ -252,6 +388,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_nowPlayingChanged:(NSNotification *)notification {
+    // Reset these on track change
+    _previousSpotifyURL = nil;
+    _previousSpotifyAsset = nil;
+
     NSDictionary *userInfo = notification.userInfo;
 
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
@@ -285,7 +425,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                                                                  size:CGSizeMake(width, width)];
             [request onCompletion:^void(UIImage *image) {
                 if (!image) {
+                    #ifdef DEBUG
                     HBLogError(@"No artwork for this track!");
+                    #endif
                     return;
                 }
 
@@ -298,16 +440,19 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 if (_canvasURL) {
                     _canvasArtworkImage = image;
                     return;
-                } else if (_canvasArtworkImage && [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
+                }
+
+                _trackIdentifier = trackIdentifier;
+                // Using _mode and not _previousMode as we haven't updated it yet
+                if (_mode == Canvas && _canvasArtworkImage && [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
                     return;
+
+                [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
 
                 if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
                     [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
                     return [self _updateArtworkWithImage:_artworkImage];
                 }
-
-                [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
-                _trackIdentifier = trackIdentifier;
 
                 [self _updateArtworkWithImage:image];
                 _artworkIdentifier = artworkIdentifier;
@@ -344,7 +489,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         if (result == AVAssetImageGeneratorSucceeded) {
             completion([UIImage imageWithCGImage:cgImage]);
         } else {
+            #ifdef DEBUG
             HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
+            #endif
             completion(nil);
         }
     }];

@@ -424,8 +424,10 @@ static void initHomescreen() {
 
 %ctor {
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
+    NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
 
-    if ([bundleID isEqualToString:kSpotifyBundleID]) {
+    if ([bundleID isEqualToString:kSpotifyBundleID] &&
+        (!preferences[kCanvasEnabled] || [preferences[kCanvasEnabled] boolValue])) {
         %init(Spotify);
     } else {
         // if (fromUntrustedSource(package$bs()))
@@ -433,7 +435,7 @@ static void initHomescreen() {
 
         manager = [[SAManager alloc] init];
 
-        [manager setup];
+        [manager setupWithPreferences:preferences];
         %init(SpringBoard);
         %init;
 

@@ -1,5 +1,4 @@
 #import "SASettingsListController.h"
-#import "../SAManager.h"
 
 
 @interface SAArtworkListController : SASettingsListController

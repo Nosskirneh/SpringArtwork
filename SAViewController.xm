@@ -38,10 +38,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
         _artworkContainer = [[UIView alloc] initWithFrame:self.view.frame];
 
-        CGRect imageViewFrame = self.view.frame;
-        imageViewFrame.size.height = imageViewFrame.size.width;
-        imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
-        _artworkImageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
+        _artworkImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        [self updateArtworkWidthPercentage:manager.artworkWidthPercentage];
         _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
         [_artworkContainer addSubview:_artworkImageView];
 
@@ -112,6 +110,17 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [player play];
     else
         [player pause];
+}
+
+- (void)updateArtworkWidthPercentage:(int)percentage {
+    CGRect imageViewFrame = self.view.frame;
+    if (percentage != 100) {
+        float floatPercentage = percentage / 100.0;
+        imageViewFrame.size.width *= floatPercentage;
+    }
+    imageViewFrame.size.height = imageViewFrame.size.width;
+    imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
+    _artworkImageView.frame = imageViewFrame;
 }
 
 - (void)artworkUpdated:(SAManager *)manager {

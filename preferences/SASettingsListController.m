@@ -4,18 +4,6 @@
 
 @implementation SASettingsListController
 
-- (id)init {
-    if (self == [super init]) {
-        UIBarButtonItem *respringButton = [[UIBarButtonItem alloc] initWithTitle:@"Respring"
-                                                                           style:UIBarButtonItemStylePlain
-                                                                          target:self
-                                                                          action:@selector(respring)];
-        self.navigationItem.rightBarButtonItem = respringButton;
-    }
-
-    return self;
-}
-
 - (void)respring {
     respring(NO);
 }
@@ -67,6 +55,29 @@
     long long index = [self indexOfSpecifier:specifier];
     for (int i = index + 1; i < _specifiers.count; i++)
         [self setEnabled:enabled forSpecifier:_specifiers[i]];
+}
+
+- (void)presentOKAlertWithTitle:(NSString *)title message:(NSString *)message {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"OK"
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:nil];
+    [alert addAction:defaultAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)presentAlertWithTitle:(NSString *)title message:(NSString *)message actions:(NSArray<UIAlertAction *> *)actions {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    if (actions) {
+        for (UIAlertAction *action in actions)
+            [alert addAction:action];
+    }
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {

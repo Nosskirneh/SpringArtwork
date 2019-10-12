@@ -16,7 +16,7 @@
             <key>label</key>
             <string>Enabled</string>
             <key>PostNotification</key>
-            <string>se.nosskirneh.springartwork/preferencesChanged</string>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
 
@@ -79,7 +79,7 @@
                 <key>alpha</key>
                 <false/>
                 <key>PostNotification</key>
-                <string>se.nosskirneh.springartwork/preferencesChanged</string>
+                <string>se.nosskirneh.springartwork/settingsChanged</string>
             </dict>
             <key>label</key>
             <string>Static color</string>
@@ -105,7 +105,7 @@
             <key>isSegmented</key>
             <true/>
             <key>segmentCount</key>
-            <integer>10</integer>
+            <integer>8</integer>
             <key>showValue</key>
             <true/>
             <key>min</key>

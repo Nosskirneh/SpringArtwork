@@ -1,6 +1,5 @@
 #define SAColor [UIColor colorWithRed:0.35 green:0.0 blue:0.5 alpha:1.0] // #580080E6
 #define SA_IDENTIFIER @"se.nosskirneh.springartwork"
-#define kPrefChanged [NSString stringWithFormat:@"%@/preferencesChanged", SA_IDENTIFIER]
 #define kPrefPath [NSString stringWithFormat:@"%@/Library/Preferences/%@.plist", NSHomeDirectory(), SA_IDENTIFIER]
 
 
@@ -10,7 +9,28 @@
 #define kDefault @"default"
 #define kCell @"cell"
 
+
+typedef enum EnabledMode {
+    BothMode,
+    LockscreenMode,
+    HomescreenMode
+} EnabledMode;
+
+typedef enum Mode {
+    None,
+    Canvas,
+    Artwork
+} Mode;
+
+typedef enum ArtworkBackgroundMode {
+    MatchingColor,
+    Blurred,
+    StaticColor
+} ArtworkBackgroundMode;
+
+
 extern const char *kSpotifySettingsChanged;
+extern const char *kSettingsChanged;
 
 // General
 extern NSString *const kEnabledMode;

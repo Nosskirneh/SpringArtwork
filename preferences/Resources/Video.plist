@@ -16,7 +16,7 @@
             <key>label</key>
             <string>Enabled</string>
             <key>PostNotification</key>
-            <string>se.nosskirneh.springartwork/preferencesChanged</string>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
 
@@ -29,7 +29,7 @@
             <string>By default, Spotfiy only downloads the video when having the player visible.
 
 Enabled: If the video is not already downloaded, only download it on WiFi.
-Disabled: Always download video artwork.
+Disabled: Always download video artwork. Normal artwork will be used as fallback if enabled.
             </string>
         </dict>
 
