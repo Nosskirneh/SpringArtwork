@@ -149,6 +149,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         }
     } else {
         _artworkBackgroundMode = MatchingColor;
+        _staticColor = nil;
     }
 
     current = preferences[kArtworkWidthPercentage];
