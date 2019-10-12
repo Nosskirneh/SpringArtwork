@@ -80,11 +80,7 @@
                                             respring(NO);
                                         }];
 
-        UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"I'll respring later"
-                                                              style:UIAlertActionStyleDestructive
-                                                            handler:nil];
-
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Revert change"
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"No, revert change"
                                                                  style:UIAlertActionStyleCancel
                                                                handler:^(UIAlertAction *action) {
                                             NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
@@ -95,6 +91,10 @@
                                                                                                           BothMode;
                                             [cell setValue:@(mode)];
                                         }];
+
+        UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"No, I'll respring later"
+                                                              style:UIAlertActionStyleDefault
+                                                            handler:nil];
         [super presentAlertWithTitle:@"Restart of SpringBoard"
                              message:@"Changing this setting requires SpringBoard to be restarted. Do you wish to proceed?"
                              actions:@[respringAction, cancelAction, laterAction]];
