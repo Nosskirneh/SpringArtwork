@@ -116,7 +116,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     CGRect imageViewFrame = self.view.frame;
     if (percentage != 100) {
         float floatPercentage = percentage / 100.0;
-        imageViewFrame.size.width *= floatPercentage;
+        float difference = imageViewFrame.size.width * floatPercentage;
+        imageViewFrame.size.width -= difference;
+        imageViewFrame.origin.x += difference / 2.0;
     }
     imageViewFrame.size.height = imageViewFrame.size.width;
     imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
