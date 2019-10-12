@@ -48,7 +48,7 @@
             <key>validTitles</key>
             <array>
                 <string>Matching color</string>
-                <string>Blurred</string>
+                <string>Blurred image</string>
                 <string>Static color</string>
             </array>
             <key>validValues</key>

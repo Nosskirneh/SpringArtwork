@@ -24,7 +24,7 @@ typedef enum Mode {
 
 typedef enum ArtworkBackgroundMode {
     MatchingColor,
-    Blurred,
+    BlurredImage,
     StaticColor
 } ArtworkBackgroundMode;
 

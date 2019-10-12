@@ -526,7 +526,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             _colorInfo = [SAImageHelper colorsForImage:image];
 
-            if (NO/*blurMode*/) // TODO: Add settings for this
+            if (_artworkBackgroundMode == BlurredImage)
                 _blurredImage = [self _blurredImage:image];
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
