@@ -190,7 +190,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 _canvasAsset = nil;
                 _canvasThumbnail = nil;
                 _canvasArtworkImage = nil;
-                _colorInfo = [SAImageHelper colorsForImage:_artworkImage];
+                [self _getColorInfoWithStaticColorForImage:_artworkImage];
 
                 if (_mode == Canvas) {
                     _mode = Artwork;
@@ -225,6 +225,13 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         int artworkYOffsetPercentage = [current intValue];
         if (!updateArtworkFrames)
             updateArtworkFrames = artworkYOffsetPercentage != _artworkWidthPercentage;
+    }
+
+    current = preferences[kArtworkBackgroundMode];
+    if (current) {
+        ArtworkBackgroundMode artworkBackgroundMode = (ArtworkBackgroundMode)[current intValue];
+        if (artworkBackgroundMode != _artworkBackgroundMode)
+            _blurredImage = nil;
     }
 
     [self _fillPropertiesFromSettings:preferences];
@@ -536,7 +543,14 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (BOOL)useBackgroundColor {
-    return !_canvasURL && _artworkBackgroundMode == MatchingColor;
+    return !_canvasURL && _artworkBackgroundMode != BlurredImage;
+}
+
+- (void)_getColorInfoWithStaticColorForImage:(UIImage *)image {
+    UIColor *staticColor = _artworkBackgroundMode == StaticColor ?
+                           _staticColor : nil;
+    _colorInfo = [SAImageHelper colorsForImage:_artworkImage
+                     withStaticBackgroundColor:staticColor];
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
@@ -544,7 +558,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
     if (image) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            _colorInfo = [SAImageHelper colorsForImage:image];
+            [self _getColorInfoWithStaticColorForImage:image];
 
             if (_artworkBackgroundMode == BlurredImage)
                 _blurredImage = [self _blurredImage:image];

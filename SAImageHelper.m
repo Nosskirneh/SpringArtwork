@@ -52,6 +52,11 @@ typedef union {
 @implementation SAImageHelper
 
 + (SAColorInfo *)colorsForImage:(UIImage *)image {
+    return [self colorsForImage:image withStaticBackgroundColor:nil];
+}
+
++ (SAColorInfo *)colorsForImage:(UIImage *)image
+      withStaticBackgroundColor:(UIColor *)staticBackgroundColor {
     const float dimension = 10;
     const float flexibility = 2;
     const float range = 60;
@@ -64,7 +69,8 @@ typedef union {
     NSUInteger bytesPerPixel = 4;
     NSUInteger bytesPerRow = bytesPerPixel * dimension;
     NSUInteger bitsPerComponent = 8;
-    CGContextRef context = CGBitmapContextCreate(rawData, dimension, dimension, bitsPerComponent, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextRef context = CGBitmapContextCreate(rawData, dimension, dimension, bitsPerComponent, bytesPerRow,
+                                                 colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(colorSpace);
     CGContextDrawImage(context, CGRectMake(0, 0, dimension, dimension), imageRef);
     CGContextRelease(context);
@@ -196,7 +202,7 @@ typedef union {
         [colorArray addObject:color];
     }
 
-    UIColor *backgroundColor = colorArray[0];
+    UIColor *backgroundColor = staticBackgroundColor ? staticBackgroundColor : colorArray[0];
     UIColor *primaryColor = nil;
     UIColor *secondaryColor = nil;
     if (colorArray.count > 1) {

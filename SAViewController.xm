@@ -38,16 +38,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
         _artworkContainer = [[UIView alloc] initWithFrame:self.view.frame];
 
+        _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
+        _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
+        [_artworkContainer addSubview:_backgroundArtworkImageView];
+
         _artworkImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
         [self updateArtworkWidthPercentage:manager.artworkWidthPercentage
                          yOffsetPercentage:manager.artworkYOffsetPercentage];
         _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
         [_artworkContainer addSubview:_artworkImageView];
-
-        _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
-        _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
-        _backgroundArtworkImageView.layer.opacity = 0.0;
-        [_artworkContainer addSubview:_backgroundArtworkImageView];
 
         _canvasContainerImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
         _canvasContainerImageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -212,7 +211,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     // Not already visible, so we don't need to animate the image change, just the layer
     if (changedContent || ![self _isShowingArtworkView]) {
-        [self _setArtwork:artwork blurredImage:blurredImage color:color];
+        [self _setArtwork:artwork];
+        [self _setBlurredImage:blurredImage color:color];
         [self _showArtworkViews];
     } else {
         [self _animateArtworkChange:artwork blurredImage:blurredImage color:color];
@@ -226,20 +226,30 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                       duration:ANIMATION_DURATION
                        options:UIViewAnimationOptionTransitionCrossDissolve
                     animations:^{
-            [self _setArtwork:artwork blurredImage:blurredImage color:color];
-        }
-        completion:nil
-    ];
+                        [self _setArtwork:artwork];
+                    }
+                    completion:nil];
+
+    [UIView transitionWithView:_backgroundArtworkImageView
+                      duration:ANIMATION_DURATION
+                       options:UIViewAnimationOptionTransitionCrossDissolve
+                    animations:^{
+                        [self _setBlurredImage:blurredImage color:color];
+                    }
+                    completion:nil];
 }
 
-- (void)_setArtwork:(UIImage *)artwork
-       blurredImage:(UIImage *)blurredImage
-              color:(UIColor *)color {
-    _artworkImageView.image = artwork;
+- (void)_setBlurredImage:(UIImage *)blurredImage color:(UIColor *)color {
     if (blurredImage)
         _backgroundArtworkImageView.image = blurredImage;
-    else if (color)
-        _artworkContainer.backgroundColor = color;
+    else if (color) {
+        _backgroundArtworkImageView.image = nil;
+        _backgroundArtworkImageView.backgroundColor = color;
+    }
+}
+
+- (void)_setArtwork:(UIImage *)artwork {
+    _artworkImageView.image = artwork;
 }
 
 - (BOOL)_isShowingArtworkView {

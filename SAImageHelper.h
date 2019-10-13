@@ -8,6 +8,8 @@
 
 @interface SAImageHelper : NSObject
 + (SAColorInfo *)colorsForImage:(UIImage *)image;
++ (SAColorInfo *)colorsForImage:(UIImage *)image
+      withStaticBackgroundColor:(UIColor *)staticBackgroundColor;
 + (BOOL)colorIsLight:(UIColor *)color;
 + (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second;
 + (NSString *)imageToString:(UIImage *)image;

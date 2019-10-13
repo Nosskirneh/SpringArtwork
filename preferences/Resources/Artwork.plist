@@ -47,18 +47,20 @@
             <string>artworkBackgroundMode</string>
             <key>validTitles</key>
             <array>
-                <string>Matching color</string>
                 <string>Blurred image</string>
+                <string>Matching color</string>
                 <string>Static color</string>
             </array>
             <key>validValues</key>
             <array>
-                <string>0</string>
                 <string>1</string>
+                <string>0</string>
                 <string>2</string>
             </array>
             <key>default</key>
-            <string>1</string>
+            <string>0</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
         <dict>
