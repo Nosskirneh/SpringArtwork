@@ -220,12 +220,14 @@
 - (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
     %orig;
 
+    if (!manager.isSharedWallpaper)
+        return;
+
     // Show when returning from LS?
-    if (manager.isSharedWallpaper &&
-        manager.enabledMode == HomescreenMode &&
-        fromLockscreen) {
+    if (manager.enabledMode == HomescreenMode && fromLockscreen)
         manager.inChargeController.view.hidden = NO;
-    }
+    else if (manager.enabledMode == LockscreenMode && fromLockscreen)
+        manager.inChargeController.view.hidden = YES;
 }
 
 %end
