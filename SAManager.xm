@@ -260,7 +260,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
     rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
     [_rbs_center runServerOnCurrentThread];
-    [_rbs_center registerForMessageName:kCanvasURLMessage target:self selector:@selector(_handleIncomingMessage:withUserInfo:)];
+    [_rbs_center registerForMessageName:kCanvasURLMessage
+                                 target:self
+                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
 
     [self _registerScreenEvent];
     
