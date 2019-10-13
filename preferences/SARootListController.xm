@@ -88,7 +88,9 @@
 
         UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"No, I'll respring later"
                                                               style:UIAlertActionStyleDefault
-                                                            handler:nil];
+                                                            handler:^(UIAlertAction *action) {
+                                            [super setPreferenceValue:value specifier:specifier];
+                                        }];
         [super presentAlertWithTitle:@"Restart of SpringBoard"
                              message:@"Changing this setting requires SpringBoard to be restarted. Do you wish to proceed?"
                              actions:@[respringAction, cancelAction, laterAction]];
