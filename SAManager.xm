@@ -135,19 +135,12 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     [self _unregisterEventsForCanvasMode];
     notify_cancel(_notifyTokenForSettingsChanged);
 
-    _mode = None;
-    _previousMode = None;
-
-    _colorInfo = nil;
-    _artworkImage = nil;
-    _blurredImage = nil;
+    [self _setModeToNone];
     _placeholderImage = nil;
 
     _previousSpotifyURL = nil;
     _previousSpotifyAsset = nil;
 
-    _canvasURL = nil;
-    _canvasAsset = nil;
     _canvasThumbnail = nil;
     _canvasArtworkImage = nil;
 
@@ -439,11 +432,12 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
-    HBLogDebug(@"bundleID: %@", bundleID);
 
-    if (!bundleID)
+    if (!bundleID) {
+        [self _setModeToNone];
+        [self _checkForStoreSpotifyConnectIssue:bundleID];
         [self _revertLabels];
-    else if ([_disabledApps containsObject:bundleID])
+    } else if ([_disabledApps containsObject:bundleID])
         [self _unsubscribeToArtworkChanges];
     else {
         [self _subscribeToArtworkChanges];
@@ -451,14 +445,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
             _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
             [self _checkForRestoreSpotifyConnectIssue];
         } else {
-            [self _checkForStoreSpotifyConnectIssue:bundleID];
-
-            _mode = None;
-            _previousMode = None;
-
-            _canvasURL = nil;
-            _canvasAsset = nil;
-
+            [self _setModeToNone];
             [self _sendUpdateArtworkEvent:NO];
 
             if ([bundleID isEqualToString:kDeezerBundleID])
@@ -468,6 +455,21 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         }
     }
     _bundleID = bundleID;
+}
+
+- (void)_setModeToNone {
+    _mode = None;
+    _previousMode = None;
+
+    _canvasURL = nil;
+    _canvasAsset = nil;
+
+    _colorInfo = nil;
+    _artworkImage = nil;
+    _blurredImage = nil;
+
+    _artworkIdentifier = nil;
+    _trackIdentifier = nil;
 }
 
 - (void)_nowPlayingChanged:(NSNotification *)notification {
