@@ -16,7 +16,7 @@
 - (void)togglePlayPause;
 - (void)artworkUpdated:(id)manager;
 - (void)updateArtworkWidthPercentage:(int)percentage
-				yOffsetPercentage:(int)yOffsetPercentage;
+				   yOffsetPercentage:(int)yOffsetPercentage;
 @end
 
 
