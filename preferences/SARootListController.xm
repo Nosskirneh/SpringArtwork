@@ -6,6 +6,7 @@
 #import "../../DRM/PFStatusBarAlert/PFStatusBarAlert.h"
 #import "../../TwitterStuff/Prompt.h"
 #import "../SettingsKeys.h"
+#import <substrate.h>
 
 
 @interface SARootListController : SASettingsListController <PFStatusBarAlertDelegate, DRMDelegate>
@@ -15,8 +16,12 @@
 @property (nonatomic, strong) UIAlertController *giveawayAlertController;
 @end
 
+@interface UISegmentedControl (Missing)
+- (void)selectSegment:(int)index;
+@end
+
 @interface PSSegmentTableCell : PSControlTableCell 
-- (void)setValue:(id)value;
+@property (retain) UISegmentedControl *control;
 @end
 
 @implementation SARootListController
@@ -27,7 +32,8 @@
 
     // Add license specifier
     NSMutableArray *mspecs = (NSMutableArray *)[_specifiers mutableCopy];
-    _specifiers = addDRMSpecifiers(mspecs, self, licensePath$bs(), kPrefPath, package$bs(), licenseFooterText$bs(), trialFooterText$bs());
+    _specifiers = addDRMSpecifiers(mspecs, self, licensePath$bs(), kPrefPath,
+                                   package$bs(), licenseFooterText$bs(), trialFooterText$bs());
 
     return _specifiers;
 }
@@ -74,10 +80,10 @@
                                             NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
                                             PSSegmentTableCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
 
-                                            NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-                                            EnabledMode mode = preferences && preferences[kEnabledMode] ? (EnabledMode)[preferences[kEnabledMode] intValue] :
-                                                                                                          BothMode;
-                                            [cell setValue:@(mode)];
+                                            NSNumber *mode = [self readPreferenceValue:specifier];
+                                            int segmentIndex = [MSHookIvar<NSArray *>(cell, "_values") indexOfObject:mode];
+                                            UISegmentedControl *control = cell.control;
+                                            [control selectSegment:segmentIndex];
                                         }];
 
         UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"No, I'll respring later"
