@@ -466,7 +466,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         return;
 
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
-    if ([_artworkIdentifier isEqualToString:artworkIdentifier])
+    if (!artworkIdentifier || [_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
 
     HBLogDebug(@"trackIdentifier: %@, artworkIdentifier: %@", trackIdentifier, artworkIdentifier);
