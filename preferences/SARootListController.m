@@ -21,18 +21,6 @@
 
 @implementation SARootListController
 
-- (id)init {
-    if (self == [super init]) {
-        UIBarButtonItem *respringButton = [[UIBarButtonItem alloc] initWithTitle:@"Respring"
-                                                                           style:UIBarButtonItemStylePlain
-                                                                          target:self
-                                                                          action:@selector(respring)];
-        self.navigationItem.rightBarButtonItem = respringButton;
-    }
-
-    return self;
-}
-
 - (NSArray *)specifiers {
     if (!_specifiers)
         _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
