@@ -9,6 +9,7 @@ NSString *const kArtworkEnabled = @"artworkEnabled";
 NSString *const kArtworkBackgroundMode = @"artworkBackgroundMode";
 NSString *const kStaticColor = @"staticColor";
 NSString *const kArtworkWidthPercentage = @"artworkWidthPercentage";
+NSString *const kArtworkYOffsetPercentage = @"artworkYOffsetPercentage";
 
 // Video artwork
 NSString *const kCanvasEnabled = @"canvasEnabled";

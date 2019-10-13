@@ -96,8 +96,6 @@
         <dict>
             <key>cell</key>
             <string>PSSliderCell</string>
-            <key>label</key>
-            <string>Corner radius</string>
             <key>defaults</key>
             <string>se.nosskirneh.springartwork</string>
             <key>key</key>
@@ -114,6 +112,42 @@
             <integer>100</integer>
             <key>default</key>
             <string>100</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
+
+        <!-- Artwork y-coordinate offset -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Artwork y coordinate offset</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>Percentage of screen height in which the artwork image will be offsetted from the center of the screen. 0 % means the artwork will stay in the center of the screen. -50 % would make the artwork center be at the top of the screen, and 50 % would place it at the bottom of the screen.</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>defaults</key>
+            <string>se.nosskirneh.springartwork</string>
+            <key>key</key>
+            <string>artworkYOffsetPercentage</string>
+            <key>isSegmented</key>
+            <true/>
+            <key>segmentCount</key>
+            <integer>10</integer>
+            <key>showValue</key>
+            <true/>
+            <key>min</key>
+            <integer>-50</integer>
+            <key>max</key>
+            <integer>50</integer>
+            <key>default</key>
+            <string>0</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
     </array>
     <key>title</key>

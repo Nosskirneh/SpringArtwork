@@ -5,14 +5,18 @@
 
 @interface SAViewController : UIViewController
 - (id)initWithManager:(id)manager;
-- (id)initWithTargetView:(UIView *)targetView manager:(id)manager;
-- (id)initWithTargetView:(UIView *)targetView manager:(id)manager inCharge:(BOOL)inCharge;
+- (id)initWithTargetView:(UIView *)targetView
+				 manager:(id)manager;
+- (id)initWithTargetView:(UIView *)targetView
+				 manager:(id)manager
+				inCharge:(BOOL)inCharge;
 - (void)setTargetView:(UIView *)targetView;
 - (void)replayVideo;
 - (void)togglePlayPauseWithState:(BOOL)playState;
 - (void)togglePlayPause;
 - (void)artworkUpdated:(id)manager;
-- (void)updateArtworkWidthPercentage:(int)percentage;
+- (void)updateArtworkWidthPercentage:(int)percentage
+				yOffsetPercentage:(int)yOffsetPercentage;
 @end
 
 

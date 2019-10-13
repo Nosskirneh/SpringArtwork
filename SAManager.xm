@@ -155,6 +155,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     current = preferences[kArtworkWidthPercentage];
     _artworkWidthPercentage = current ? [current intValue] : 100;
 
+    current = preferences[kArtworkYOffsetPercentage];
+    _artworkYOffsetPercentage = current ? [current intValue] : 0;
+
     current = preferences[kCanvasEnabled];
     _canvasEnabled = !current || [current boolValue];
 }
@@ -210,20 +213,34 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         }
     }
 
+    BOOL updateArtworkFrames;
     current = preferences[kArtworkWidthPercentage];
     if (current) {
         int artworkWidthPercentage = [current intValue];
-        if (artworkWidthPercentage != _artworkWidthPercentage) {
-            for (SAViewController *vc in _viewControllers)
-                [vc updateArtworkWidthPercentage:artworkWidthPercentage];
-        }
+        updateArtworkFrames = artworkWidthPercentage != _artworkWidthPercentage;
+    }
+
+    current = preferences[kArtworkYOffsetPercentage];
+    if (current) {
+        int artworkYOffsetPercentage = [current intValue];
+        if (!updateArtworkFrames)
+            updateArtworkFrames = artworkYOffsetPercentage != _artworkWidthPercentage;
     }
 
     [self _fillPropertiesFromSettings:preferences];
+
+    if (updateArtworkFrames)
+        [self _updateArtworkFrames];
     [self _sendUpdateArtworkEvent:YES];
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [self _overrideLabels];
     });
+}
+
+- (void)_updateArtworkFrames {
+    for (SAViewController *vc in _viewControllers)
+        [vc updateArtworkWidthPercentage:_artworkWidthPercentage
+                       yOffsetPercentage:_artworkYOffsetPercentage];
 }
 
 - (void)_subscribeToArtworkChanges {

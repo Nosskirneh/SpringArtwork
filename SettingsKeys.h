@@ -40,6 +40,7 @@ extern NSString *const kArtworkEnabled;
 extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;
 extern NSString *const kArtworkWidthPercentage;
+extern NSString *const kArtworkYOffsetPercentage;
 
 // Video artwork
 extern NSString *const kCanvasEnabled;
