@@ -33,6 +33,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 @implementation SAManager {
     CPDistributedMessagingCenter *_rbs_center;
     int _notifyTokenForDidChangeDisplayStatus;
+    int _notifyTokenForSettingsChanged;
 
     BOOL _manuallyPaused;
     BOOL _playing;
@@ -89,9 +90,8 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
     _viewControllers = [NSMutableArray new];
 
-    int token;
     notify_register_dispatch(kSettingsChanged,
-        &token,
+        &_notifyTokenForSettingsChanged,
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
         ^(int t) {
             [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
@@ -122,6 +122,38 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 - (void)addNewViewController:(SAViewController *)viewController {
     [_viewControllers addObject:viewController];
+}
+
+// Destroy everything! MOHAHAHA! *evil laugh continues...*
+- (void)setTrialEnded {
+    _trialEnded = YES;
+
+    [self _unsubscribeToArtworkChanges];
+    [self _unregisterEventsForCanvasMode];
+    notify_cancel(_notifyTokenForSettingsChanged);
+
+    _mode = None;
+    _previousMode = None;
+
+    _colorInfo = nil;
+    _artworkImage = nil;
+    _blurredImage = nil;
+    _placeholderImage = nil;
+
+    _previousSpotifyURL = nil;
+    _previousSpotifyAsset = nil;
+
+    _canvasURL = nil;
+    _canvasAsset = nil;
+    _canvasThumbnail = nil;
+    _canvasArtworkImage = nil;
+
+    _artworkEnabled = NO;
+    _canvasEnabled = NO;
+
+    [self _sendUpdateArtworkEvent:NO];
+    _viewControllers = nil;
+    _inChargeController = nil;
 }
 
 #pragma mark Private

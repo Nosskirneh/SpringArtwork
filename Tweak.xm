@@ -6,6 +6,7 @@
 #import <AVFoundation/AVAsset.h>
 #import "notifyDefines.h"
 #import <notify.h>
+#import "DRMValidateOptions.mm"
 
 
 %group Spotify
@@ -400,7 +401,55 @@
 // ---
 
 
-static void initLockscreen() {
+%group PackagePirated
+%hook SBCoverSheetPresentationManager
+
+- (void)_cleanupDismissalTransition {
+    %orig;
+
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        showPiracyAlert(packageShown$bs());
+    });
+}
+
+%end
+%end
+
+
+%group Welcome
+%hook SBCoverSheetPresentationManager
+
+- (void)_cleanupDismissalTransition {
+    %orig;
+    showSpringBoardDismissAlert(packageShown$bs(), WelcomeMsg$bs());
+}
+
+%end
+%end
+
+
+%group CheckTrialEnded
+%hook SBCoverSheetPresentationManager
+
+- (void)_cleanupDismissalTransition {
+    %orig;
+
+    if (!manager.trialEnded && check_lic(licensePath$bs(), package$bs()) == CheckInvalidTrialLicense) {
+        [manager setTrialEnded];
+        showSpringBoardDismissAlert(packageShown$bs(), TrialEndedMsg$bs());
+    }
+}
+
+%end
+%end
+
+static inline void initTrial() {
+    %init(CheckTrialEnded);
+}
+
+
+static inline void initLockscreen() {
     %init(Lockscreen);
 
     if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
@@ -412,7 +461,7 @@ static void initLockscreen() {
         %init(wallpaperEffectView_oldiOS11);
 }
 
-static void initHomescreen() {
+static inline void initHomescreen() {
     %init(Homescreen);
 
     if (%c(SBHomeScreenBackdropView))
@@ -432,10 +481,30 @@ static void initHomescreen() {
         (!preferences[kCanvasEnabled] || [preferences[kCanvasEnabled] boolValue])) {
         %init(Spotify);
     } else {
-        // if (fromUntrustedSource(package$bs()))
-        //     %init(PackagePirated);
+        if (fromUntrustedSource(package$bs()))
+            %init(PackagePirated);
 
         manager = [[SAManager alloc] init];
+
+        // License check – if no license found, present message. If no valid license found, do not init
+        switch (check_lic(licensePath$bs(), package$bs())) {
+            case CheckNoLicense:
+                %init(Welcome);
+                return;
+            case CheckInvalidTrialLicense:
+                initTrial();
+                return;
+            case CheckValidTrialLicense:
+                initTrial();
+                break;
+            case CheckValidLicense:
+                break;
+            case CheckInvalidLicense:
+            case CheckUDIDsDoNotMatch:
+            default:
+                return;
+        }
+        // ---
 
         [manager setupWithPreferences:preferences];
         %init(SpringBoard);

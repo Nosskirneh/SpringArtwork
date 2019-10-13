@@ -33,6 +33,10 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 /* Settings properties */
 @property (nonatomic, assign, readonly) int artworkWidthPercentage;
 @property (nonatomic, assign, readonly) int artworkYOffsetPercentage;
+// ---
+
+@property (nonatomic, assign, readonly) BOOL trialEnded;
+- (void)setTrialEnded;
 
 - (void)setupWithPreferences:(NSDictionary *)preferences;
 - (void)togglePlayManually;
