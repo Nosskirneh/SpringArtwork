@@ -431,6 +431,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     } else {
         [self _checkForStoreSpotifyConnectIssue:bundleID];
 
+        _mode = None;
+        _previousMode = None;
+
         _canvasURL = nil;
         _canvasAsset = nil;
 
