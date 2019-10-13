@@ -35,6 +35,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     int _notifyTokenForDidChangeDisplayStatus;
     int _notifyTokenForSettingsChanged;
 
+    BOOL _subscribedToArtwork;
+    NSSet *_disabledApps;
+
     BOOL _manuallyPaused;
     BOOL _playing;
     UIImpactFeedbackGenerator *_hapticGenerator;
@@ -170,6 +173,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     current = preferences[kArtworkEnabled];
     _artworkEnabled = !current || [current boolValue];
 
+    current = preferences[kDisabledApps];
+    NSArray *disabledAppsList = current ? current : @[];
+    _disabledApps = [NSSet setWithArray:disabledAppsList];
+
     current = preferences[kArtworkBackgroundMode];
     if (current) {
         _artworkBackgroundMode = (ArtworkBackgroundMode)[current intValue];
@@ -283,6 +290,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_subscribeToArtworkChanges {
+    if (_subscribedToArtwork)
+        return;
+
+    _subscribedToArtwork = YES;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingChanged:)
                                                  name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
@@ -290,6 +301,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_unsubscribeToArtworkChanges {
+    if (!_subscribedToArtwork)
+        return;
+
+    _subscribedToArtwork = NO;
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
                                                   object:nil];
@@ -372,7 +387,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
         }];
         return;
     }
-    [self _sendUpdateArtworkEvent:YES];
+    [self _sendUpdateArtworkEvent:_canvasURL != nil];
 }
 
 - (void)_sendUpdateArtworkEvent:(BOOL)content {
@@ -425,26 +440,32 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
     HBLogDebug(@"bundleID: %@", bundleID);
-    if ([bundleID isEqualToString:kSpotifyBundleID]) {
-        _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
-        [self _checkForRestoreSpotifyConnectIssue];
-    } else {
-        [self _checkForStoreSpotifyConnectIssue:bundleID];
 
-        _mode = None;
-        _previousMode = None;
+    if (!bundleID)
+        [self _revertLabels];
+    else if ([_disabledApps containsObject:bundleID])
+        [self _unsubscribeToArtworkChanges];
+    else {
+        [self _subscribeToArtworkChanges];
+        if ([bundleID isEqualToString:kSpotifyBundleID]) {
+            _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+            [self _checkForRestoreSpotifyConnectIssue];
+        } else {
+            [self _checkForStoreSpotifyConnectIssue:bundleID];
 
-        _canvasURL = nil;
-        _canvasAsset = nil;
+            _mode = None;
+            _previousMode = None;
 
-        [self _sendUpdateArtworkEvent:NO];
+            _canvasURL = nil;
+            _canvasAsset = nil;
 
-        if (!bundleID)
-            [self _revertLabels];
-        else if ([bundleID isEqualToString:kDeezerBundleID])
-            _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
-        else
-            _placeholderImage = nil;
+            [self _sendUpdateArtworkEvent:NO];
+
+            if ([bundleID isEqualToString:kDeezerBundleID])
+                _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
+            else
+                _placeholderImage = nil;
+        }
     }
     _bundleID = bundleID;
 }
@@ -735,6 +756,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (!urlString) {
         _canvasURL = nil;
         _canvasAsset = nil;
+
+        if ([_disabledApps containsObject:kSpotifyBundleID])
+            [self _sendCanvasUpdatedEvent];
         return;
     } else {
         _trackIdentifier = nil;

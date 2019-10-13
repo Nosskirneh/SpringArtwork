@@ -2,6 +2,7 @@
 #import "SAAppListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <AppList/AppList.h>
+#import "../notifyDefines.h"
 
 @interface PSSpecifier (Missing)
 + (id)groupSpecifierWithHeader:(NSString *)header footer:(NSString *)footer;
@@ -41,6 +42,10 @@
         return [obj1 compare:obj2];
     }];
 
+    NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+    NSArray *disabledAppsList = preferences && preferences[kDisabledApps] ? preferences[kDisabledApps] : @[];
+    NSSet *disabledApps = [NSSet setWithArray:disabledAppsList];
+
     // Add each application as a switch
     for (NSString *key in orderedKeys) {
         PSSpecifier *spec = [PSSpecifier preferenceSpecifierNamed:applications[key]
@@ -51,7 +56,7 @@
                                                              cell:PSSwitchCell
                                                              edit:nil];
         [spec setProperty:key forKey:kKey];
-        [spec setProperty:@NO forKey:kDefault];
+        [spec setProperty:@([disabledApps containsObject:key]) forKey:kDefault];
 
         UIImage *icon = [[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall
                                                          forDisplayIdentifier:key];
@@ -62,16 +67,23 @@
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
-    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if (!preferences) preferences = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *preferences = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+    if (!preferences) preferences = [NSMutableDictionary new];
     NSString *key = [specifier propertyForKey:kKey];
 
-    if ([value isEqualToNumber:@NO])
-        [preferences removeObjectForKey:key];
-    else if ([value isEqualToNumber:@YES])
-        [preferences setObject:value forKey:key];
+    NSArray *disabledAppsList = preferences[kDisabledApps] ? preferences[kDisabledApps] : @[];
+    NSMutableSet *disabledApps = [NSMutableSet setWithArray:disabledAppsList];
 
+    if ([value isEqualToNumber:@NO])
+        [disabledApps removeObject:key];
+    else if ([value isEqualToNumber:@YES])
+        [disabledApps addObject:key];
+
+    preferences[kDisabledApps] = [disabledApps allObjects];
     [preferences writeToFile:kPrefPath atomically:YES];
+
+    CFStringRef post = (CFStringRef)CFBridgingRetain([NSString stringWithUTF8String:kSettingsChanged]);
+    notify(post);
 }
 
 @end

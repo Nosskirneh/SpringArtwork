@@ -27,7 +27,7 @@
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *key = [specifier propertyForKey:kKey];
     if ([key isEqualToString:kArtworkEnabled] && ![preferences[key] boolValue])
-        [super setEnabled:[preferences[key] boolValue] forSpecifiersAfterSpecifier:specifier];
+        [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
 

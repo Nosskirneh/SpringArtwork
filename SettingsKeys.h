@@ -37,6 +37,7 @@ extern NSString *const kEnabledMode;
 
 // Normal artwork
 extern NSString *const kArtworkEnabled;
+extern NSString *const kDisabledApps;
 extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;
 extern NSString *const kArtworkWidthPercentage;
