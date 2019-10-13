@@ -253,13 +253,10 @@ typedef union {
 
     if (first.size.width != second.size.width) {
         // Transform into the same size, and compare them with higher tolerance
-        HBLogDebug(@"sizes before: (%f, %f), (%f, %f)", first.size.width, first.size.height, second.size.width, second.size.height);
         if (first.size.width > second.size.width)
             first = [self imageWithImage:first scaledToSize:second.size];
         else
             second = [self imageWithImage:second scaledToSize:first.size];
-
-        HBLogDebug(@"sizes afterward: (%f, %f), (%f, %f)", first.size.width, first.size.height, second.size.width, second.size.height);
     }
 
     return [self _compareImage:first withImage:second tolerance:0.1];
@@ -385,7 +382,9 @@ typedef union {
     free(firstImagePixels);
     free(secondImagePixels);
 
+    #ifdef DEBUG
     HBLogDebug(@"imageEqual: %d", imageEqual);
+    #endif
     return imageEqual;
 }
 

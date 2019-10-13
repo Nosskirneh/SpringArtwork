@@ -493,8 +493,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (!artworkIdentifier || [_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
 
-    HBLogDebug(@"trackIdentifier: %@, artworkIdentifier: %@", trackIdentifier, artworkIdentifier);
-
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
         onCompletion:^void(MPCMediaRemoteController *controller) {
             float width = [UIScreen mainScreen].nativeBounds.size.width;
@@ -517,8 +515,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
                 if ([self _candidatePlaceholderImage:image])
                     return;
-
-                HBLogDebug(@"image: %@", image);
 
                 if (_canvasURL) {
                     _canvasArtworkImage = image;
@@ -545,17 +541,11 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_updateModeToArtworkWithTrackIdentifier:(NSString *)trackIdentifier {
-    HBLogDebug(@"t1: %@, t2: %@", _trackIdentifier, trackIdentifier);
-    if (_mode == Artwork && ![_trackIdentifier isEqualToString:trackIdentifier]) {
-        HBLogDebug(@"setting previous to none");
+    if (_mode == Artwork && ![_trackIdentifier isEqualToString:trackIdentifier])
         _previousMode = None;
-    }
     else {
-        HBLogDebug(@"setting mode to artwork");
-        if (_mode == Canvas) {
-            HBLogDebug(@"setting previous to canvas");
+        if (_mode == Canvas)
             _previousMode = Canvas;
-        }
         _mode = Artwork;
     }
 }
@@ -766,20 +756,14 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     }
 
     if (![urlString isEqualToString:_canvasURL]) {
-        HBLogDebug(@"updating with URL: %@", urlString);
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
 
-        if (_mode == Canvas) {
-            HBLogDebug(@"setting previous to none");
+        if (_mode == Canvas)
             _previousMode = None;
-        }
         else {
-            if (_mode == Artwork) {
-                HBLogDebug(@"setting previous to artwork");
+            if (_mode == Artwork)
                 _previousMode = Artwork;
-            }
-            HBLogDebug(@"setting mode to canvas");
             _mode = Canvas;
         }
 
