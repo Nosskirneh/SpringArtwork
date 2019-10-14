@@ -16,8 +16,11 @@
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:kCanvasEnabled] && ![preferences[key] boolValue])
-        [super setEnabled:[preferences[key] boolValue] forSpecifiersAfterSpecifier:specifier];
+    if ([key isEqualToString:kCanvasEnabled] && preferences[key]) {
+        BOOL enabled = [preferences[key] boolValue];
+        if (!enabled)
+            [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
+    }
 
     return [super readPreferenceValue:specifier];
 }
