@@ -640,7 +640,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (_UILegibilitySettings *)_getOriginalHomeScreenLegibilitySettings {
-    return ((SBIconController *)[%c(SBIconController) sharedInstance]).legibilitySettings;
+    return [((SBWallpaperController *)[%c(SBWallpaperController) sharedInstance]) legibilitySettingsForVariant:1];
 }
 
 - (_UILegibilitySettings *)_getOriginalLockScreenLegibilitySettings {
@@ -649,8 +649,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 - (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings {
     SBIconController *iconController = ((SBIconController *)[%c(SBIconController) sharedInstance]);
-    SBIconViewMap *viewMap = iconController.homescreenIconViewMap;
-    viewMap.legibilitySettings = settings;
+    [iconController setLegibilitySettings:settings];
 
     [[iconController _rootFolderController].contentView.pageControl setLegibilitySettings:settings];
 }

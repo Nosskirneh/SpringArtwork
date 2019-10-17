@@ -2,12 +2,6 @@
 #import "SBWallpaperEffectView.h"
 
 
-@interface SBWallpaperController : NSObject
-@property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
-@property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
-@end
-
-
 typedef enum AppearState {
     Lockscreen = 1,
     Homescreen = 3
@@ -50,6 +44,13 @@ typedef enum AppearState {
 @interface _UILegibilitySettings : NSObject
 @property (nonatomic, retain) UIColor *primaryColor;
 + (id)sharedInstanceForStyle:(NSInteger)style;
+@end
+
+@interface SBWallpaperController : NSObject
+@property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
+@property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
++ (id)sharedInstance;
+- (_UILegibilitySettings *)legibilitySettingsForVariant:(long long)variant;
 @end
 
 @interface SBDashBoardLegibilityProvider : NSObject
@@ -146,18 +147,7 @@ typedef enum {
 @end
 
 
-@interface SBIconView : UIView
-@property (nonatomic,retain) _UILegibilitySettings * legibilitySettings;
-- (void)_updateLabel;
-@end
-
-@interface SBIconViewMap
-@property (retain, nonatomic) _UILegibilitySettings *legibilitySettings;
-- (void)enumerateMappedIconViewsUsingBlock:(void (^)(SBIconView *))block;
-@end
-
 @interface SBIconController : NSObject
-@property (nonatomic, readonly) SBIconViewMap *homescreenIconViewMap;
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;

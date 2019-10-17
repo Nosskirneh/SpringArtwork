@@ -341,30 +341,6 @@
 
 
 /* Homescreen down below */
-%group SBIconViewMap_iOS12
-%hook SBIconViewMap
-%property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
-%end
-%end
-
-
-%group Homescreen
-    /* Homescreen app labels */
-    %hook SBIconViewMap
-
-    - (void)_recycleIconView:(SBIconView *)iconView {
-        %orig;
-
-        if (manager.enabledMode != LockscreenMode) {
-            iconView.legibilitySettings = self.legibilitySettings;
-            [iconView _updateLabel];
-        }
-    }
-
-    %end
-    // ---
-%end
-
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
    The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
@@ -462,15 +438,10 @@ static inline void initLockscreen() {
 }
 
 static inline void initHomescreen() {
-    %init(Homescreen);
-
     if (%c(SBHomeScreenBackdropView))
         %init(SwitcherBackdrop_iOS12);
     else
         %init(SwitcherBackdrop_iOS11);
-
-    if (![%c(SBIconViewMap) instancesRespondToSelector:@selector(legibilitySettings)])
-        %init(SBIconViewMap_iOS12);
 }
 
 %ctor {
