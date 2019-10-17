@@ -434,8 +434,9 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
 
     if (!bundleID) {
-        [self _setModeToNone];
         [self _checkForStoreSpotifyConnectIssue:bundleID];
+        [self _setModeToNone];
+        [self _sendUpdateArtworkEvent:NO];
         [self _revertLabels];
     } else if ([_disabledApps containsObject:bundleID])
         [self _unsubscribeToArtworkChanges];
