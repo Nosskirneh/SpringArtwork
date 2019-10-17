@@ -364,7 +364,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_sendCanvasUpdatedEvent {
-    if (_canvasURL && ![self isDirty]) {
+    if (_canvasURL) {
         [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
             _canvasThumbnail = image;
             [self _sendUpdateArtworkEvent:YES];
@@ -379,8 +379,10 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
             });
         }];
         return;
+    } else {
+        [self _sendUpdateArtworkEvent:NO];
+        [self _revertLabels];
     }
-    [self _sendUpdateArtworkEvent:_canvasURL != nil];
 }
 
 - (void)_sendUpdateArtworkEvent:(BOOL)content {
