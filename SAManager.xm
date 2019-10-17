@@ -404,9 +404,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
-    HBLogDebug(@"should restore SPT? ai: %@, cu: %@", _artworkImage, _canvasURL);
     if (!_artworkImage && !_canvasURL && (_previousSpotifyURL || _previousSpotifyArtworkImage)) {
-        HBLogDebug(@"RESTORING...");
         _canvasURL = _previousSpotifyURL;
         _canvasAsset = _previousSpotifyAsset;
         _artworkImage = _previousSpotifyArtworkImage;
@@ -422,7 +420,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 
 - (void)_checkForStoreSpotifyConnectIssue:(NSString *)newBundleID {
     if (!newBundleID && [_bundleID isEqualToString:kSpotifyBundleID]) {
-        HBLogDebug(@"STORING SPOTIFY INFO...");
         _previousSpotifyURL = _canvasURL;
         _previousSpotifyAsset = _canvasAsset;
         _previousSpotifyArtworkImage = _artworkImage;
