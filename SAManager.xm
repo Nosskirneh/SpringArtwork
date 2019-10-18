@@ -749,6 +749,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     if (!urlString) {
         _canvasURL = nil;
         _canvasAsset = nil;
+        _canvasArtworkImage = nil;
 
         if ([_disabledApps containsObject:kSpotifyBundleID])
             [self _sendCanvasUpdatedEvent];
