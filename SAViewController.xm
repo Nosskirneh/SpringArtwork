@@ -265,8 +265,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^() {
         _animating = NO;
 
-        if (_completion)
+        if (_completion) {
             _completion();
+            _completion = nil;
+        }
     }];
     return YES;
 }
