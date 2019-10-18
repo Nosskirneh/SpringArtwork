@@ -523,12 +523,14 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
                     return;
                 }
 
-                _trackIdentifier = trackIdentifier;
-                // Using _mode and not _previousMode as we haven't updated it yet
-                if (_mode == Canvas && _canvasArtworkImage && [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
-                    return;
-
                 [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
+
+                _trackIdentifier = trackIdentifier;
+                /* Skip showing artwork for canvas track when switching
+                   (some weird bug that sends the old artwork when changing track) */
+                if (_previousMode == Canvas && _canvasArtworkImage &&
+                    [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
+                    return;
 
                 if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
                     [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
