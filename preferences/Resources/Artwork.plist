@@ -139,7 +139,7 @@
             <key>isSegmented</key>
             <true/>
             <key>segmentCount</key>
-            <integer>10</integer>
+            <integer>20</integer>
             <key>showValue</key>
             <true/>
             <key>min</key>
