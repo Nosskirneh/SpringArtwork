@@ -480,7 +480,7 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     NSDictionary *userInfo = notification.userInfo;
 
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
-    if (!contentItems && contentItems.count == 0)
+    if (!contentItems || contentItems.count == 0)
         return;
 
     MRContentItem *contentItem = contentItems[0];
