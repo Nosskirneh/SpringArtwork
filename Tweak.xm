@@ -70,6 +70,9 @@
     - (void)setCurrentTrack:(SPTPlayerTrack *)track {
         if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
+            if (![canvasURL.absoluteString hasSuffix:@".mp4"])
+                return sendCanvasURL(nil);
+
             SPTVideoURLAssetLoaderImplementation *assetLoader = getVideoURLAssetLoader();
 
             if ([assetLoader hasLocalAssetForURL:canvasURL]) {
