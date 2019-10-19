@@ -15,6 +15,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     SAManager *_manager;
     BOOL _inCharge;
 
+    UIView *_targetView;
     UIImageView *_canvasContainerImageView;
     AVPlayerLayer *_canvasLayer;
     UIView *_artworkContainer;
@@ -72,7 +73,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return self;
 }
 
-- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager inCharge:(BOOL)inCharge {
+- (id)initWithTargetView:(UIView *)targetView
+                 manager:(SAManager *)manager
+                inCharge:(BOOL)inCharge {
     if (self == [self initWithManager:manager]) {
         _inCharge = inCharge;
         if (inCharge)
@@ -84,6 +87,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)setTargetView:(UIView *)targetView {
+    _targetView = targetView;
     if (!targetView)
         return [self.view removeFromSuperview];
 
@@ -131,6 +135,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)artworkUpdated:(SAManager *)manager {
     if (manager) {
+        [self _prepareViews];
         BOOL changedContent = [manager changedContent];
         if (manager.canvasAsset) {
             void (^afterThumbnailCompletion)() = nil;
@@ -168,6 +173,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 #pragma mark Private
+
+- (void)_prepareViews {
+    if ([_targetView isKindOfClass:%c(SBFProceduralWallpaperView)])
+        [_targetView sendSubviewToBack:((SBFProceduralWallpaperView *)_targetView).proceduralWallpaper];
+}
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
                     blurredImage:(UIImage *)blurredImage

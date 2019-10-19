@@ -23,6 +23,11 @@ typedef enum AppearState {
 @end
 
 
+@interface SBFProceduralWallpaperView : UIView
+@property (nonatomic, readonly) UIView *proceduralWallpaper;
+@end
+
+
 @interface SBUIController : NSObject {
     SBHomeScreenBackdropView *_homeScreenBackdropView; // iOS 12
 
