@@ -101,7 +101,7 @@ typedef union {
     NSMutableArray *flexibleColors = [NSMutableArray new];
  
     float flexFactor = flexibility * 2 + 1;
-    float factor = flexFactor * flexFactor * 3; //(r,g,b) == *3
+    float factor = flexFactor * flexFactor * 3; // (r, g, b) => * 3
     for (int n = 0; n < (dimension * dimension); n++) {
  
         NSArray *pixelColors = copyColors[n];
@@ -215,7 +215,7 @@ typedef union {
     return [SAColorInfo infoWithBackgroundColor:backgroundColor
                                    primaryColor:primaryColor
                                  secondaryColor:secondaryColor
-                         textColor:textColor];
+                                      textColor:textColor];
 }
 
 + (NSString *)imageToString:(UIImage *)image {
@@ -233,7 +233,7 @@ typedef union {
     CGColorSpaceRef colorSpace = CGColorGetColorSpace(color.CGColor);
     CGColorSpaceModel colorSpaceModel = CGColorSpaceGetModel(colorSpace);
 
-    if(colorSpaceModel == kCGColorSpaceModelRGB){
+    if (colorSpaceModel == kCGColorSpaceModelRGB){
         const CGFloat *componentColors = CGColorGetComponents(color.CGColor);
         colorBrightness = ((componentColors[0] * 299) + (componentColors[1] * 587) + (componentColors[2] * 114)) / 1000;
     } else {
