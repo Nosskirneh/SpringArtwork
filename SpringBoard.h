@@ -87,11 +87,15 @@ typedef enum AppearState {
 
 @interface SBFolderController : UIViewController
 @property (assign, nonatomic) id folderDelegate;
-@property (nonatomic, readonly) SBFloatyFolderView *contentView;
 @property (nonatomic, copy, readonly) NSArray *iconListViews;
 @end
 
 @interface SBRootFolderController : SBFolderController
+@property (nonatomic, readonly) SBRootFolderView *contentView;
+@end
+
+@interface SBFolderController (Extra)
+@property (nonatomic, readonly) SBFloatyFolderView *contentView;
 @end
 
 
