@@ -11,6 +11,8 @@
 + (SAColorInfo *)colorsForImage:(UIImage *)image
       withStaticBackgroundColor:(UIColor *)staticBackgroundColor;
 + (BOOL)colorIsLight:(UIColor *)color;
++ (UIColor *)lighterColorForColor:(UIColor *)color;
++ (UIColor *)darkerColorForColor:(UIColor *)color;
 + (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second;
 + (NSString *)imageToString:(UIImage *)image;
 + (UIImage *)stringToImage:(NSString *)string;

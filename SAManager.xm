@@ -658,8 +658,14 @@ extern SBIconController *getIconController();
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
     [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
 
-    if (!revert && (_canvasThumbnail || _artworkImage))
-        iconController.sa_color = [_colorInfo.backgroundColor colorWithAlphaComponent:0.6];
+    if (!revert && (_canvasThumbnail || _artworkImage)) {
+        UIColor *color = _colorInfo.backgroundColor;
+        if ([SAImageHelper colorIsLight:color])
+            color = [SAImageHelper darkerColorForColor:color];
+        else
+            color = [SAImageHelper lighterColorForColor:color];
+        iconController.sa_color = [color colorWithAlphaComponent:0.6];
+    }
     else
         iconController.sa_color = nil;
 
