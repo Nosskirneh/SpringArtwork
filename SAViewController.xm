@@ -3,8 +3,6 @@
 #import "SpringBoard.h"
 #import "Common.h"
 
-#define ANIMATION_DURATION 0.75
-
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
     NSError *error = nil;

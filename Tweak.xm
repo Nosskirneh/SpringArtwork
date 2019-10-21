@@ -105,6 +105,14 @@
         return ((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController;
     }
 
+    SBWallpaperController *getWallpaperController() {
+        return ((SBWallpaperController *)[%c(SBWallpaperController) sharedInstance]);
+    }
+
+    SBIconController *getIconController() {
+        return ((SBIconController *)[%c(SBIconController) sharedInstance]);
+    }
+
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -357,6 +365,13 @@
 
 
 /* Homescreen down below */
+%group Homescreen
+%hook SBIconController
+%property (nonatomic, retain) UIColor *sa_color;
+%end
+%end
+
+
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
    The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
@@ -391,6 +406,72 @@
 %end
 %end
 // ---
+
+
+%group FolderIcons
+%hook SBFolderIconView
+
+%new
+- (void)sa_tryChangeColor {
+    if (MSHookIvar<SBIcon *>(self, "_icon") != nil)
+        [self sa_colorFolderBackground:[self iconBackgroundView]];
+}
+
+%new
+- (void)sa_colorFolderBackground:(SBFolderIconBackgroundView *)backgroundView {
+    SBIconController *iconController = self.delegate;
+    UIColor *color = iconController.sa_color;
+    if (color) {
+        backgroundView.sa_color = color;
+        [backgroundView setWallpaperBackgroundRect:[backgroundView wallpaperRelativeBounds]
+                                       forContents:nil
+                                 withFallbackColor:color.CGColor];
+    } else {
+        backgroundView.sa_color = nil;
+    }
+}
+
+- (void)setIcon:(SBIcon *)icon {
+    %orig;
+
+    if (icon)
+        [self sa_colorFolderBackground:[self iconBackgroundView]];
+}
+%end
+
+
+%hook SBRootFolderController
+
+- (void)folderControllerWillOpen:(SBFolderController *)folderController {
+    %orig;
+
+    SBIconController *iconController = self.folderDelegate;
+    if (!iconController.sa_color)
+        return;
+
+    SBFloatyFolderView *floatyFolderView = folderController.contentView;
+    SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(floatyFolderView, "_scrollClipView");
+    SBFolderBackgroundView *backgroundView = clipView.backgroundView;
+    MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = iconController.sa_color;
+}
+
+%end
+
+%hook SBFolderIconBackgroundView
+
+%property (nonatomic, retain) UIColor *sa_color;
+
+- (void)setWallpaperBackgroundRect:(CGRect)rect
+                       forContents:(CGImageRef)contents
+                 withFallbackColor:(CGColorRef)color {
+    if (self.sa_color)
+        %orig(rect, nil, self.sa_color.CGColor);
+    else
+        %orig;
+}
+
+%end
+%end
 
 
 %group PackagePirated
@@ -454,6 +535,9 @@ static inline void initLockscreen() {
 }
 
 static inline void initHomescreen() {
+    %init(Homescreen);
+    %init(FolderIcons);
+
     if (%c(SBHomeScreenBackdropView))
         %init(SwitcherBackdrop_iOS12);
     else

@@ -3,6 +3,8 @@
 #define kSpotifyBundleID @"com.spotify.client"
 #define kDeezerBundleID @"com.deezer.Deezer"
 
+#define ANIMATION_DURATION 0.75
+
 extern NSString *const kCanvasURLMessage;
 extern NSString *const kCanvasURL;
 extern NSString *const kCanvasAsset;

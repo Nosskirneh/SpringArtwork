@@ -28,6 +28,8 @@
 
 extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
+extern SBWallpaperController *getWallpaperController();
+extern SBIconController *getIconController();
 
 
 @implementation SAManager {
@@ -628,32 +630,64 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
     _UILegibilitySettings *settings = legibilitySettingsForDarkText(_colorInfo.hasDarkTextColor);
 
     if (_enabledMode != LockscreenMode)
-        [self _setAppLabelsLegibilitySettings:settings];
+        [self _setAppLabelsLegibilitySettings:settings revert:NO];
     [self _overrideStatusBar:settings];
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
 }
 
 - (void)_revertLabels {
-    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomeScreenLegibilitySettings]];
+    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomeScreenLegibilitySettings] revert:YES];
     [self _revertStatusBar];
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
 }
 
 - (_UILegibilitySettings *)_getOriginalHomeScreenLegibilitySettings {
-    return [((SBWallpaperController *)[%c(SBWallpaperController) sharedInstance]) legibilitySettingsForVariant:1];
+    return [getWallpaperController() legibilitySettingsForVariant:1];
 }
 
 - (_UILegibilitySettings *)_getOriginalLockScreenLegibilitySettings {
     return [getDashBoardViewController().legibilityProvider currentLegibilitySettings];
 }
 
-- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings {
-    SBIconController *iconController = ((SBIconController *)[%c(SBIconController) sharedInstance]);
+- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings revert:(BOOL)revert {
+    SBIconController *iconController = getIconController();
     [iconController setLegibilitySettings:settings];
 
-    [[iconController _rootFolderController].contentView.pageControl setLegibilitySettings:settings];
+    SBRootFolderController *rootFolderController = [iconController _rootFolderController];
+    [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
+
+    if (!revert && (_canvasThumbnail || _artworkImage))
+        iconController.sa_color = [_colorInfo.backgroundColor colorWithAlphaComponent:0.6];
+    else
+        iconController.sa_color = nil;
+
+    [self _colorFolderIcons:rootFolderController.iconListViews animate:YES];
+}
+
+- (void)_colorFolderIcons:(NSArray<SBRootIconListView *> *)iconListViews animate:(BOOL)animate {
+    for (SBRootIconListView *listView in iconListViews) {
+        SBIconViewMap *viewMap = listView.viewMap;
+        SBIconListModel *listModel = listView.model;
+
+        [listModel enumerateFolderIconsUsingBlock:^(SBFolderIcon *folderIcon) {
+            SBFolderIconView *iconView = (SBFolderIconView *)[viewMap mappedIconViewForIcon:folderIcon];
+            SBFolderIconBackgroundView *backgroundView = [iconView iconBackgroundView];
+
+            if (animate) {
+                [UIView transitionWithView:backgroundView
+                                  duration:ANIMATION_DURATION
+                                   options:UIViewAnimationOptionTransitionCrossDissolve
+                                animations:^{
+                                    [iconView sa_colorFolderBackground:backgroundView];
+                                }
+                                completion:nil];
+            } else {
+                [iconView sa_colorFolderBackground:backgroundView];
+            }
+        }];
+    }
 }
 
 - (void)_overrideStatusBar:(_UILegibilitySettings *)settings {
