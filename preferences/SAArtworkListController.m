@@ -26,7 +26,7 @@
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *key = [specifier propertyForKey:kKey];
-    if ([key isEqualToString:kArtworkEnabled] && ![preferences[key] boolValue])
+    if ([key isEqualToString:kArtworkEnabled] && preferences[key] && ![preferences[key] boolValue])
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
