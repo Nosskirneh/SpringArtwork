@@ -113,7 +113,7 @@
             <key>max</key>
             <integer>100</integer>
             <key>default</key>
-            <string>100</string>
+            <string>70</string>
             <key>PostNotification</key>
             <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>

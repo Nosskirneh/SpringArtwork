@@ -191,7 +191,7 @@ extern SBIconController *getIconController();
     }
 
     current = preferences[kArtworkWidthPercentage];
-    _artworkWidthPercentage = current ? [current intValue] : 100;
+    _artworkWidthPercentage = current ? [current intValue] : 70;
 
     current = preferences[kArtworkYOffsetPercentage];
     _artworkYOffsetPercentage = current ? [current intValue] : 0;
