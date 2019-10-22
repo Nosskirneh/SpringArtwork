@@ -33,7 +33,7 @@
 }
 
 - (void)setEnabled:(BOOL)enabled forSpecifier:(PSSpecifier *)specifier {
-    if ([[specifier propertyForKey:kCell] isEqualToString:@"PSGroupCell"])
+    if (!specifier || [[specifier propertyForKey:kCell] isEqualToString:@"PSGroupCell"])
         return;
 
     NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
