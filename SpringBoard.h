@@ -101,7 +101,6 @@ typedef enum AppearState {
 
 @interface SBIconController : NSObject
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
-@property (nonatomic, retain) UIColor *sa_color;
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
 - (UIView *)contentView;

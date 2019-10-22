@@ -207,12 +207,9 @@ extern SBIconController *getIconController();
     NSNumber *current = preferences[kTintFolderIcons];
     if (current) {
         BOOL tintFolderIcons = [current boolValue];
-        if (tintFolderIcons != _tintFolderIcons) {
-            SBIconController *iconController = getIconController();
-            [self _colorFolderIconsWithIconController:iconController
-                                 rootFolderController:[iconController _rootFolderController]
-                                               revert:!tintFolderIcons];
-        }
+        if (tintFolderIcons != _tintFolderIcons)
+            [self _colorFolderIconsWithRootFolderController:[getIconController() _rootFolderController]
+                                                     revert:!tintFolderIcons];
     }
 
     current = preferences[kArtworkEnabled];
@@ -676,14 +673,12 @@ extern SBIconController *getIconController();
 
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
     [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
-    [self _colorFolderIconsWithIconController:iconController
-                         rootFolderController:rootFolderController
-                                       revert:revert];
+    [self _colorFolderIconsWithRootFolderController:rootFolderController
+                                             revert:revert];
 }
 
-- (void)_colorFolderIconsWithIconController:(SBIconController *)iconController
-                       rootFolderController:(SBRootFolderController *)rootFolderController
-                                     revert:(BOOL)revert {
+- (void)_colorFolderIconsWithRootFolderController:(SBRootFolderController *)rootFolderController
+                                           revert:(BOOL)revert {
     if (!revert && (_canvasThumbnail || _artworkImage) &&
         _tintFolderIcons) {
         UIColor *color = _colorInfo.backgroundColor;
@@ -691,9 +686,9 @@ extern SBIconController *getIconController();
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
-        iconController.sa_color = _folderColor = [color colorWithAlphaComponent:0.6];
+        _folderColor = [color colorWithAlphaComponent:0.6];
     } else
-        iconController.sa_color = _folderColor = nil;
+        _folderColor = nil;
 
     [self _colorFolderIcons:rootFolderController.iconListViews animate:YES];
 }

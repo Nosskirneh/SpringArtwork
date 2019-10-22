@@ -366,13 +366,6 @@
 
 
 /* Homescreen down below */
-%group Homescreen
-%hook SBIconController
-%property (nonatomic, retain) UIColor *sa_color;
-%end
-%end
-
-
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
    The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
@@ -415,8 +408,7 @@
 
 %new
 - (void)sa_colorFolderBackground:(SBFolderIconBackgroundView *)backgroundView {
-    SBIconController *iconController = self.delegate;
-    UIColor *color = iconController.sa_color;
+    UIColor *color = manager.folderColor;
     if (color) {
         [backgroundView setWallpaperBackgroundRect:[backgroundView wallpaperRelativeBounds]
                                        forContents:nil
@@ -449,19 +441,19 @@
 
 
 /* Background of an open folder */
-%hook SBRootFolderController
+%hook SBFloatyFolderView
+- (void)enumeratePageBackgroundViewsUsingBlock:(void(^)(SBFloatyFolderBackgroundClipView *))block {
+    if (!manager.folderColor)
+        return %orig;
 
-- (void)folderControllerWillOpen:(SBFolderController *)folderController {
-    %orig;
+    void (^newBlock)(SBFloatyFolderBackgroundClipView *) = ^(SBFloatyFolderBackgroundClipView *clipView) {
+        block(clipView);
 
-    SBIconController *iconController = self.folderDelegate;
-    if (!iconController.sa_color)
-        return;
+        SBFolderBackgroundView *backgroundView = clipView.backgroundView;
+        MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = manager.folderColor;
+    };
 
-    SBFloatyFolderView *floatyFolderView = folderController.contentView;
-    SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(floatyFolderView, "_scrollClipView");
-    SBFolderBackgroundView *backgroundView = clipView.backgroundView;
-    MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = iconController.sa_color;
+    %orig(newBlock);
 }
 
 %end
@@ -530,7 +522,6 @@ static inline void initLockscreen() {
 }
 
 static inline void initHomescreen() {
-    %init(Homescreen);
     %init(FolderIcons);
 
     if (%c(SBHomeScreenBackdropView))
