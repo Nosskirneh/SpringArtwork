@@ -294,9 +294,11 @@ extern SBIconController *getIconController();
 }
 
 - (void)_updateArtworkFrames {
-    for (SAViewController *vc in _viewControllers)
-        [vc updateArtworkWidthPercentage:_artworkWidthPercentage
-                       yOffsetPercentage:_artworkYOffsetPercentage];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        for (SAViewController *vc in _viewControllers)
+            [vc updateArtworkWidthPercentage:_artworkWidthPercentage
+                           yOffsetPercentage:_artworkYOffsetPercentage];
+    });
 }
 
 - (void)_subscribeToArtworkChanges {
