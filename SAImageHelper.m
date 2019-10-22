@@ -268,9 +268,6 @@ typedef union {
 }
 
 + (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second {
-    if (CGSizeEqualToSize(first.size, second.size))
-        return [self _compareImage:first withImage:second tolerance:0];
-
     if (first.size.width != second.size.width) {
         // Transform into the same size, and compare them with higher tolerance
         if (first.size.width > second.size.width)
