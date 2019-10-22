@@ -45,23 +45,6 @@
         </dict>
 
         <dict>
-            <key>id</key>
-            <string>tintFolderIcons</string>
-            <key>cell</key>
-            <string>PSSwitchCell</string>
-            <key>cellClass</key>
-            <string>SASwitchTableCell</string>
-            <key>default</key>
-            <true/>
-            <key>key</key>
-            <string>tintFolderIcons</string>
-            <key>label</key>
-            <string>Tint folder icons</string>
-            <key>PostNotification</key>
-            <string>se.nosskirneh.springartwork/settingsChanged</string>
-        </dict>
-
-        <dict>
             <key>cell</key>
             <string>PSLinkCell</string>
             <key>detail</key>
@@ -86,6 +69,29 @@
             <string>spotify.png</string>
             <key>label</key>
             <string>Video artwork</string>
+        </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+        </dict>
+
+        <dict>
+            <key>id</key>
+            <string>tintFolderIcons</string>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>key</key>
+            <string>tintFolderIcons</string>
+            <key>label</key>
+            <string>Tint folder icons</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
 
