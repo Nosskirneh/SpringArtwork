@@ -410,25 +410,17 @@
 
 
 %group FolderIcons
+/* Folder icons */
 %hook SBFolderIconView
-
-%new
-- (void)sa_tryChangeColor {
-    if (MSHookIvar<SBIcon *>(self, "_icon") != nil)
-        [self sa_colorFolderBackground:[self iconBackgroundView]];
-}
 
 %new
 - (void)sa_colorFolderBackground:(SBFolderIconBackgroundView *)backgroundView {
     SBIconController *iconController = self.delegate;
     UIColor *color = iconController.sa_color;
     if (color) {
-        backgroundView.sa_color = color;
         [backgroundView setWallpaperBackgroundRect:[backgroundView wallpaperRelativeBounds]
                                        forContents:nil
                                  withFallbackColor:color.CGColor];
-    } else {
-        backgroundView.sa_color = nil;
     }
 }
 
@@ -440,7 +432,23 @@
 }
 %end
 
+%hook SBFolderIconBackgroundView
 
+- (void)setWallpaperBackgroundRect:(CGRect)rect
+                       forContents:(CGImageRef)contents
+                 withFallbackColor:(CGColorRef)color {
+    UIColor *folderColor = manager.folderColor;
+    if (folderColor)
+        %orig(rect, nil, folderColor.CGColor);
+    else
+        %orig;
+}
+
+%end
+// ---
+
+
+/* Background of an open folder */
 %hook SBRootFolderController
 
 - (void)folderControllerWillOpen:(SBFolderController *)folderController {
@@ -457,21 +465,7 @@
 }
 
 %end
-
-%hook SBFolderIconBackgroundView
-
-%property (nonatomic, retain) UIColor *sa_color;
-
-- (void)setWallpaperBackgroundRect:(CGRect)rect
-                       forContents:(CGImageRef)contents
-                 withFallbackColor:(CGColorRef)color {
-    if (self.sa_color)
-        %orig(rect, nil, self.sa_color.CGColor);
-    else
-        %orig;
-}
-
-%end
+// ---
 %end
 
 

@@ -126,7 +126,6 @@ typedef enum AppearState {
 @end
 
 @interface SBFolderIconBackgroundView : SBIconBlurryBackgroundView
-@property (nonatomic, retain) UIColor *sa_color;
 @end
 
 @interface SBFolderIconView : SBIconView

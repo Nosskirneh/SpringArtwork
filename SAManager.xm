@@ -691,9 +691,9 @@ extern SBIconController *getIconController();
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
-        iconController.sa_color = [color colorWithAlphaComponent:0.6];
+        iconController.sa_color = _folderColor = [color colorWithAlphaComponent:0.6];
     } else
-        iconController.sa_color = nil;
+        iconController.sa_color = _folderColor = nil;
 
     [self _colorFolderIcons:rootFolderController.iconListViews animate:YES];
 }
