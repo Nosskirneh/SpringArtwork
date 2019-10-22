@@ -178,7 +178,8 @@
 
         if (event.type != UIEventSubtypeMotionShake ||
             ![manager isCanvasActive] ||
-            [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication])
+            [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication] ||
+            !manager.shakeToPause)
             return;
 
         [manager togglePlayManually];

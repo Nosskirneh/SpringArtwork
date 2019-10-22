@@ -47,3 +47,4 @@ extern NSString *const kArtworkYOffsetPercentage;
 // Video artwork
 extern NSString *const kCanvasEnabled;
 extern NSString *const kCanvasOnlyWiFi;
+extern NSString *const kShakeToPause;

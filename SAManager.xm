@@ -198,6 +198,9 @@ extern SBIconController *getIconController();
 
     current = preferences[kCanvasEnabled];
     _canvasEnabled = !current || [current boolValue];
+
+    current = preferences[kShakeToPause];
+    _shakeToPause = !current || [current boolValue];
 }
 
 - (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {

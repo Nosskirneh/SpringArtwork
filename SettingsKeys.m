@@ -16,3 +16,4 @@ NSString *const kArtworkYOffsetPercentage = @"artworkYOffsetPercentage";
 // Video artwork
 NSString *const kCanvasEnabled = @"canvasEnabled";
 NSString *const kCanvasOnlyWiFi = @"canvasOnlyWiFi";
+NSString *const kShakeToPause = @"shakeToPause";
