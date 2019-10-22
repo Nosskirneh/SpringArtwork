@@ -157,19 +157,6 @@
     %end
 
 
-    /* Dynamic wallpapers send themselves to the front after unlock.
-       This overrides that. */
-    %hook SBFProceduralWallpaperView
-
-    - (void)prepareToAppear {
-        %orig;
-
-        [self sendSubviewToBack:self.proceduralWallpaper];
-    }
-
-    %end
-
-
     /* Register shake gesture to play/pause canvas video */
     %hook UIApplication
 
@@ -211,6 +198,19 @@
         };
 
         %orig(newCompletion);
+    }
+
+    %end
+
+
+    /* Dynamic wallpapers send themselves to the front after unlock.
+       This overrides that. */
+    %hook SBFProceduralWallpaperView
+
+    - (void)prepareToAppear {
+        %orig;
+
+        [self sendSubviewToBack:self.proceduralWallpaper];
     }
 
     %end
