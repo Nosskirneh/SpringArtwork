@@ -67,6 +67,9 @@
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:kKey];
     if ([key isEqualToString:kEnabledMode]) {
+        EnabledMode pickedMode = (EnabledMode)[value intValue];
+        [self enableTintFolderIconsSpecifierForMode:pickedMode];
+
         UIAlertAction *respringAction = [UIAlertAction actionWithTitle:@"Yes"
                                                                  style:UIAlertActionStyleDestructive
                                                                handler:^(UIAlertAction *action) {
@@ -84,6 +87,8 @@
                                             int segmentIndex = [MSHookIvar<NSArray *>(cell, "_values") indexOfObject:mode];
                                             UISegmentedControl *control = cell.control;
                                             [control selectSegment:segmentIndex];
+
+                                            [self enableTintFolderIconsSpecifierForMode:(EnabledMode)[mode intValue]];
                                         }];
 
         UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"No, I'll respring later"
@@ -97,6 +102,10 @@
         return;
     }
     [super setPreferenceValue:value specifier:specifier];
+}
+
+- (void)enableTintFolderIconsSpecifierForMode:(EnabledMode)mode {
+    [self setEnabled:(mode != LockscreenMode) forSpecifier:[self specifierForID:kTintFolderIcons]];
 }
 
 - (void)viewDidLoad {

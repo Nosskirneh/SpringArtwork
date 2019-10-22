@@ -3,6 +3,7 @@ const char *kSettingsChanged = "se.nosskirneh.springartwork/settingsChanged";
 
 // General
 NSString *const kEnabledMode = @"enabledMode";
+NSString *const kTintFolderIcons = @"tintFolderIcons";
 
 // Normal artwork
 NSString *const kArtworkEnabled = @"artworkEnabled";

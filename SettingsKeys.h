@@ -34,6 +34,7 @@ extern const char *kSettingsChanged;
 
 // General
 extern NSString *const kEnabledMode;
+extern NSString *const kTintFolderIcons;
 
 // Normal artwork
 extern NSString *const kArtworkEnabled;

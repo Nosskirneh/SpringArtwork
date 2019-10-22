@@ -70,6 +70,7 @@ extern SBIconController *getIconController();
     NSMutableArray *_viewControllers;
     UIImage *_placeholderImage;
 
+    BOOL _tintFolderIcons;
     BOOL _artworkEnabled;
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
@@ -165,6 +166,9 @@ extern SBIconController *getIconController();
     id current = preferences[kEnabledMode];
     _enabledMode = current ? (EnabledMode)[current intValue] : BothMode;
 
+    current = preferences[kTintFolderIcons];
+    _tintFolderIcons = !current || [current boolValue];
+
     current = preferences[kArtworkEnabled];
     _artworkEnabled = !current || [current boolValue];
 
@@ -197,7 +201,18 @@ extern SBIconController *getIconController();
 }
 
 - (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {
-    NSNumber *current = preferences[kArtworkEnabled];
+    NSNumber *current = preferences[kTintFolderIcons];
+    if (current) {
+        BOOL tintFolderIcons = [current boolValue];
+        if (tintFolderIcons != _tintFolderIcons) {
+            SBIconController *iconController = getIconController();
+            [self _colorFolderIconsWithIconController:iconController
+                                 rootFolderController:[iconController _rootFolderController]
+                                               revert:!tintFolderIcons];
+        }
+    }
+
+    current = preferences[kArtworkEnabled];
     if (current) {
         BOOL artworkEnabled = [current boolValue];
         if (artworkEnabled != _artworkEnabled) {
@@ -651,22 +666,30 @@ extern SBIconController *getIconController();
     return [getDashBoardViewController().legibilityProvider currentLegibilitySettings];
 }
 
-- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings revert:(BOOL)revert {
+- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings
+                                 revert:(BOOL)revert {
     SBIconController *iconController = getIconController();
     [iconController setLegibilitySettings:settings];
 
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
     [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
+    [self _colorFolderIconsWithIconController:iconController
+                         rootFolderController:rootFolderController
+                                       revert:revert];
+}
 
-    if (!revert && (_canvasThumbnail || _artworkImage)) {
+- (void)_colorFolderIconsWithIconController:(SBIconController *)iconController
+                       rootFolderController:(SBRootFolderController *)rootFolderController
+                                     revert:(BOOL)revert {
+    if (!revert && (_canvasThumbnail || _artworkImage) &&
+        _tintFolderIcons) {
         UIColor *color = _colorInfo.backgroundColor;
         if ([SAImageHelper colorIsLight:color])
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
         iconController.sa_color = [color colorWithAlphaComponent:0.6];
-    }
-    else
+    } else
         iconController.sa_color = nil;
 
     [self _colorFolderIcons:rootFolderController.iconListViews animate:YES];
