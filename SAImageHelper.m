@@ -290,7 +290,7 @@ typedef union {
 }
 
 + (BOOL)_compareImage:(UIImage *)first withImage:(UIImage *)second tolerance:(CGFloat)tolerance {
-    NSAssert(CGSizeEqualToSize(first.size, second.size), @"Images must be same size.");
+    NSAssert(CGSizeEqualToSize(first.size, second.size), @"Images must be of same size.");
 
     CGSize firstImageSize = CGSizeMake(CGImageGetWidth(first.CGImage), CGImageGetHeight(first.CGImage));
     CGSize secondImageSize = CGSizeMake(CGImageGetWidth(second.CGImage), CGImageGetHeight(second.CGImage));
@@ -337,11 +337,11 @@ typedef union {
     CGContextRelease(firstImageContext);
     CGContextRelease(secondimageContext);
 
-    BOOL imageEqual = YES;
+    BOOL imageEqual = NO;
 
     // Do a fast compare if we can
     if (tolerance == 0) {
-        imageEqual = (memcmp(firstImagePixels, secondImagePixels, firstImageSizeBytes) == 0);
+        imageEqual = memcmp(firstImagePixels, secondImagePixels, firstImageSizeBytes) == 0;
     } else {
         // Go through each pixel in turn and see if it is different
         const NSInteger pixelCount = firstImageSize.width * firstImageSize.height;
