@@ -130,6 +130,14 @@ extern SBIconController *getIconController();
     [_viewControllers addObject:viewController];
 }
 
+- (void)mediaWidgetWillHide {
+    [self _setModeToNone];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [self _sendUpdateArtworkEvent:NO];
+        [self _revertLabels];
+    });
+}
+
 // Destroy everything! MOHAHAHA! *evil laugh continues...*
 - (void)setTrialEnded {
     _trialEnded = YES;

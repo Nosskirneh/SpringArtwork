@@ -49,4 +49,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (BOOL)isDirty;
 - (BOOL)isCanvasActive;
 - (BOOL)changedContent;
+
+- (void)mediaWidgetWillHide;
 @end

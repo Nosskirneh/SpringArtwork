@@ -220,3 +220,8 @@ typedef enum {
 - (SBMutableAppStatusBarSettings *)currentStatusBarSettings;
 - (void)_enumerateAssertionsToLevel:(unsigned long long)arg1 withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
 @end
+
+
+@interface SBDashBoardNowPlayingController : NSObject
+@property (nonatomic, assign) BOOL sa_timerActive;
+@end
