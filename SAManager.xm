@@ -187,12 +187,10 @@ extern SBIconController *getIconController();
     current = preferences[kArtworkBackgroundMode];
     if (current) {
         _artworkBackgroundMode = (ArtworkBackgroundMode)[current intValue];
-        if (_artworkBackgroundMode == StaticColor) {
-            current = preferences[kStaticColor];
-            _staticColor = current ? LCPParseColorString(current, nil) : UIColor.blackColor;
-        } else {
+        if (_artworkBackgroundMode == StaticColor)
+            [self _updateStaticColor:preferences];
+        else
             _staticColor = nil;
-        }
     } else {
         _artworkBackgroundMode = MatchingColor;
         _staticColor = nil;
@@ -209,6 +207,11 @@ extern SBIconController *getIconController();
 
     current = preferences[kShakeToPause];
     _shakeToPause = !current || [current boolValue];
+}
+
+- (void)_updateStaticColor:(NSDictionary *)preferences {
+    NSString *current = preferences[kStaticColor];
+    _staticColor = current ? LCPParseColorString(current, nil) : UIColor.blackColor;
 }
 
 - (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {
@@ -287,8 +290,21 @@ extern SBIconController *getIconController();
     current = preferences[kArtworkBackgroundMode];
     if (current) {
         ArtworkBackgroundMode artworkBackgroundMode = (ArtworkBackgroundMode)[current intValue];
-        if (artworkBackgroundMode != _artworkBackgroundMode)
-            _blurredImage = nil;
+        if (artworkBackgroundMode != _artworkBackgroundMode) {
+            if (_artworkImage && !_canvasURL) {
+                _blurredImage = nil;
+                _colorInfo = nil;
+
+                if (artworkBackgroundMode == BlurredImage)
+                    _blurredImage = [self _blurredImage:_artworkImage];
+                else if (artworkBackgroundMode == StaticColor)
+                    [self _updateStaticColor:preferences];
+
+                // Updating these here as the updated values are required below
+                _artworkBackgroundMode = artworkBackgroundMode;
+                [self _getColorInfoWithStaticColorForImage:_artworkImage];
+            }
+        }
     }
 
     [self _fillPropertiesFromSettings:preferences];
