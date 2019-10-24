@@ -295,8 +295,8 @@ extern SBIconController *getIconController();
 
     if (updateArtworkFrames)
         [self _updateArtworkFrames];
-    [self _sendUpdateArtworkEvent:YES];
     dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [self _sendUpdateArtworkEvent:YES];
         [self _overrideLabels];
     });
 }
@@ -394,7 +394,9 @@ extern SBIconController *getIconController();
     if (_canvasURL) {
         [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
             _canvasThumbnail = image;
-            [self _sendUpdateArtworkEvent:YES];
+            dispatch_async(dispatch_get_main_queue(), ^(void) {
+                [self _sendUpdateArtworkEvent:YES];
+            });
 
             if (!image)
                 return;
