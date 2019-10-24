@@ -79,7 +79,7 @@
                 <key>fallback</key>
                 <string>#000000</string>
                 <key>alpha</key>
-                <false/>
+                <true/>
                 <key>PostNotification</key>
                 <string>se.nosskirneh.springartwork/settingsChanged</string>
             </dict>
