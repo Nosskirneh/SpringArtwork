@@ -207,6 +207,9 @@ extern SBIconController *getIconController();
 
     current = preferences[kShakeToPause];
     _shakeToPause = !current || [current boolValue];
+
+    current = preferences[kHideDockBackground];
+    _hideDockBackground = !current || [current boolValue];
 }
 
 - (void)_updateStaticColor:(NSDictionary *)preferences {

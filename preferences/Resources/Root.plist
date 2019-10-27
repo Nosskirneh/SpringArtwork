@@ -42,6 +42,8 @@
             </array>
             <key>default</key>
             <string>0</string>
+            <key>requiresRespring</key>
+            <true/>
         </dict>
 
         <dict>
@@ -92,6 +94,23 @@
             <string>Tint folder icons</string>
             <key>PostNotification</key>
             <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
+
+        <dict>
+            <key>id</key>
+            <string>hideDockBackground</string>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>requiresRespring</key>
+            <true/>
+            <key>key</key>
+            <string>hideDockBackground</string>
+            <key>label</key>
+            <string>Hide dock background</string>
         </dict>
 
 

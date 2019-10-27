@@ -16,14 +16,6 @@
 @property (nonatomic, strong) UIAlertController *giveawayAlertController;
 @end
 
-@interface UISegmentedControl (Missing)
-- (void)selectSegment:(int)index;
-@end
-
-@interface PSSegmentTableCell : PSControlTableCell 
-@property (retain) UISegmentedControl *control;
-@end
-
 @implementation SARootListController
 
 - (NSArray *)specifiers {
@@ -51,7 +43,9 @@
     activate(licensePath$bs(), package$bs(), self);
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+- (BOOL)textField:(UITextField *)textField
+        shouldChangeCharactersInRange:(NSRange)range
+        replacementString:(NSString *)string {
     [self textFieldChanged:textField];
     return YES;
 }
@@ -64,48 +58,33 @@
     trial(licensePath$bs(), package$bs(), self);
 }
 
-- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
+- (id)readPreferenceValue:(PSSpecifier *)specifier {
+    id value = [super readPreferenceValue:specifier];
+
     NSString *key = [specifier propertyForKey:kKey];
     if ([key isEqualToString:kEnabledMode]) {
         EnabledMode pickedMode = (EnabledMode)[value intValue];
-        [self enableTintFolderIconsSpecifierForMode:pickedMode];
-
-        UIAlertAction *respringAction = [UIAlertAction actionWithTitle:@"Yes"
-                                                                 style:UIAlertActionStyleDestructive
-                                                               handler:^(UIAlertAction *action) {
-                                            [super setPreferenceValue:value specifier:specifier];
-                                            respring(NO);
-                                        }];
-
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"No, revert change"
-                                                                 style:UIAlertActionStyleCancel
-                                                               handler:^(UIAlertAction *action) {
-                                            NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
-                                            PSSegmentTableCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
-
-                                            NSNumber *mode = [self readPreferenceValue:specifier];
-                                            int segmentIndex = [MSHookIvar<NSArray *>(cell, "_values") indexOfObject:mode];
-                                            UISegmentedControl *control = cell.control;
-                                            [control selectSegment:segmentIndex];
-
-                                            [self enableTintFolderIconsSpecifierForMode:(EnabledMode)[mode intValue]];
-                                        }];
-
-        UIAlertAction *laterAction = [UIAlertAction actionWithTitle:@"No, I'll respring later"
-                                                              style:UIAlertActionStyleDefault
-                                                            handler:^(UIAlertAction *action) {
-                                            [super setPreferenceValue:value specifier:specifier];
-                                        }];
-        [super presentAlertWithTitle:@"Restart of SpringBoard"
-                             message:@"Changing this setting requires SpringBoard to be restarted. Do you wish to proceed?"
-                             actions:@[respringAction, cancelAction, laterAction]];
-        return;
+        [self enableHomescreenSpecifiers:pickedMode];
     }
-    [super setPreferenceValue:value specifier:specifier];
+
+    return value;
 }
 
-- (void)enableTintFolderIconsSpecifierForMode:(EnabledMode)mode {
-    [self setEnabled:(mode != LockscreenMode) forSpecifier:[self specifierForID:kTintFolderIcons]];
+- (void)preferenceValueChanged:(id)value specifier:(PSSpecifier *)specifier {
+    NSString *key = [specifier propertyForKey:kKey];
+    if ([key isEqualToString:kEnabledMode]) {
+        EnabledMode pickedMode = (EnabledMode)[value intValue];
+        [self enableHomescreenSpecifiers:pickedMode];
+    }
+}
+
+- (void)enableHomescreenSpecifiers:(EnabledMode)mode {
+    BOOL homescreenEnabled = (mode != LockscreenMode);
+    [self setEnabled:homescreenEnabled
+        forSpecifier:[self specifierForID:kTintFolderIcons]];
+
+    [self setEnabled:homescreenEnabled
+        forSpecifier:[self specifierForID:kHideDockBackground]];
 }
 
 - (void)viewDidLoad {

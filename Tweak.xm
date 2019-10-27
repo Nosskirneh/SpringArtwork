@@ -134,10 +134,12 @@
                 self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
                                                                                            manager:manager
                                                                                           inCharge:YES];
-            else
-                self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView
+            else {
+                Class c = manager.hideDockBackground ? %c(SADockViewController) : %c(SAViewController);
+                self.homescreenCanvasViewController = [[c alloc] initWithTargetView:wallpaperView
                                                                                                manager:manager
                                                                                               inCharge:YES];
+            }
         } else {
             BOOL homescreen = variant == 1;
             if (homescreen) {

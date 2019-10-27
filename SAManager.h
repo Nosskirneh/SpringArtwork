@@ -35,6 +35,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) int artworkWidthPercentage;
 @property (nonatomic, assign, readonly) int artworkYOffsetPercentage;
 @property (nonatomic, assign, readonly) BOOL shakeToPause;
+@property (nonatomic, assign, readonly) BOOL hideDockBackground;
 // ---
 
 @property (nonatomic, assign, readonly) BOOL trialEnded;
