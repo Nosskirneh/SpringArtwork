@@ -30,6 +30,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
 @property (nonatomic, retain) SAViewController *inChargeController;
 @property (nonatomic, assign) BOOL isSharedWallpaper;
+@property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
 
 /* Settings properties */
 @property (nonatomic, assign, readonly) int artworkWidthPercentage;

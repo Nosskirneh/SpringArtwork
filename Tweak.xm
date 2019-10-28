@@ -390,6 +390,19 @@
 
 
 /* Homescreen down below */
+%group Homescreen
+%hook SBIconController
+
+- (void)setLegibilitySettings:(_UILegibilitySettings *)settings {
+    _UILegibilitySettings *mSettings = manager.legibilitySettings;
+    if (mSettings)
+        return %orig(mSettings);
+    %orig;
+}
+
+%end
+%end
+
 /* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
    appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
    The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
@@ -546,6 +559,7 @@ static inline void initLockscreen() {
 }
 
 static inline void initHomescreen() {
+    %init(Homescreen);
     %init(FolderIcons);
 
     if (%c(SBHomeScreenBackdropView))

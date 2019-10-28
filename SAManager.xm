@@ -683,22 +683,23 @@ extern SBIconController *getIconController();
 }
 
 - (void)_revertLabels {
-    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomeScreenLegibilitySettings] revert:YES];
+    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomescreenLegibilitySettings] revert:YES];
     [self _revertStatusBar];
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
 }
 
-- (_UILegibilitySettings *)_getOriginalHomeScreenLegibilitySettings {
+- (_UILegibilitySettings *)_getOriginalHomescreenLegibilitySettings {
     return [getWallpaperController() legibilitySettingsForVariant:1];
 }
 
-- (_UILegibilitySettings *)_getOriginalLockScreenLegibilitySettings {
+- (_UILegibilitySettings *)_getOriginalLockscreenLegibilitySettings {
     return [getDashBoardViewController().legibilityProvider currentLegibilitySettings];
 }
 
 - (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings
                                  revert:(BOOL)revert {
+    _legibilitySettings = settings;
     SBIconController *iconController = getIconController();
     [iconController setLegibilitySettings:settings];
 
@@ -766,11 +767,11 @@ extern SBIconController *getIconController();
     _UILegibilitySettings *originalLockscreenSettings = nil;
 
     if (_enabledMode == BothMode)
-        originalLockscreenSettings = originalHomescreenSettings = [self _getOriginalHomeScreenLegibilitySettings];
+        originalLockscreenSettings = originalHomescreenSettings = [self _getOriginalHomescreenLegibilitySettings];
     else if (_enabledMode == LockscreenMode)
-        originalLockscreenSettings = [self _getOriginalLockScreenLegibilitySettings];
+        originalLockscreenSettings = [self _getOriginalLockscreenLegibilitySettings];
     else
-        originalHomescreenSettings = [self _getOriginalHomeScreenLegibilitySettings];
+        originalHomescreenSettings = [self _getOriginalHomescreenLegibilitySettings];
 
     [self _setStatusBarHomescreenSettings:originalHomescreenSettings lockscreenSettings:originalLockscreenSettings];
 }
