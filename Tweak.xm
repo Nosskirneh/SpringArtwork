@@ -546,11 +546,13 @@
 %end
 %end
 
+__attribute__((always_inline, visibility("hidden")))
 static inline void initTrial() {
     %init(CheckTrialEnded);
 }
 
 
+__attribute__((always_inline, visibility("hidden")))
 static inline void initLockscreen() {
     %init(Lockscreen);
 
@@ -563,6 +565,7 @@ static inline void initLockscreen() {
         %init(wallpaperEffectView_oldiOS11);
 }
 
+__attribute__((always_inline, visibility("hidden")))
 static inline void initHomescreen() {
     %init(Homescreen);
     %init(FolderIcons);
