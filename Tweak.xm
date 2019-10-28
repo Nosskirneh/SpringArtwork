@@ -164,6 +164,11 @@
 
     %property (nonatomic, assign) BOOL sa_timerActive;
 
+    - (void)_disableTimerFired {
+        %orig;
+        [manager mediaWidgetWillHide];
+    }
+
     - (void)_startDisableTimer {
         self.sa_timerActive = YES;
 
