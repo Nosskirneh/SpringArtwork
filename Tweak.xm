@@ -137,8 +137,8 @@
             else {
                 Class c = manager.hideDockBackground ? %c(SADockViewController) : %c(SAViewController);
                 self.homescreenCanvasViewController = [[c alloc] initWithTargetView:wallpaperView
-                                                                                               manager:manager
-                                                                                              inCharge:YES];
+                                                                            manager:manager
+                                                                           inCharge:YES];
             }
         } else {
             BOOL homescreen = variant == 1;
@@ -395,6 +395,7 @@
 
 
 /* Homescreen down below */
+/* Make app labels coloring persistent after unlock */
 %group Homescreen
 %hook SBIconController
 
@@ -449,8 +450,8 @@
 %hook SBFolderIconView
 
 %new
-- (void)sa_colorFolderBackground:(SBFolderIconBackgroundView *)backgroundView {
-    UIColor *color = manager.folderColor;
+- (void)sa_colorizeFolderBackground:(SBFolderIconBackgroundView *)backgroundView
+                              color:(UIColor *)color {
     if (color) {
         [backgroundView setWallpaperBackgroundRect:[backgroundView wallpaperRelativeBounds]
                                        forContents:nil
@@ -461,8 +462,11 @@
 - (void)setIcon:(SBIcon *)icon {
     %orig;
 
-    if (icon)
-        [self sa_colorFolderBackground:[self iconBackgroundView]];
+    if (icon) {
+        UIColor *color = manager.folderColor;
+        if (color)
+            [self sa_colorizeFolderBackground:[self iconBackgroundView] color:color];
+    }
 }
 %end
 
@@ -485,17 +489,30 @@
 /* Background of an open folder */
 %hook SBFloatyFolderView
 - (void)enumeratePageBackgroundViewsUsingBlock:(void(^)(SBFloatyFolderBackgroundClipView *))block {
-    if (!manager.folderColor)
+    UIColor *color = manager.folderColor;
+    if (!color)
         return %orig;
 
     void (^newBlock)(SBFloatyFolderBackgroundClipView *) = ^(SBFloatyFolderBackgroundClipView *clipView) {
         block(clipView);
-
-        SBFolderBackgroundView *backgroundView = clipView.backgroundView;
-        MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = manager.folderColor;
+        [clipView nu_colorizeFolderBackground:color];
     };
 
     %orig(newBlock);
+}
+
+%end
+
+%hook SBFloatyFolderBackgroundClipView
+
+%new
+- (void)nu_colorizeFolderBackground:(UIColor *)color {
+    SBFolderBackgroundView *backgroundView = self.backgroundView;
+
+    if (!color)
+        color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.6];
+
+    MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = color;
 }
 
 %end

@@ -74,10 +74,12 @@ typedef enum AppearState {
 @interface SBFolderBackgroundView : UIView {
     UIImageView *_tintView;;
 }
+- (UIColor *)_tintViewBackgroundColorAtFullAlpha;
 @end
 
 @interface SBFloatyFolderBackgroundClipView : UIView
 @property (nonatomic, readonly) SBFolderBackgroundView *backgroundView;
+- (void)nu_colorizeFolderBackground:(UIColor *)color;
 @end
 
 @interface SBFloatyFolderView : UIView {
@@ -103,6 +105,7 @@ typedef enum AppearState {
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
+- (SBFolderController *)_openFolderController;
 - (UIView *)contentView;
 @end
 
@@ -130,7 +133,8 @@ typedef enum AppearState {
 @interface SBFolderIconView : SBIconView
 - (SBFolderIconBackgroundView *)iconBackgroundView;
 - (void)sa_tryChangeColor;
-- (void)sa_colorFolderBackground:(SBFolderIconBackgroundView *)backgroundView;
+- (void)sa_colorizeFolderBackground:(SBFolderIconBackgroundView *)backgroundView
+                              color:(UIColor *)color;
 @end
 
 @interface SBIconViewMap : NSObject
@@ -156,6 +160,10 @@ typedef enum AppearState {
 + (id)sharedInstance;
 - (_UILegibilitySettings *)legibilitySettingsForVariant:(long long)variant;
 - (CGImage *)homescreenLightForegroundBlurImage;
+@end
+
+@interface _SBIconWallpaperBackgroundProvider : NSObject
+- (void)_updateAllClients;
 @end
 
 @interface SBDashBoardLegibilityProvider : NSObject

@@ -221,9 +221,12 @@ extern SBIconController *getIconController();
     NSNumber *current = preferences[kTintFolderIcons];
     if (current) {
         BOOL tintFolderIcons = [current boolValue];
-        if (tintFolderIcons != _tintFolderIcons)
-            [self _colorFolderIconsWithRootFolderController:[getIconController() _rootFolderController]
-                                                     revert:!tintFolderIcons];
+        if (tintFolderIcons != _tintFolderIcons) {
+            SBIconController *iconController = getIconController();
+            [self _colorFolderIconsWithIconController:iconController
+                                 rootFolderController:[iconController _rootFolderController]
+                                               revert:!tintFolderIcons];
+        }
     }
 
     current = preferences[kArtworkEnabled];
@@ -705,27 +708,43 @@ extern SBIconController *getIconController();
 
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
     [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
-    [self _colorFolderIconsWithRootFolderController:rootFolderController
-                                             revert:revert];
+    [self _colorFolderIconsWithIconController:iconController
+                         rootFolderController:rootFolderController
+                                       revert:revert];
 }
 
-- (void)_colorFolderIconsWithRootFolderController:(SBRootFolderController *)rootFolderController
-                                           revert:(BOOL)revert {
-    if (!revert && (_canvasThumbnail || _artworkImage) &&
-        _tintFolderIcons) {
-        UIColor *color = _colorInfo.backgroundColor;
+- (void)_colorFolderIconsWithIconController:(SBIconController *)iconController
+                       rootFolderController:(SBRootFolderController *)rootFolderController
+                                     revert:(BOOL)revert {
+    UIColor *color;
+    if (!revert && (_canvasThumbnail || _artworkImage) && _tintFolderIcons) {
+        color = _colorInfo.backgroundColor;
         if ([SAImageHelper colorIsLight:color])
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
         _folderColor = [color colorWithAlphaComponent:0.6];
-    } else
-        _folderColor = nil;
 
-    [self _colorFolderIcons:rootFolderController.iconListViews animate:YES];
+        [self _colorizeFolderIcons:rootFolderController.iconListViews color:color animate:YES];
+    } else if (!_folderColor) {
+        return; // If we haven't already colorized, don't bother reverting it
+    } else {
+        _folderColor = nil;
+        [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
+    }
+
+    // If there is any open folder, colorize the background
+    SBFolderController *openedFolder = [iconController _openFolderController];
+    if (openedFolder) {
+        SBFloatyFolderView *folderView = openedFolder.contentView;
+        SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(folderView, "_scrollClipView");
+        [clipView nu_colorizeFolderBackground:_folderColor];
+    }
 }
 
-- (void)_colorFolderIcons:(NSArray<SBRootIconListView *> *)iconListViews animate:(BOOL)animate {
+- (void)_colorizeFolderIcons:(NSArray<SBRootIconListView *> *)iconListViews
+                       color:(UIColor *)color
+                     animate:(BOOL)animate {
     for (SBRootIconListView *listView in iconListViews) {
         SBIconViewMap *viewMap = listView.viewMap;
         SBIconListModel *listModel = listView.model;
@@ -739,11 +758,11 @@ extern SBIconController *getIconController();
                                   duration:ANIMATION_DURATION
                                    options:UIViewAnimationOptionTransitionCrossDissolve
                                 animations:^{
-                                    [iconView sa_colorFolderBackground:backgroundView];
+                                    [iconView sa_colorizeFolderBackground:backgroundView color:color];
                                 }
                                 completion:nil];
             } else {
-                [iconView sa_colorFolderBackground:backgroundView];
+                [iconView sa_colorizeFolderBackground:backgroundView color:color];
             }
         }];
     }
