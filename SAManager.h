@@ -22,6 +22,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIColor *folderColor;
+@property (nonatomic, retain, readonly) UIColor *folderBackgroundColor;
 @property (nonatomic, assign, readonly) BOOL useBackgroundColor;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 @property (nonatomic, retain, readonly) UIImage *blurredImage;

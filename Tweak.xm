@@ -489,7 +489,7 @@
 /* Background of an open folder */
 %hook SBFloatyFolderView
 - (void)enumeratePageBackgroundViewsUsingBlock:(void(^)(SBFloatyFolderBackgroundClipView *))block {
-    UIColor *color = manager.folderColor;
+    UIColor *color = manager.folderBackgroundColor;
     if (!color)
         return %orig;
 
@@ -510,7 +510,7 @@
     SBFolderBackgroundView *backgroundView = self.backgroundView;
 
     if (!color)
-        color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.6];
+        color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.8];
 
     MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = color;
 }

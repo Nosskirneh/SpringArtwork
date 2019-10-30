@@ -723,13 +723,15 @@ extern SBIconController *getIconController();
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
-        _folderColor = [color colorWithAlphaComponent:0.6];
+        _folderColor = [color colorWithAlphaComponent:0.8];
+        _folderBackgroundColor = [color colorWithAlphaComponent:0.6];
 
-        [self _colorizeFolderIcons:rootFolderController.iconListViews color:color animate:YES];
+        [self _colorizeFolderIcons:rootFolderController.iconListViews color:_folderColor animate:YES];
     } else if (!_folderColor) {
         return; // If we haven't already colorized, don't bother reverting it
     } else {
         _folderColor = nil;
+        _folderBackgroundColor = nil;
         [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
     }
 
@@ -738,7 +740,7 @@ extern SBIconController *getIconController();
     if (openedFolder) {
         SBFloatyFolderView *folderView = openedFolder.contentView;
         SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(folderView, "_scrollClipView");
-        [clipView nu_colorizeFolderBackground:_folderColor];
+        [clipView nu_colorizeFolderBackground:_folderBackgroundColor];
     }
 }
 
