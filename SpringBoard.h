@@ -170,11 +170,36 @@ typedef enum AppearState {
 - (_UILegibilitySettings *)currentLegibilitySettings;
 @end
 
+
+
+typedef enum NowPlayingState {
+    Inactive,
+    Paused,
+    Playing
+} NowPlayingState;
+
+@interface SBLockScreenNowPlayingController : NSObject                                           //@synthesize enabled=_enabled - In the implementation block
+@property (nonatomic, readonly) NowPlayingState currentState;
+@end
+
+@interface SBDashBoardNotificationAdjunctListViewController : UIViewController
+@property (nonatomic, retain) SBLockScreenNowPlayingController *nowPlayingController;
+@end
+
+@interface SBDashBoardCombinedListViewController : UIViewController
+@property (nonatomic, retain) SBDashBoardNotificationAdjunctListViewController *adjunctListViewController;
+@end
+
+@interface SBDashBoardMainPageContentViewController : UIViewController
+@property (nonatomic, readonly) SBDashBoardCombinedListViewController *combinedListViewController;
+@end
+
 @interface SBDashBoardView : UIView
 @property (nonatomic, retain) SAViewController *canvasViewController;
 @end
 
 @interface SBDashBoardViewController : UIViewController
+@property (setter=_setMainPageContentViewController:, nonatomic, retain) SBDashBoardMainPageContentViewController *mainPageContentViewController;
 @property (nonatomic, retain) SBDashBoardView *view;
 @property (nonatomic, retain) SBDashBoardLegibilityProvider *legibilityProvider;
 - (void)_updateActiveAppearanceForReason:(id)reason;
@@ -229,7 +254,3 @@ typedef enum {
 - (void)_enumerateAssertionsToLevel:(unsigned long long)arg1 withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
 @end
 
-
-@interface SBDashBoardNowPlayingController : NSObject
-@property (nonatomic, assign) BOOL sa_timerActive;
-@end

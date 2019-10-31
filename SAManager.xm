@@ -16,6 +16,7 @@
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
+#define kSpringBoardFinishedStartup "com.apple.springboard.finishedstartup"
 
 
 @interface NSValue (Missing)
@@ -75,6 +76,9 @@ extern SBIconController *getIconController();
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
     BOOL _canvasEnabled;
+
+    /* Storing this as a ivar to prevent always having to traverse all the properties */
+    SBLockScreenNowPlayingController *_nowPlayingController;
 }
 
 #pragma mark Public
@@ -101,7 +105,26 @@ extern SBIconController *getIconController();
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
         ^(int t) {
             [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
-        });
+        }
+    );
+
+    /* This is called once when SpringBoard finished loading,
+       thus traversing UI properties is possible here. */
+    int springBoardLoadedToken;
+    notify_register_dispatch(kSpringBoardFinishedStartup,
+        &springBoardLoadedToken,
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
+        ^(int t) {
+            SBDashBoardNotificationAdjunctListViewController *adjunctVC = getDashBoardViewController().
+                                                                          mainPageContentViewController.
+                                                                          combinedListViewController.
+                                                                          adjunctListViewController;
+            _nowPlayingController = MSHookIvar<SBLockScreenNowPlayingController *>(adjunctVC,
+                                                                                   "_nowPlayingController");
+
+            notify_cancel(springBoardLoadedToken);
+        }
+    );
 }
 
 - (BOOL)isCanvasActive {
@@ -130,7 +153,7 @@ extern SBIconController *getIconController();
     [_viewControllers addObject:viewController];
 }
 
-- (void)mediaWidgetWillHide {
+- (void)hide:(BOOL)animated {
     [self _setModeToNone];
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [self _sendUpdateArtworkEvent:NO];
@@ -317,10 +340,13 @@ extern SBIconController *getIconController();
 
     if (updateArtworkFrames)
         [self _updateArtworkFrames];
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        [self _sendUpdateArtworkEvent:YES];
-        [self _overrideLabels];
-    });
+
+    if ([self _allowActivate]) {
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            [self _sendUpdateArtworkEvent:YES];
+            [self _overrideLabels];
+        });
+    }
 }
 
 - (void)_updateArtworkFrames {
@@ -416,13 +442,19 @@ extern SBIconController *getIconController();
     if (_canvasURL) {
         [self _thumbnailFromAsset:_canvasAsset withCompletion:^(UIImage *image) {
             _canvasThumbnail = image;
+
+            if (![self _allowActivate]) {
+                if (image)
+                    _colorInfo = [SAImageHelper colorsForImage:image];
+                return;
+            }
+
             dispatch_async(dispatch_get_main_queue(), ^(void) {
                 [self _sendUpdateArtworkEvent:YES];
             });
 
             if (!image)
                 return;
-
             _colorInfo = [SAImageHelper colorsForImage:image];
 
             dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -441,6 +473,10 @@ extern SBIconController *getIconController();
         for (SAViewController *vc in _viewControllers)
             [vc artworkUpdated:content ? self : nil];
     });
+}
+
+- (BOOL)_allowActivate {
+    return _nowPlayingController.currentState != Inactive;
 }
 
 - (void)_currentAppChanged:(NSNotification *)notification {
@@ -462,8 +498,10 @@ extern SBIconController *getIconController();
         _canvasAsset = _previousSpotifyAsset;
         _artworkImage = _previousSpotifyArtworkImage;
 
-        [self _sendUpdateArtworkEvent:YES];
-        [self _overrideLabels];
+        if ([self _allowActivate]) {
+            [self _sendUpdateArtworkEvent:YES];
+            [self _overrideLabels];
+        }
 
         _previousSpotifyURL = nil;
         _previousSpotifyAsset = nil;
@@ -664,10 +702,12 @@ extern SBIconController *getIconController();
             if (_artworkBackgroundMode == BlurredImage)
                 _blurredImage = [self _blurredImage:image];
 
-            dispatch_async(dispatch_get_main_queue(), ^(void) {
-                [self _sendUpdateArtworkEvent:YES];
-                [self _overrideLabels];
-            });
+            if ([self _allowActivate]) {
+                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                    [self _sendUpdateArtworkEvent:YES];
+                    [self _overrideLabels];
+                });
+            }
         });
         return;
     }

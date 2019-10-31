@@ -159,33 +159,6 @@
     %end
 
 
-    /* Hide views when the media widget is hidden due to inactivity */
-    %hook SBDashBoardNowPlayingController
-
-    %property (nonatomic, assign) BOOL sa_timerActive;
-
-    - (void)_disableTimerFired {
-        %orig;
-        [manager mediaWidgetWillHide];
-    }
-
-    - (void)_startDisableTimer {
-        self.sa_timerActive = YES;
-
-        %orig;
-    }
-
-    - (void)_invalidateDisableTimer {
-        if (self.sa_timerActive)
-            [manager mediaWidgetWillHide];
-
-        self.sa_timerActive = NO;
-        %orig;
-    }
-
-    %end
-
-
     /* Register shake gesture to play/pause canvas video */
     %hook UIApplication
 
@@ -199,6 +172,23 @@
             return;
 
         [manager togglePlayManually];
+    }
+
+    %end
+
+
+    /* Hide views when the media widget is hidden due to inactivity */
+    %hook SBLockScreenNowPlayingController
+
+    - (void)setEnabled:(BOOL)enabled {
+        %orig(YES);
+    }
+
+    - (void)_updateToState:(long long)newState {
+        if (self.currentState == Paused && newState == Inactive)
+            [manager hide:YES];
+
+        %orig;
     }
 
     %end
