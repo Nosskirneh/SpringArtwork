@@ -118,7 +118,7 @@
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 
     - (id)init {
-        [manager loadHaptic];
+        [manager setupHaptic];
         return %orig;
     }
 

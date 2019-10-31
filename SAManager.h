@@ -45,7 +45,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 - (void)setupWithPreferences:(NSDictionary *)preferences;
 - (void)togglePlayManually;
-- (void)loadHaptic;
+- (void)setupHaptic;
 /* isDirty marks that there has been a change of canvasURL,
    but we're not updating it because once the event occurred
    the device was either at sleep or some app was in the foreground. */

@@ -131,7 +131,7 @@ extern SBIconController *getIconController();
     return _mode == Canvas;
 }
 
-- (void)loadHaptic {
+- (void)setupHaptic {
     _hapticGenerator = [[%c(UIImpactFeedbackGenerator) alloc] initWithStyle:UIImpactFeedbackStyleMedium];
 }
 
@@ -526,9 +526,9 @@ extern SBIconController *getIconController();
         [self _setModeToNone];
         [self _sendUpdateArtworkEvent:NO];
         [self _revertLabels];
-    } else if ([_disabledApps containsObject:bundleID])
+    } else if ([_disabledApps containsObject:bundleID]) {
         [self _unsubscribeToArtworkChanges];
-    else {
+    } else {
         [self _subscribeToArtworkChanges];
         if ([bundleID isEqualToString:kSpotifyBundleID]) {
             _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
@@ -779,7 +779,8 @@ extern SBIconController *getIconController();
     SBFolderController *openedFolder = [iconController _openFolderController];
     if (openedFolder) {
         SBFloatyFolderView *folderView = openedFolder.contentView;
-        SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(folderView, "_scrollClipView");
+        SBFloatyFolderBackgroundClipView *clipView = MSHookIvar<SBFloatyFolderBackgroundClipView *>(folderView,
+                                                                                                    "_scrollClipView");
         [clipView nu_colorizeFolderBackground:_folderBackgroundColor];
     }
 }
