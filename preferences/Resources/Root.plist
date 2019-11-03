@@ -102,6 +102,31 @@
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>Automatically play and pause content with media. Will not automatically resume content if manually paused using the shake gesture.</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>key</key>
+            <string>pauseContentWithMedia</string>
+            <key>label</key>
+            <string>Pause content with media</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
         </dict>
 
         <dict>

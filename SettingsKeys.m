@@ -4,6 +4,7 @@ const char *kSettingsChanged = "se.nosskirneh.springartwork/settingsChanged";
 // General
 NSString *const kEnabledMode = @"enabledMode";
 NSString *const kShakeToPause = @"shakeToPause";
+NSString *const kPauseContentWithMedia = @"pauseContentWithMedia";
 NSString *const kTintFolderIcons = @"tintFolderIcons";
 NSString *const kHideDockBackground = @"hideDockBackground";
 

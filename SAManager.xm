@@ -52,6 +52,7 @@ extern SBIconController *getIconController();
 
     BOOL _insideApp;
     BOOL _screenTurnedOn;
+    BOOL _mediaPlaying;
 
     NSString *_canvasURL;
 
@@ -78,6 +79,7 @@ extern SBIconController *getIconController();
     UIColor *_staticColor;
     BOOL _canvasEnabled;
     BOOL _animateArtwork;
+    BOOL _pauseContentWithMedia;
 
     /* Storing this as a ivar to prevent always having to traverse all the properties */
     SBLockScreenNowPlayingController *_nowPlayingController;
@@ -99,6 +101,9 @@ extern SBIconController *getIconController();
                                                object:nil];
 
     [self _subscribeToArtworkChanges];
+
+    if (_pauseContentWithMedia)
+        [self _subscribeToMediaPlayPause];
 
     _viewControllers = [NSMutableArray new];
 
@@ -255,6 +260,9 @@ extern SBIconController *getIconController();
 
     current = preferences[kAnimateArtwork];
     _animateArtwork = current && [current boolValue];
+
+    current = preferences[kPauseContentWithMedia];
+    _pauseContentWithMedia = !current || [current boolValue];
 }
 
 - (void)_updateStaticColor:(NSDictionary *)preferences {
@@ -339,6 +347,20 @@ extern SBIconController *getIconController();
             [self _unregisterAutoPlayPauseEvents];
     }
 
+    current = preferences[kPauseContentWithMedia];
+    if (current) {
+        BOOL pauseContentWithMedia = [current boolValue];
+        if (pauseContentWithMedia != _pauseContentWithMedia) {
+            if (pauseContentWithMedia) {
+                [self _subscribeToMediaPlayPause];
+                [self _playPauseChanged:nil];
+            } else {
+                [self _unsubscribeToMediaPlayPause];
+            }
+        }
+    }
+    
+
     BOOL updateArtworkFrames;
     current = preferences[kArtworkWidthPercentage];
     if (current) {
@@ -392,6 +414,19 @@ extern SBIconController *getIconController();
             [vc updateArtworkWidthPercentage:_artworkWidthPercentage
                            yOffsetPercentage:_artworkYOffsetPercentage];
     });
+}
+
+- (void)_subscribeToMediaPlayPause {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_playPauseChanged:)
+                                                 name:(__bridge NSString *)kMRMediaRemoteNowPlayingApplicationIsPlayingDidChangeNotification
+                                               object:nil];
+}
+
+- (void)_unsubscribeToMediaPlayPause {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:(__bridge NSString *)kMRMediaRemoteNowPlayingApplicationIsPlayingDidChangeNotification
+                                                  object:nil];
 }
 
 - (void)_subscribeToArtworkChanges {
@@ -469,6 +504,9 @@ extern SBIconController *getIconController();
             /* If the user manually paused the video,
                do not resume on screen turn on event */
             if (!_playing && _manuallyPaused)
+                return;
+
+            if (_pauseContentWithMedia && !_mediaPlaying)
                 return;
 
             if (!_insideApp)
@@ -562,6 +600,9 @@ extern SBIconController *getIconController();
     /* If the user manually paused the video,
        do not resume when app enters background */
     if (!_playing && _manuallyPaused)
+        return;
+
+    if (_pauseContentWithMedia && !_mediaPlaying)
         return;
 
     [self _setPlayPauseState:!_insideApp waitForMainQueue:YES];
@@ -708,6 +749,24 @@ extern SBIconController *getIconController();
             }];
         }
     ];
+}
+
+- (void)_playPauseChanged:(NSNotification *)notification {
+    MRMediaRemoteGetNowPlayingApplicationIsPlaying(dispatch_get_main_queue(),
+                                                   ^(Boolean playing) {
+        _mediaPlaying = playing;
+
+        if (_insideApp || !_screenTurnedOn)
+            return;
+
+        /* If the user manually paused the video,
+           do not resume on media playback state change */
+        if (!_playing && _manuallyPaused)
+            return;
+
+        if ([self playingContent])
+            [self _setPlayPauseState:playing waitForMainQueue:NO];
+    });
 }
 
 - (void)_updateModeToArtworkWithTrackIdentifier:(NSString *)trackIdentifier {

@@ -37,6 +37,7 @@ extern NSString *const kEnabledMode;
 extern NSString *const kTintFolderIcons;
 extern NSString *const kHideDockBackground;
 extern NSString *const kShakeToPause;
+extern NSString *const kPauseContentWithMedia;
 
 // Normal artwork
 extern NSString *const kArtworkEnabled;
