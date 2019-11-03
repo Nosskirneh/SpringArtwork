@@ -110,7 +110,7 @@ extern SBIconController *getIconController();
     notify_register_dispatch(kSettingsChanged,
         &_notifyTokenForSettingsChanged,
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
-        ^(int t) {
+        ^(int _) {
             [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
         }
     );
@@ -121,7 +121,7 @@ extern SBIconController *getIconController();
     notify_register_dispatch(kSpringBoardFinishedStartup,
         &springBoardLoadedToken,
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
-        ^(int t) {
+        ^(int _) {
             SBDashBoardNotificationAdjunctListViewController *adjunctVC = getDashBoardViewController().
                                                                           mainPageContentViewController.
                                                                           combinedListViewController.
