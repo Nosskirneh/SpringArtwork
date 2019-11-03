@@ -650,7 +650,7 @@ extern SBIconController *getIconController();
         return;
 
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
-        onCompletion:^void(MPCMediaRemoteController *controller) {
+        onCompletion:^(MPCMediaRemoteController *controller) {
             float width = [UIScreen mainScreen].nativeBounds.size.width;
             MPCFuture *request;
             if ([controller respondsToSelector:@selector(contentItemArtworkForContentItemIdentifier:artworkIdentifier:size:)])
@@ -660,7 +660,7 @@ extern SBIconController *getIconController();
             else
                 request = [controller contentItemArtworkForIdentifier:trackIdentifier
                                                                  size:CGSizeMake(width, width)];
-            [request onCompletion:^void(UIImage *image) {
+            [request onCompletion:^(UIImage *image) {
                 if (!image) {
                     #ifdef DEBUG
                     HBLogError(@"No artwork for this track!");
