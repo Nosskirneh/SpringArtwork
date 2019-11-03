@@ -86,6 +86,24 @@
             <key>label</key>
             <string>Static color</string>
         </dict>
+        
+
+        <dict>
+            <key>id</key>
+            <string>animateArtwork</string>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>key</key>
+            <string>animateArtwork</string>
+            <key>label</key>
+            <string>Animate artwork</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
 
 
         <!-- Artwork width percentage -->

@@ -38,6 +38,7 @@ extern SBIconController *getIconController();
     int _notifyTokenForDidChangeDisplayStatus;
     int _notifyTokenForSettingsChanged;
 
+    BOOL _registeredAutoPlayPauseEvents;
     BOOL _subscribedToArtwork;
     NSSet *_disabledApps;
 
@@ -76,6 +77,7 @@ extern SBIconController *getIconController();
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
     BOOL _canvasEnabled;
+    BOOL _animateArtwork;
 
     /* Storing this as a ivar to prevent always having to traverse all the properties */
     SBLockScreenNowPlayingController *_nowPlayingController;
@@ -127,8 +129,16 @@ extern SBIconController *getIconController();
     );
 }
 
+- (BOOL)playingContent {
+    return [self isCanvasActive] || [self hasAnimatingArtwork];
+}
+
 - (BOOL)isCanvasActive {
     return _mode == Canvas;
+}
+
+- (BOOL)hasAnimatingArtwork {
+    return _mode == Artwork && _animateArtwork && _artworkImage;
 }
 
 - (void)setupHaptic {
@@ -136,7 +146,7 @@ extern SBIconController *getIconController();
 }
 
 - (void)togglePlayManually {
-    if (![self isCanvasActive])
+    if (![self isCanvasActive] || ![self hasAnimatingArtwork])
         return;
 
     [_hapticGenerator impactOccurred];
@@ -167,6 +177,7 @@ extern SBIconController *getIconController();
 
     [self _unsubscribeToArtworkChanges];
     [self _unregisterEventsForCanvasMode];
+    [self _unregisterAutoPlayPauseEvents];
     notify_cancel(_notifyTokenForSettingsChanged);
 
     [self _setModeToNone];
@@ -184,6 +195,14 @@ extern SBIconController *getIconController();
     [self _sendUpdateArtworkEvent:NO];
     _viewControllers = nil;
     _inChargeController = nil;
+}
+
+- (BOOL)changedContent {
+    return _previousMode != None && _mode != _previousMode;
+}
+
+- (BOOL)useBackgroundColor {
+    return !_canvasURL && _artworkBackgroundMode != BlurredImage;
 }
 
 #pragma mark Private
@@ -233,6 +252,9 @@ extern SBIconController *getIconController();
 
     current = preferences[kHideDockBackground];
     _hideDockBackground = !current || [current boolValue];
+
+    current = preferences[kAnimateArtwork];
+    _animateArtwork = current && [current boolValue];
 }
 
 - (void)_updateStaticColor:(NSDictionary *)preferences {
@@ -266,9 +288,12 @@ extern SBIconController *getIconController();
         }
     }
 
+    current = preferences[kAnimateArtwork];
+    BOOL animateArtwork = !current || ![current boolValue];
     current = preferences[kCanvasEnabled];
+    BOOL canvasEnabled = !current || [current boolValue];
+
     if (current) {
-        BOOL canvasEnabled = [current boolValue];
         if (canvasEnabled != _canvasEnabled) {
             if (!canvasEnabled) {
                 _previousSpotifyURL = _canvasURL;
@@ -286,6 +311,11 @@ extern SBIconController *getIconController();
                     _previousMode = Canvas;
                 }
                 [self _unregisterEventsForCanvasMode];
+
+                /* Don't disable auto play pause events
+                   if artwork animation is enabled. */
+                if (!animateArtwork)
+                    [self _unregisterAutoPlayPauseEvents];
             } else {
                 if (_previousSpotifyURL) {
                     _canvasURL = _previousSpotifyURL;
@@ -300,6 +330,13 @@ extern SBIconController *getIconController();
                 });
             }
         }
+    }
+
+    if (_animateArtwork != animateArtwork) {
+        if (animateArtwork)
+            [self _registerAutoPlayPauseEvents];
+        else if (!canvasEnabled)
+            [self _unregisterAutoPlayPauseEvents];
     }
 
     BOOL updateArtworkFrames;
@@ -378,13 +415,10 @@ extern SBIconController *getIconController();
                                                   object:nil];
 }
 
-- (void)_registerEventsForCanvasMode {
-    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
-    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
-    [_rbs_center runServerOnCurrentThread];
-    [_rbs_center registerForMessageName:kCanvasURLMessage
-                                 target:self
-                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
+- (void)_registerAutoPlayPauseEvents {
+    if (_registeredAutoPlayPauseEvents)
+        return;
+    _registeredAutoPlayPauseEvents = YES;
 
     [self _registerScreenEvent];
     
@@ -394,10 +428,10 @@ extern SBIconController *getIconController();
                                                object:nil];
 }
 
-- (void)_unregisterEventsForCanvasMode {
-    [_rbs_center unregisterForMessageName:kCanvasURLMessage];
-    [_rbs_center stopServer];
-    _rbs_center = nil;
+- (void)_unregisterAutoPlayPauseEvents {
+    if (!_registeredAutoPlayPauseEvents)
+        return;
+    _registeredAutoPlayPauseEvents = NO;
 
     [self _unregisterScreenEvent];
     
@@ -406,22 +440,40 @@ extern SBIconController *getIconController();
                                                   object:nil];
 }
 
+- (void)_registerEventsForCanvasMode {
+    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
+    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
+    [_rbs_center runServerOnCurrentThread];
+    [_rbs_center registerForMessageName:kCanvasURLMessage
+                                 target:self
+                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
+
+    [self _registerAutoPlayPauseEvents];
+}
+
+- (void)_unregisterEventsForCanvasMode {
+    [_rbs_center unregisterForMessageName:kCanvasURLMessage];
+    [_rbs_center stopServer];
+    _rbs_center = nil;
+}
+
 - (BOOL)_registerScreenEvent {
     uint32_t result = notify_register_dispatch(kNotificationNameDidChangeDisplayStatus,
-       &_notifyTokenForDidChangeDisplayStatus,
-       dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
-       ^(int info) {
+        &_notifyTokenForDidChangeDisplayStatus,
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
+        ^(int info) {
             uint64_t state;
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
-            // If the user manually paused the video, do not resume on screen turn on event
-            if (![self isCanvasActive] || (!_playing && _manuallyPaused))
+            /* If the user manually paused the video,
+               do not resume on screen turn on event */
+            if (!_playing && _manuallyPaused)
                 return;
 
             if (!_insideApp)
-                [self _setCanvasPlayPauseState:_screenTurnedOn];
-       });
+                [self _setPlayPauseState:_screenTurnedOn];
+        });
 
     return result == NOTIFY_STATUS_OK;
 }
@@ -430,12 +482,12 @@ extern SBIconController *getIconController();
     return notify_cancel(_notifyTokenForDidChangeDisplayStatus) == NOTIFY_STATUS_OK;
 }
 
-- (void)_setCanvasPlayPauseState:(BOOL)newState {
+- (void)_setPlayPauseState:(BOOL)newState {
     for (SAViewController *vc in _viewControllers)
         [vc togglePlayPauseWithState:newState];
 
     _manuallyPaused = NO;
-    _playing = _canvasURL != nil;
+    _playing = _canvasURL != nil || _artworkImage != nil;
 }
 
 - (void)_sendCanvasUpdatedEvent {
@@ -449,9 +501,7 @@ extern SBIconController *getIconController();
                 return;
             }
 
-            dispatch_async(dispatch_get_main_queue(), ^(void) {
-                [self _sendUpdateArtworkEvent:YES];
-            });
+            [self _sendUpdateArtworkEventOnMainQueue:YES];
 
             if (!image)
                 return;
@@ -469,12 +519,18 @@ extern SBIconController *getIconController();
 }
 
 - (void)_sendUpdateArtworkEvent:(BOOL)content {
+    for (SAViewController *vc in _viewControllers)
+        [vc artworkUpdated:content ? self : nil];
+}
+
+- (void)_sendUpdateArtworkEventOnMainQueue:(BOOL)content {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         for (SAViewController *vc in _viewControllers)
             [vc artworkUpdated:content ? self : nil];
     });
 }
 
+/* Only allow activate when the media widget is showing */
 - (BOOL)_allowActivate {
     return _nowPlayingController.currentState != Inactive;
 }
@@ -483,17 +539,24 @@ extern SBIconController *getIconController();
     SBApplication *app = notification.object;
     id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
                                         app.internalProcessState : app.processState;
-    _insideApp = processState.foreground && processState.visibility != ForegroundObscured;
+    BOOL insideApp = processState.foreground && processState.visibility != ForegroundObscured;
 
-    // If the user manually paused the video, do not resume when app enters background
-    if (![self isCanvasActive] || (!_playing && _manuallyPaused))
+    /* Don't update if nothing changed */
+    if (_insideApp == insideApp)
         return;
 
-    [self _setCanvasPlayPauseState:!_insideApp];
+    _insideApp = insideApp;
+
+    /* If the user manually paused the video, do not resume when app enters background */
+    if (!_playing && _manuallyPaused)
+        return;
+
+    [self _setPlayPauseState:!_insideApp];
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
-    if (!_artworkImage && !_canvasURL && (_previousSpotifyURL || _previousSpotifyArtworkImage)) {
+    if (!_artworkImage && !_canvasURL &&
+        (_previousSpotifyURL || _previousSpotifyArtworkImage)) {
         _canvasURL = _previousSpotifyURL;
         _canvasAsset = _previousSpotifyAsset;
         _artworkImage = _previousSpotifyArtworkImage;
@@ -524,7 +587,7 @@ extern SBIconController *getIconController();
     if (!bundleID) {
         [self _checkForStoreSpotifyConnectIssue:bundleID];
         [self _setModeToNone];
-        [self _sendUpdateArtworkEvent:NO];
+        [self _sendUpdateArtworkEventOnMainQueue:NO];
         [self _revertLabels];
     } else if ([_disabledApps containsObject:bundleID]) {
         [self _unsubscribeToArtworkChanges];
@@ -535,7 +598,7 @@ extern SBIconController *getIconController();
             [self _checkForRestoreSpotifyConnectIssue];
         } else {
             [self _setModeToNone];
-            [self _sendUpdateArtworkEvent:NO];
+            [self _sendUpdateArtworkEventOnMainQueue:NO];
 
             if ([bundleID isEqualToString:kDeezerBundleID])
                 _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
@@ -621,9 +684,10 @@ extern SBIconController *getIconController();
                     [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
                     return;
 
-                if ([self _candidateSameAsPreviousArtwork:image] && ![self changedContent]) {
-                    [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
-                    return [self _updateArtworkWithImage:_artworkImage];
+                if ([self _candidateSameAsPreviousArtwork:image]) {
+                    if (![self changedContent])
+                        [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
+                    return;
                 }
 
                 [self _updateArtworkWithImage:image];
@@ -677,14 +741,6 @@ extern SBIconController *getIconController();
     return NO;
 }
 
-- (BOOL)changedContent {
-    return _previousMode != None && _mode != _previousMode;
-}
-
-- (BOOL)useBackgroundColor {
-    return !_canvasURL && _artworkBackgroundMode != BlurredImage;
-}
-
 - (void)_getColorInfoWithStaticColorForImage:(UIImage *)image {
     UIColor *staticColor = _artworkBackgroundMode == StaticColor ?
                            _staticColor : nil;
@@ -712,7 +768,7 @@ extern SBIconController *getIconController();
         return;
     }
 
-    [self _sendUpdateArtworkEvent:NO];
+    [self _sendUpdateArtworkEventOnMainQueue:NO];
 }
 
 - (void)_overrideLabels {
@@ -896,7 +952,8 @@ extern SBIconController *getIconController();
 }
 
 - (BOOL)isDirty {
-    return !_screenTurnedOn || [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
+    return !_screenTurnedOn ||
+           [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {

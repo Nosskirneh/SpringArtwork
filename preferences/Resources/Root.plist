@@ -77,6 +77,31 @@
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>Shake to pause artwork video or animation.</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>cellClass</key>
+            <string>SASwitchTableCell</string>
+            <key>default</key>
+            <true/>
+            <key>key</key>
+            <string>shakeToPause</string>
+            <key>label</key>
+            <string>Shake to pause</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
+
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
         </dict>
 
         <dict>

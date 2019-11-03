@@ -2,6 +2,7 @@
 #import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
+#import <float.h>
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
@@ -100,16 +101,23 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)togglePlayPauseWithState:(BOOL)playState {
-    AVPlayer *player = _canvasLayer.player;
-    playState ? [player play] : [player pause];
+    if ([_manager isCanvasActive]) {
+        AVPlayer *player = _canvasLayer.player;
+        playState ? [player play] : [player pause];
+    } else if ([_manager hasAnimatingArtwork]) {
+        playState ? [self _resumeArtworkAnimation] :
+                    [self _pauseArtworkAnimation];
+    }
 }
 
 - (void)togglePlayPause {
-    AVPlayer *player = _canvasLayer.player;
-    if (player.rate == 0 || player.error)
-        [player play];
-    else
-        [player pause];
+    if ([_manager isCanvasActive]) {
+        AVPlayer *player = _canvasLayer.player;
+        (player.rate == 0 || player.error) ? [player play] :
+                                             [player pause];
+    } else if ([_manager hasAnimatingArtwork]) {
+        [self _togglePlayPauseArtworkAnimation];
+    }
 }
 
 - (void)updateArtworkWidthPercentage:(int)percentage
@@ -249,7 +257,76 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_setArtwork:(UIImage *)artwork {
+    /* If call came from change of settings, it might be that the artwork is still the same.
+       Hence, compare the image pointer before updating. */
+    if (artwork == _artworkImageView.image)
+        return;
+
     _artworkImageView.image = artwork;
+    if ([_manager hasAnimatingArtwork])
+        [self _addSpinArtwork];
+}
+
+- (void)_addSpinArtwork {
+    _artworkImageView.layer.mask = [self _createLayerArtworkMask];
+
+    _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
+    _artworkImageView.clipsToBounds = YES;
+
+    CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
+    rotation.fromValue = [NSNumber numberWithFloat:0];
+    rotation.toValue = [NSNumber numberWithFloat:(2 * M_PI)];
+    rotation.duration = 15.0;
+    rotation.repeatCount = FLT_MAX;
+    [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
+}
+
+- (CALayer *)_createLayerArtworkMask {
+    CGFloat holeWidth = 40.0f;
+    CAShapeLayer *lay = [CAShapeLayer layer];
+    CGRect holeFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - holeWidth / 2,
+                                  _artworkImageView.frame.size.height / 2 - holeWidth / 2,
+                                  holeWidth, holeWidth);
+    UIBezierPath *beizerPath = [UIBezierPath bezierPathWithRect:CGRectMake(0, 0, _artworkImageView.frame.size.width, _artworkImageView.frame.size.height)];
+    [beizerPath appendPath:[[UIBezierPath bezierPathWithOvalInRect:holeFrame] bezierPathByReversingPath]];
+
+    /* Use and modify code below to create vinyl instead of CD */
+    // CGFloat innerHoleWidth = 20.0f;
+    // CGRect innerHoleFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - innerHoleWidth / 2,
+    //                                    _artworkImageView.frame.size.height / 2 - innerHoleWidth / 2,
+    //                                    innerHoleWidth, innerHoleWidth);
+    // [beizerPath appendPath:[UIBezierPath bezierPathWithOvalInRect:innerHoleFrame]];
+    [lay setPath:[beizerPath CGPath]];
+    return lay;
+}
+
+- (void)_togglePlayPauseArtworkAnimation {
+    CALayer *layer = _artworkImageView.layer;
+    layer.speed == 0.0 ? [self _resumeArtworkAnimation:layer] :
+                         [self _pauseArtworkAnimation:layer];
+}
+
+- (void)_pauseArtworkAnimation {
+    [self _pauseArtworkAnimation:_artworkImageView.layer];
+}
+
+- (void)_resumeArtworkAnimation {
+    [self _resumeArtworkAnimation:_artworkImageView.layer];
+}
+
+- (void)_pauseArtworkAnimation:(CALayer *)layer {
+    CFTimeInterval pausedTime = [layer convertTime:CACurrentMediaTime() fromLayer:nil];
+    layer.speed = 0.0;
+    layer.timeOffset = pausedTime;
+}
+
+- (void)_resumeArtworkAnimation:(CALayer *)layer {
+    CFTimeInterval pausedTime = [layer timeOffset];
+    layer.speed = 1.0;
+    layer.timeOffset = 0.0;
+    layer.beginTime = 0.0;
+    CFTimeInterval timeSincePause = [layer convertTime:CACurrentMediaTime() fromLayer:nil] - pausedTime;
+    layer.beginTime = timeSincePause;
 }
 
 - (BOOL)_isShowingArtworkView {

@@ -166,7 +166,7 @@
         %orig;
 
         if (event.type != UIEventSubtypeMotionShake ||
-            ![manager isCanvasActive] ||
+            ![manager playingContent] ||
             [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication] ||
             !manager.shakeToPause)
             return;
@@ -408,7 +408,7 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([manager isCanvasActive]) {
+    if ([manager playingContent]) {
         MSHookIvar<UIView *>(self, "_homeScreenContentBackdropView").hidden = NO;
         MSHookIvar<UIImageView *>(self, "_homeScreenBlurredContentSnapshotImageView").hidden = YES;
     }
@@ -423,7 +423,7 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([manager isCanvasActive]) {
+    if ([manager playingContent]) {
         MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
         MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
         [[%c(SBIconController) sharedInstance] contentView].hidden = NO;

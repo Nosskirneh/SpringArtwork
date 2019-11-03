@@ -13,7 +13,11 @@
 + (BOOL)colorIsLight:(UIColor *)color;
 + (UIColor *)lighterColorForColor:(UIColor *)color;
 + (UIColor *)darkerColorForColor:(UIColor *)color;
-+ (BOOL)compareImage:(UIImage *)first withImage:(UIImage *)second;
++ (BOOL)compareImage:(UIImage *)first
+           withImage:(UIImage *)second;
++ (BOOL)compareImage:(UIImage *)first
+           withImage:(UIImage *)second
+           tolerance:(CGFloat)tolerance;
 + (NSString *)imageToString:(UIImage *)image;
 + (UIImage *)stringToImage:(NSString *)string;
 @end

@@ -38,6 +38,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) int artworkYOffsetPercentage;
 @property (nonatomic, assign, readonly) BOOL shakeToPause;
 @property (nonatomic, assign, readonly) BOOL hideDockBackground;
+@property (nonatomic, assign, readonly) BOOL animatingNormal;
 // ---
 
 @property (nonatomic, assign, readonly) BOOL trialEnded;
@@ -46,11 +47,15 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)setupWithPreferences:(NSDictionary *)preferences;
 - (void)togglePlayManually;
 - (void)setupHaptic;
+
+- (BOOL)playingContent;
+- (BOOL)isCanvasActive;
+- (BOOL)hasAnimatingArtwork;
+
 /* isDirty marks that there has been a change of canvasURL,
    but we're not updating it because once the event occurred
    the device was either at sleep or some app was in the foreground. */
 - (BOOL)isDirty;
-- (BOOL)isCanvasActive;
 - (BOOL)changedContent;
 
 - (void)hide:(BOOL)animated;

@@ -276,7 +276,7 @@ typedef union {
             second = [self imageWithImage:second scaledToSize:first.size];
     }
 
-    return [self _compareImage:first withImage:second tolerance:0.1];
+    return [self compareImage:first withImage:second tolerance:0.1];
 }
 
 + (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
@@ -289,8 +289,11 @@ typedef union {
     return newImage;
 }
 
-+ (BOOL)_compareImage:(UIImage *)first withImage:(UIImage *)second tolerance:(CGFloat)tolerance {
-    NSAssert(CGSizeEqualToSize(first.size, second.size), @"Images must be of same size.");
++ (BOOL)compareImage:(UIImage *)first
+           withImage:(UIImage *)second
+           tolerance:(CGFloat)tolerance {
+    if (!CGSizeEqualToSize(first.size, second.size))
+        return NO;
 
     CGSize firstImageSize = CGSizeMake(CGImageGetWidth(first.CGImage), CGImageGetHeight(first.CGImage));
     CGSize secondImageSize = CGSizeMake(CGImageGetWidth(second.CGImage), CGImageGetHeight(second.CGImage));

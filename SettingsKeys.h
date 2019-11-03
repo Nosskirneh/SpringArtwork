@@ -36,16 +36,17 @@ extern const char *kSettingsChanged;
 extern NSString *const kEnabledMode;
 extern NSString *const kTintFolderIcons;
 extern NSString *const kHideDockBackground;
+extern NSString *const kShakeToPause;
 
 // Normal artwork
 extern NSString *const kArtworkEnabled;
 extern NSString *const kDisabledApps;
 extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;
+extern NSString *const kAnimateArtwork;
 extern NSString *const kArtworkWidthPercentage;
 extern NSString *const kArtworkYOffsetPercentage;
 
 // Video artwork
 extern NSString *const kCanvasEnabled;
 extern NSString *const kCanvasOnlyWiFi;
-extern NSString *const kShakeToPause;

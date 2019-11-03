@@ -47,27 +47,6 @@ Disabled: Always download video artwork. Normal artwork will be used as fallback
             <key>PostNotification</key>
             <string>se.nosskirneh.springartwork/spotifySettingsChanged</string>
         </dict>
-
-
-        <dict>
-            <key>cell</key>
-            <string>PSGroupCell</string>
-        </dict>
-
-        <dict>
-            <key>cell</key>
-            <string>PSSwitchCell</string>
-            <key>cellClass</key>
-            <string>SASwitchTableCell</string>
-            <key>default</key>
-            <true/>
-            <key>key</key>
-            <string>shakeToPause</string>
-            <key>label</key>
-            <string>Shake to pause video</string>
-            <key>PostNotification</key>
-            <string>se.nosskirneh.springartwork/settingsChanged</string>
-        </dict>
     </array>
     <key>title</key>
     <string>Video artwork</string>
