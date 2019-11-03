@@ -86,8 +86,18 @@
             <key>label</key>
             <string>Static color</string>
         </dict>
-        
 
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Animate</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>Spins the artwork like a CD.</string>
+        </dict>
         <dict>
             <key>id</key>
             <string>animateArtwork</string>
