@@ -483,8 +483,10 @@ extern SBIconController *getIconController();
 }
 
 - (void)_setPlayPauseState:(BOOL)newState {
-    for (SAViewController *vc in _viewControllers)
-        [vc togglePlayPauseWithState:newState];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        for (SAViewController *vc in _viewControllers)
+            [vc togglePlayPauseWithState:newState];
+    });
 
     _manuallyPaused = NO;
     _playing = _canvasURL != nil || _artworkImage != nil;
