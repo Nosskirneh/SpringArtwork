@@ -144,7 +144,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             void (^afterThumbnailCompletion)() = nil;
 
             if (changedContent)
-                afterThumbnailCompletion = ^() {
+                afterThumbnailCompletion = ^{
                     [self _artworkUpdatedWithImage:nil
                                       blurredImage:nil
                                              color:nil
@@ -194,7 +194,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                   changedContent:(BOOL)changedContent {
     if (_animating) {
         __weak typeof(self) weakSelf = self;
-        _completion = ^() {
+        _completion = ^{
             [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork
                                           blurredImage:blurredImage
                                                  color:color
@@ -339,7 +339,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     _animating = YES;
     [self.view addSubview:_artworkContainer];
-    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^() {
+    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^{
         _animating = NO;
 
         if (_completion) {
@@ -354,7 +354,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (![self _isShowingArtworkView])
         return NO;
 
-    [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^() {
+    [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^{
         [_artworkContainer removeFromSuperview];
     }];
     return YES;
@@ -470,7 +470,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (!_canvasContainerImageView.superview)
         return NO;
 
-    [self _showCanvasLayer:NO completion:^() {
+    [self _showCanvasLayer:NO completion:^{
         [_canvasLayer.player pause];
         [_canvasContainerImageView removeFromSuperview];
     }];

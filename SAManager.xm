@@ -165,7 +165,7 @@ extern SBIconController *getIconController();
 
 - (void)hide:(BOOL)animated {
     [self _setModeToNone];
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
         [self _sendUpdateArtworkEvent:NO];
         [self _revertLabels];
     });
@@ -325,7 +325,7 @@ extern SBIconController *getIconController();
                     _mode = Canvas;
                     _previousMode = Artwork;
                 }
-                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                dispatch_async(dispatch_get_main_queue(), ^{
                     [self _registerEventsForCanvasMode];
                 });
             }
@@ -379,7 +379,7 @@ extern SBIconController *getIconController();
         [self _updateArtworkFrames];
 
     if ([self _allowActivate]) {
-        dispatch_async(dispatch_get_main_queue(), ^(void) {
+        dispatch_async(dispatch_get_main_queue(), ^{
             [self _sendUpdateArtworkEvent:YES];
             [self _overrideLabels];
         });
@@ -387,7 +387,7 @@ extern SBIconController *getIconController();
 }
 
 - (void)_updateArtworkFrames {
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
         for (SAViewController *vc in _viewControllers)
             [vc updateArtworkWidthPercentage:_artworkWidthPercentage
                            yOffsetPercentage:_artworkYOffsetPercentage];
@@ -461,7 +461,7 @@ extern SBIconController *getIconController();
     uint32_t result = notify_register_dispatch(kNotificationNameDidChangeDisplayStatus,
         &_notifyTokenForDidChangeDisplayStatus,
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
-        ^(int info) {
+        ^(int _) {
             uint64_t state;
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
@@ -472,7 +472,7 @@ extern SBIconController *getIconController();
                 return;
 
             if (!_insideApp)
-                [self _setPlayPauseState:_screenTurnedOn];
+                [self _setPlayPauseState:_screenTurnedOn waitForMainQueue:YES];
         });
 
     return result == NOTIFY_STATUS_OK;
@@ -482,11 +482,22 @@ extern SBIconController *getIconController();
     return notify_cancel(_notifyTokenForDidChangeDisplayStatus) == NOTIFY_STATUS_OK;
 }
 
-- (void)_setPlayPauseState:(BOOL)newState {
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
+- (void)_updatePlayingVariables {
+}
+
+- (void)_setPlayPauseState:(BOOL)newState waitForMainQueue:(BOOL)waitForMainQueue {
+    void (^block)() = ^{
         for (SAViewController *vc in _viewControllers)
             [vc togglePlayPauseWithState:newState];
-    });
+    };
+
+    if (waitForMainQueue) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            block();
+        });
+    } else {
+        block();
+    }
 
     _manuallyPaused = NO;
     _playing = _canvasURL != nil || _artworkImage != nil;
@@ -509,7 +520,7 @@ extern SBIconController *getIconController();
                 return;
             _colorInfo = [SAImageHelper colorsForImage:image];
 
-            dispatch_async(dispatch_get_main_queue(), ^(void) {
+            dispatch_async(dispatch_get_main_queue(), ^{
                 [self _overrideLabels];
             });
         }];
@@ -526,9 +537,8 @@ extern SBIconController *getIconController();
 }
 
 - (void)_sendUpdateArtworkEventOnMainQueue:(BOOL)content {
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        for (SAViewController *vc in _viewControllers)
-            [vc artworkUpdated:content ? self : nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self _sendUpdateArtworkEventOnMainQueue:content];
     });
 }
 
@@ -549,11 +559,12 @@ extern SBIconController *getIconController();
 
     _insideApp = insideApp;
 
-    /* If the user manually paused the video, do not resume when app enters background */
+    /* If the user manually paused the video,
+       do not resume when app enters background */
     if (!_playing && _manuallyPaused)
         return;
 
-    [self _setPlayPauseState:!_insideApp];
+    [self _setPlayPauseState:!_insideApp waitForMainQueue:YES];
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
@@ -761,7 +772,7 @@ extern SBIconController *getIconController();
                 _blurredImage = [self _blurredImage:image];
 
             if ([self _allowActivate]) {
-                dispatch_async(dispatch_get_main_queue(), ^(void) {
+                dispatch_async(dispatch_get_main_queue(), ^{
                     [self _sendUpdateArtworkEvent:YES];
                     [self _overrideLabels];
                 });

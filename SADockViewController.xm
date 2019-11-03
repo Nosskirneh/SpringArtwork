@@ -31,7 +31,7 @@ extern SAManager *manager;
 
     [self _performLayerOpacityAnimation:background.layer
                                    show:!hide
-                             completion:^() {
+                             completion:^{
         if (hide)
             background.hidden = YES;
     }];
