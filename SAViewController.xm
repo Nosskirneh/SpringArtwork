@@ -2,7 +2,6 @@
 #import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
-#import <float.h>
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
@@ -284,10 +283,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _artworkImageView.clipsToBounds = YES;
 
     CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
-    rotation.fromValue = [NSNumber numberWithFloat:0];
-    rotation.toValue = [NSNumber numberWithFloat:(2 * M_PI)];
+    rotation.fromValue = @(0);
+    rotation.toValue = @(2 * M_PI);
     rotation.duration = 15.0;
-    rotation.repeatCount = FLT_MAX;
+    rotation.repeatCount = INFINITY;
     [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
 }
 
