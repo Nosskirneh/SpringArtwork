@@ -276,8 +276,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_addSpinArtwork {
     _artworkImageView.layer.mask = [self _createLayerArtworkMask];
+    [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
 
     _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
+    _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
+    _artworkImageView.layer.borderWidth = 1.0f;
     _artworkImageView.clipsToBounds = YES;
 
     CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
@@ -288,23 +291,35 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
 }
 
-- (CALayer *)_createLayerArtworkMask {
-    CGFloat holeWidth = 40.0f;
-    CAShapeLayer *lay = [CAShapeLayer layer];
-    CGRect holeFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - holeWidth / 2,
-                                  _artworkImageView.frame.size.height / 2 - holeWidth / 2,
-                                  holeWidth, holeWidth);
-    UIBezierPath *beizerPath = [UIBezierPath bezierPathWithRect:CGRectMake(0, 0, _artworkImageView.frame.size.width, _artworkImageView.frame.size.height)];
-    [beizerPath appendPath:[[UIBezierPath bezierPathWithOvalInRect:holeFrame] bezierPathByReversingPath]];
+- (CALayer *)_createLayerArtworkOuterCD {
+    CGFloat outerHoleWidth = 40.0f;
+    CGRect outerHoleFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - outerHoleWidth / 2,
+                                       _artworkImageView.frame.size.height / 2 - outerHoleWidth / 2,
+                                       outerHoleWidth, outerHoleWidth);
+    UIBezierPath *beizerPath = [UIBezierPath bezierPathWithOvalInRect:outerHoleFrame];
 
-    /* Use and modify code below to create vinyl instead of CD */
-    // CGFloat innerHoleWidth = 20.0f;
-    // CGRect innerHoleFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - innerHoleWidth / 2,
-    //                                    _artworkImageView.frame.size.height / 2 - innerHoleWidth / 2,
-    //                                    innerHoleWidth, innerHoleWidth);
-    // [beizerPath appendPath:[UIBezierPath bezierPathWithOvalInRect:innerHoleFrame]];
-    [lay setPath:[beizerPath CGPath]];
-    return lay;
+    CAShapeLayer *layer = [CAShapeLayer layer];
+    layer.fillColor = [UIColor.whiteColor colorWithAlphaComponent:0.5].CGColor;
+    [layer setPath:[beizerPath CGPath]];
+    return layer;
+}
+
+- (CALayer *)_createLayerArtworkMask {
+    CGRect allFrame = CGRectMake(0, 0,
+                                 _artworkImageView.frame.size.width,
+                                 _artworkImageView.frame.size.height);
+    UIBezierPath *beizerPath = [UIBezierPath bezierPathWithRect:allFrame];
+
+    CGFloat innerHoleWidth = 20.0f;
+    CGRect holeFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - innerHoleWidth / 2,
+                                  _artworkImageView.frame.size.height / 2 - innerHoleWidth / 2,
+                                  innerHoleWidth, innerHoleWidth);
+    [beizerPath appendPath:[[UIBezierPath bezierPathWithOvalInRect:holeFrame]
+                            bezierPathByReversingPath]];
+
+    CAShapeLayer *layer = [CAShapeLayer layer];
+    [layer setPath:[beizerPath CGPath]];
+    return layer;
 }
 
 - (void)_togglePlayPauseArtworkAnimation {
