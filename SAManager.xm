@@ -510,7 +510,7 @@ extern SBIconController *getIconController();
                 return;
 
             if (!_insideApp)
-                [self _setPlayPauseState:_screenTurnedOn waitForMainQueue:YES];
+                [self _setPlayPauseState:_screenTurnedOn];
         });
 
     return result == NOTIFY_STATUS_OK;
@@ -520,22 +520,11 @@ extern SBIconController *getIconController();
     return notify_cancel(_notifyTokenForDidChangeDisplayStatus) == NOTIFY_STATUS_OK;
 }
 
-- (void)_updatePlayingVariables {
-}
-
-- (void)_setPlayPauseState:(BOOL)newState waitForMainQueue:(BOOL)waitForMainQueue {
-    void (^block)() = ^{
+- (void)_setPlayPauseState:(BOOL)newState {
+    dispatch_async(dispatch_get_main_queue(), ^{
         for (SAViewController *vc in _viewControllers)
             [vc togglePlayPauseWithState:newState];
-    };
-
-    if (waitForMainQueue) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            block();
-        });
-    } else {
-        block();
-    }
+    });
 
     _manuallyPaused = NO;
     _playing = _canvasURL != nil || _artworkImage != nil;
@@ -605,7 +594,7 @@ extern SBIconController *getIconController();
     if (_pauseContentWithMedia && !_mediaPlaying)
         return;
 
-    [self _setPlayPauseState:!_insideApp waitForMainQueue:YES];
+    [self _setPlayPauseState:!_insideApp];
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
@@ -752,21 +741,19 @@ extern SBIconController *getIconController();
 }
 
 - (void)_playPauseChanged:(NSNotification *)notification {
-    MRMediaRemoteGetNowPlayingApplicationIsPlaying(dispatch_get_main_queue(),
-                                                   ^(Boolean playing) {
-        _mediaPlaying = playing;
+    NSString *key = CFBridgingRelease(kMRMediaRemoteNowPlayingApplicationIsPlayingUserInfoKey);
+    _mediaPlaying = [notification.userInfo[key] boolValue];
 
-        if (_insideApp || !_screenTurnedOn)
-            return;
+    if (_insideApp || !_screenTurnedOn)
+        return;
 
-        /* If the user manually paused the video,
-           do not resume on media playback state change */
-        if (!_playing && _manuallyPaused)
-            return;
+    /* If the user manually paused the video,
+       do not resume on media playback state change */
+    if (!_playing && _manuallyPaused)
+        return;
 
-        if ([self playingContent])
-            [self _setPlayPauseState:playing waitForMainQueue:NO];
-    });
+    if ([self playingContent])
+        [self _setPlayPauseState:_mediaPlaying];
 }
 
 - (void)_updateModeToArtworkWithTrackIdentifier:(NSString *)trackIdentifier {
