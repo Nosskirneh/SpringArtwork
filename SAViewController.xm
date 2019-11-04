@@ -88,7 +88,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (!targetView)
         return [self.view removeFromSuperview];
 
-    self.view.frame = CGRectMake(0, 0, targetView.frame.size.width, targetView.frame.size.height);
+    self.view.frame = CGRectMake(0, 0,
+                                 targetView.frame.size.width,
+                                 targetView.frame.size.height);
     [targetView addSubview:self.view];
 }
 
@@ -130,10 +132,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         imageViewFrame.origin.x += difference / 2.0;
     }
     imageViewFrame.size.height = imageViewFrame.size.width;
-    imageViewFrame.origin.y = self.view.frame.size.height / 2 - imageViewFrame.size.height / 2;
+    imageViewFrame.origin.y = self.view.frame.size.height / 2 -
+                              imageViewFrame.size.height / 2;
 
     if (yOffsetPercentage != 0)
-        imageViewFrame.origin.y += yOffsetPercentage / 100.0 * self.view.frame.size.height;
+        imageViewFrame.origin.y += yOffsetPercentage / 100.0 *
+                                   self.view.frame.size.height;
     _artworkImageView.frame = imageViewFrame;
 }
 
@@ -158,7 +162,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         } else if (manager.artworkImage) {
             [self _artworkUpdatedWithImage:manager.artworkImage
                               blurredImage:manager.blurredImage
-                                     color:manager.useBackgroundColor ? manager.colorInfo.backgroundColor : nil
+                                     color:manager.useBackgroundColor ?
+                                               manager.colorInfo.backgroundColor : nil
                             changedContent:changedContent];
             if (changedContent)
                 [self _canvasUpdatedWithAsset:nil
@@ -217,13 +222,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return;
     }
 
-    // Not already visible, so we don't need to animate the image change, just the layer
+    // Not already visible, so we don't need to animate the image change but only the layer
     if (changedContent || ![self _isShowingArtworkView]) {
         [self _setArtwork:artwork];
         [self _setBlurredImage:blurredImage color:color];
         [self _showArtworkViews];
     } else {
-        [self _animateArtworkChange:artwork blurredImage:blurredImage color:color];
+        [self _animateArtworkChange:artwork
+                       blurredImage:blurredImage
+                              color:color];
     }
 }
 
