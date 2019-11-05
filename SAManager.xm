@@ -566,7 +566,7 @@ extern SBIconController *getIconController();
 
 - (void)_sendUpdateArtworkEventOnMainQueue:(BOOL)content {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self _sendUpdateArtworkEventOnMainQueue:content];
+        [self _sendUpdateArtworkEvent:content];
     });
 }
 
