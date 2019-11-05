@@ -377,6 +377,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^{
         [_artworkContainer removeFromSuperview];
+        _artworkImageView.image = nil;
     }];
     return YES;
 }
