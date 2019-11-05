@@ -815,7 +815,7 @@ extern SBIconController *getIconController();
                           UIColor.blackColor : UIColor.whiteColor;
     _blendedCDBackgroundColor = [[SAImageHelper blendColor:_colorInfo.backgroundColor
                                                  withColor:toMixColor
-                                                percentage:0.4] colorWithAlphaComponent:0.7];
+                                                percentage:0.5] colorWithAlphaComponent:0.8];
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
