@@ -21,6 +21,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
+@property (nonatomic, retain, readonly) UIColor *blendedCDBackgroundColor;
 @property (nonatomic, retain, readonly) UIColor *folderColor;
 @property (nonatomic, retain, readonly) UIColor *folderBackgroundColor;
 @property (nonatomic, assign, readonly) BOOL useBackgroundColor;

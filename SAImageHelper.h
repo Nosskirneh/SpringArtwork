@@ -10,6 +10,9 @@
 + (SAColorInfo *)colorsForImage:(UIImage *)image;
 + (SAColorInfo *)colorsForImage:(UIImage *)image
       withStaticBackgroundColor:(UIColor *)staticBackgroundColor;
++ (UIColor *)blendColor:(UIColor *)color1
+              withColor:(UIColor *)color2
+             percentage:(CGFloat)percentage;
 + (BOOL)colorIsLight:(UIColor *)color;
 + (UIColor *)lighterColorForColor:(UIColor *)color;
 + (UIColor *)darkerColorForColor:(UIColor *)color;

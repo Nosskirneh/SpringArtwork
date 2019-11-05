@@ -661,6 +661,11 @@ extern SBIconController *getIconController();
     _canvasAsset = nil;
 
     _colorInfo = nil;
+    _blendedCDBackgroundColor = nil;
+    _folderColor = nil;
+    _folderBackgroundColor = nil;
+    _legibilitySettings = nil;
+
     _artworkImage = nil;
     _blurredImage = nil;
 
@@ -806,6 +811,12 @@ extern SBIconController *getIconController();
                            _staticColor : nil;
     _colorInfo = [SAImageHelper colorsForImage:_artworkImage
                      withStaticBackgroundColor:staticColor];
+
+    UIColor *toMixColor = [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
+                          UIColor.blackColor : UIColor.whiteColor;
+    _blendedCDBackgroundColor = [[SAImageHelper blendColor:_colorInfo.backgroundColor
+                                                 withColor:toMixColor
+                                                percentage:0.4] colorWithAlphaComponent:0.7];
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {

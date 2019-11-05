@@ -298,7 +298,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIBezierPath *beizerPath = [UIBezierPath bezierPathWithOvalInRect:outerHoleFrame];
 
     CAShapeLayer *layer = [CAShapeLayer layer];
-    layer.fillColor = [UIColor.whiteColor colorWithAlphaComponent:0.5].CGColor;
+    layer.fillColor = _manager.blendedCDBackgroundColor.CGColor;
     [layer setPath:[beizerPath CGPath]];
     return layer;
 }
