@@ -211,6 +211,11 @@ extern SBIconController *getIconController();
     return !_canvasURL && _artworkBackgroundMode != BlurredImage;
 }
 
+- (void)mediaWidgetDidActivate {
+    if (_canvasURL || _artworkImage)
+        [self _sendUpdateArtworkEvent:YES];
+}
+
 #pragma mark Private
 
 - (void)_videoEnded {
