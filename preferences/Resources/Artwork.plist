@@ -106,7 +106,7 @@
             <key>cellClass</key>
             <string>SASwitchTableCell</string>
             <key>default</key>
-            <true/>
+            <false/>
             <key>key</key>
             <string>animateArtwork</string>
             <key>label</key>
