@@ -18,6 +18,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIView *_artworkContainer;
     UIImageView *_artworkImageView;
     UIImageView *_backgroundArtworkImageView;
+    CAShapeLayer *_outerCDLayer;
 
     BOOL _animating;
     void(^_completion)();
@@ -274,8 +275,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)_addSpinArtwork {
-    _artworkImageView.layer.mask = [self _createLayerArtworkMask];
-    [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
+    if (!_outerCDLayer) {
+        _artworkImageView.layer.mask = [self _createLayerArtworkMask];
+        [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
+    }
+
+    _outerCDLayer.fillColor = _manager.blendedCDBackgroundColor.CGColor;
 
     _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
     _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
@@ -297,10 +302,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                        outerHoleWidth, outerHoleWidth);
     UIBezierPath *beizerPath = [UIBezierPath bezierPathWithOvalInRect:outerHoleFrame];
 
-    CAShapeLayer *layer = [CAShapeLayer layer];
-    layer.fillColor = _manager.blendedCDBackgroundColor.CGColor;
-    [layer setPath:[beizerPath CGPath]];
-    return layer;
+    _outerCDLayer = [CAShapeLayer layer];
+    [_outerCDLayer setPath:[beizerPath CGPath]];
+    return _outerCDLayer;
 }
 
 - (CALayer *)_createLayerArtworkMask {
