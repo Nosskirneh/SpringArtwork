@@ -128,6 +128,7 @@ extern SBIconController *getIconController();
                                                                           adjunctListViewController;
             _nowPlayingController = MSHookIvar<SBLockScreenNowPlayingController *>(adjunctVC,
                                                                                    "_nowPlayingController");
+            [_nowPlayingController setEnabled:YES];
 
             notify_cancel(springBoardLoadedToken);
         }

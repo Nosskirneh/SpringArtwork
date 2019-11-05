@@ -178,7 +178,8 @@ typedef enum NowPlayingState {
     Playing
 } NowPlayingState;
 
-@interface SBLockScreenNowPlayingController : NSObject                                           //@synthesize enabled=_enabled - In the implementation block
+@interface SBLockScreenNowPlayingController : NSObject
+@property (assign, getter=isEnabled, nonatomic) BOOL enabled;
 @property (nonatomic, readonly) NowPlayingState currentState;
 @end
 
