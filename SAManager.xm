@@ -172,8 +172,7 @@ extern SBIconController *getIconController();
 - (void)hide:(BOOL)animated {
     [self _setModeToNone];
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self _sendUpdateArtworkEvent:NO];
-        [self _revertLabels];
+        [self _updateWithContent:NO];
     });
 }
 
@@ -198,7 +197,7 @@ extern SBIconController *getIconController();
     _artworkEnabled = NO;
     _canvasEnabled = NO;
 
-    [self _sendUpdateArtworkEvent:NO];
+    [self _updateWithContent:NO];
     _viewControllers = nil;
     _inChargeController = nil;
 }
@@ -213,7 +212,7 @@ extern SBIconController *getIconController();
 
 - (void)mediaWidgetDidActivate {
     if (_canvasURL || _artworkImage)
-        [self _sendUpdateArtworkEvent:YES];
+        [self _updateWithContent:YES];
 }
 
 #pragma mark Private
@@ -249,6 +248,9 @@ extern SBIconController *getIconController();
         _staticColor = nil;
     }
 
+    current = preferences[kAnimateArtwork];
+    _animateArtwork = current && [current boolValue];
+
     current = preferences[kArtworkWidthPercentage];
     _artworkWidthPercentage = current ? [current intValue] : 70;
 
@@ -263,9 +265,6 @@ extern SBIconController *getIconController();
 
     current = preferences[kHideDockBackground];
     _hideDockBackground = !current || [current boolValue];
-
-    current = preferences[kAnimateArtwork];
-    _animateArtwork = current && [current boolValue];
 
     current = preferences[kPauseContentWithMedia];
     _pauseContentWithMedia = !current || [current boolValue];
@@ -408,8 +407,7 @@ extern SBIconController *getIconController();
 
     if ([self _allowActivate]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self _sendUpdateArtworkEvent:YES];
-            [self _overrideLabels];
+            [self _updateWithContent:YES];
         });
     }
 }
@@ -544,34 +542,33 @@ extern SBIconController *getIconController();
             if (![self _allowActivate]) {
                 if (image)
                     _colorInfo = [SAImageHelper colorsForImage:image];
-                return;
+            } else {
+                _colorInfo = image ? [SAImageHelper colorsForImage:image] : nil;
+                [self _updateOnMainQueueWithContent:YES];
             }
-
-            [self _sendUpdateArtworkEventOnMainQueue:YES];
-
-            if (!image)
-                return;
-            _colorInfo = [SAImageHelper colorsForImage:image];
-
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self _overrideLabels];
-            });
         }];
         return;
     } else {
-        [self _sendUpdateArtworkEvent:NO];
-        [self _revertLabels];
+        [self _updateWithContent:NO];
     }
 }
 
-- (void)_sendUpdateArtworkEvent:(BOOL)content {
+- (void)_updateWithContent:(BOOL)content {
+    id object = nil;
+    if (content) {
+        object = self;
+        [self _overrideLabels];
+    } else {
+        [self _revertLabels];
+    }
+
     for (SAViewController *vc in _viewControllers)
-        [vc artworkUpdated:content ? self : nil];
+        [vc artworkUpdated:object];
 }
 
-- (void)_sendUpdateArtworkEventOnMainQueue:(BOOL)content {
+- (void)_updateOnMainQueueWithContent:(BOOL)content {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self _sendUpdateArtworkEvent:content];
+        [self _updateWithContent:content];
     });
 }
 
@@ -610,10 +607,8 @@ extern SBIconController *getIconController();
         _canvasAsset = _previousSpotifyAsset;
         _artworkImage = _previousSpotifyArtworkImage;
 
-        if ([self _allowActivate]) {
-            [self _sendUpdateArtworkEvent:YES];
-            [self _overrideLabels];
-        }
+        if ([self _allowActivate])
+            [self _updateWithContent:YES];
 
         _previousSpotifyURL = nil;
         _previousSpotifyAsset = nil;
@@ -636,8 +631,7 @@ extern SBIconController *getIconController();
     if (!bundleID) {
         [self _checkForStoreSpotifyConnectIssue:bundleID];
         [self _setModeToNone];
-        [self _sendUpdateArtworkEventOnMainQueue:NO];
-        [self _revertLabels];
+        [self _updateOnMainQueueWithContent:NO];
     } else if ([_disabledApps containsObject:bundleID]) {
         [self _unsubscribeToArtworkChanges];
     } else {
@@ -647,7 +641,7 @@ extern SBIconController *getIconController();
             [self _checkForRestoreSpotifyConnectIssue];
         } else {
             [self _setModeToNone];
-            [self _sendUpdateArtworkEventOnMainQueue:NO];
+            [self _updateOnMainQueueWithContent:NO];
 
             if ([bundleID isEqualToString:kDeezerBundleID])
                 _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
@@ -834,20 +828,19 @@ extern SBIconController *getIconController();
             if (_artworkBackgroundMode == BlurredImage)
                 _blurredImage = [self _blurredImage:image];
 
-            if ([self _allowActivate]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self _sendUpdateArtworkEvent:YES];
-                    [self _overrideLabels];
-                });
-            }
+            if ([self _allowActivate])
+                [self _updateOnMainQueueWithContent:YES];
         });
         return;
     }
 
-    [self _sendUpdateArtworkEventOnMainQueue:NO];
+    [self _updateOnMainQueueWithContent:NO];
 }
 
 - (void)_overrideLabels {
+    if (!_colorInfo)
+        return [self _revertLabels];
+
     _UILegibilitySettings *settings = legibilitySettingsForDarkText(_colorInfo.hasDarkTextColor);
 
     if (_enabledMode != LockscreenMode)
