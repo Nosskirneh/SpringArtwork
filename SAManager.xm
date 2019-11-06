@@ -518,7 +518,6 @@ extern SBIconController *getIconController();
             if (_screenTurnedOn && !_insideApp &&
                 [self hasAnimatingArtwork] && _shouldAddRotation) {
                 [self _addArtworkRotation];
-                return;
             }
 
             if (!_insideApp)
