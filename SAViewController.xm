@@ -455,7 +455,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                    isDirty:(BOOL)isDirty
                  thumbnail:(UIImage *)thumbnail
             afterThumbnail:(void (^)())afterThumbnailCompletion {
-    if (isDirty || !thumbnail) {
+    if (!thumbnail) {
         _canvasContainerImageView.image = nil;
         [self _replaceItemWithAsset:asset autoPlay:NO];
         if (afterThumbnailCompletion)
@@ -468,7 +468,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         if (afterThumbnailCompletion)
             afterThumbnailCompletion();
 
-        [self _replaceItemWithAsset:asset autoPlay:YES];
+        [self _replaceItemWithAsset:asset autoPlay:!isDirty];
     }
 }
 
