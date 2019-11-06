@@ -45,8 +45,8 @@
                             changedContent:changedContent];
 }
 
-- (BOOL)_showArtworkViews {
-    if (![super _showArtworkViews])
+- (BOOL)_showArtworkViews:(void (^)())completion {
+    if (![super _showArtworkViews:completion])
         return NO;
     [self _hideDock:YES];
     return YES;

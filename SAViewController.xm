@@ -227,19 +227,37 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                    color:(UIColor *)color
                           changedContent:(BOOL)changedContent {
     if (!artwork) {
+        if ([_manager hasAnimatingArtwork])
+            [self _pauseArtworkAnimation];
+
         [self _hideArtworkViews];
         return;
     }
 
-    // Not already visible, so we don't need to animate the image change but only the layer
+    BOOL hasAnimatingArtwork = [_manager hasAnimatingArtwork];
+    if (hasAnimatingArtwork)
+        [self _prepareSpinArtwork];
+
+    /* Not already visible, so we don't need to
+       animate the image change but only the layer. */
     if (changedContent || ![self _isShowingArtworkView]) {
         [self _setArtwork:artwork];
         [self _setBlurredImage:blurredImage color:color];
-        [self _showArtworkViews];
+
+        /* Only wait with add of animation if changing content
+           (otherwise view is not visible and animation will not start). */
+        void (^completion)() = nil;
+        if (hasAnimatingArtwork)
+            completion = ^ {
+                [self _tryAddArtworkAnimation];
+            };
+        [self _showArtworkViews:completion];
     } else {
         [self _animateArtworkChange:artwork
                        blurredImage:blurredImage
                               color:color];
+        if (hasAnimatingArtwork)
+            [self _tryAddArtworkAnimation];
     }
 }
 
@@ -279,23 +297,23 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return;
 
     _artworkImageView.image = artwork;
-    if ([_manager hasAnimatingArtwork])
-        [self _addSpinArtwork];
 }
 
-- (void)_addSpinArtwork {
+- (void)_prepareSpinArtwork {
     if (!_outerCDLayer) {
         _artworkImageView.layer.mask = [self _createLayerArtworkMask];
         [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
+
+        _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
+        _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
+        _artworkImageView.layer.borderWidth = 1.0f;
+        _artworkImageView.clipsToBounds = YES;
     }
 
     _outerCDLayer.fillColor = _manager.blendedCDBackgroundColor.CGColor;
+}
 
-    _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
-    _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
-    _artworkImageView.layer.borderWidth = 1.0f;
-    _artworkImageView.clipsToBounds = YES;
-
+- (void)_tryAddArtworkAnimation {
     if ([_manager isDirty]) {
         if (_inCharge)
             _manager.shouldAddRotation = YES;
@@ -367,7 +385,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return _artworkContainer.superview;
 }
 
-- (BOOL)_showArtworkViews {
+- (BOOL)_showArtworkViews:(void (^)())completion {
     if ([self _isShowingArtworkView])
         return NO;
 
@@ -380,6 +398,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             _completion();
             _completion = nil;
         }
+
+        if (completion)
+            completion();
     }];
     return YES;
 }
