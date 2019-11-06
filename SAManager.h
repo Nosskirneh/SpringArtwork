@@ -33,6 +33,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, retain) SAViewController *inChargeController;
 @property (nonatomic, assign) BOOL isSharedWallpaper;
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
+@property (nonatomic, assign) BOOL shouldAddRotation;
 
 /* Settings properties */
 @property (nonatomic, assign, readonly) int artworkWidthPercentage;
@@ -49,7 +50,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)togglePlayManually;
 - (void)setupHaptic;
 
-- (BOOL)playingContent;
+- (BOOL)hasPlayableContent;
 - (BOOL)isCanvasActive;
 - (BOOL)hasAnimatingArtwork;
 

@@ -17,6 +17,7 @@
 - (void)artworkUpdated:(id)manager;
 - (void)updateArtworkWidthPercentage:(int)percentage
 				   yOffsetPercentage:(int)yOffsetPercentage;
+- (void)addArtworkRotation;
 @end
 
 

@@ -180,6 +180,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
+- (void)addArtworkRotation {
+    CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
+    rotation.fromValue = @(0);
+    rotation.toValue = @(2 * M_PI);
+    rotation.duration = 15.0;
+    rotation.repeatCount = INFINITY;
+    [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
+}
+
 #pragma mark Private
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
@@ -287,12 +296,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _artworkImageView.layer.borderWidth = 1.0f;
     _artworkImageView.clipsToBounds = YES;
 
-    CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
-    rotation.fromValue = @(0);
-    rotation.toValue = @(2 * M_PI);
-    rotation.duration = 15.0;
-    rotation.repeatCount = INFINITY;
-    [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
+    if ([_manager isDirty]) {
+        if (_inCharge)
+            _manager.shouldAddRotation = YES;
+    } else {
+        [self addArtworkRotation];
+    }
 }
 
 - (CALayer *)_createLayerArtworkOuterCD {

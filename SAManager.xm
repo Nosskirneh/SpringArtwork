@@ -135,7 +135,7 @@ extern SBIconController *getIconController();
     );
 }
 
-- (BOOL)playingContent {
+- (BOOL)hasPlayableContent {
     return [self isCanvasActive] || [self hasAnimatingArtwork];
 }
 
@@ -152,7 +152,7 @@ extern SBIconController *getIconController();
 }
 
 - (void)togglePlayManually {
-    if (![self isCanvasActive] || ![self hasAnimatingArtwork])
+    if (![self hasPlayableContent])
         return;
 
     [_hapticGenerator impactOccurred];
@@ -171,9 +171,7 @@ extern SBIconController *getIconController();
 
 - (void)hide:(BOOL)animated {
     [self _setModeToNone];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self _updateWithContent:NO];
-    });
+    [self _updateOnMainQueueWithContent:NO];
 }
 
 // Destroy everything! MOHAHAHA! *evil laugh continues...*
@@ -405,11 +403,8 @@ extern SBIconController *getIconController();
     if (updateArtworkFrames)
         [self _updateArtworkFrames];
 
-    if ([self _allowActivate]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self _updateWithContent:YES];
-        });
-    }
+    if ([self _allowActivate])
+        [self _updateOnMainQueueWithContent:YES];
 }
 
 - (void)_updateArtworkFrames {
@@ -505,6 +500,9 @@ extern SBIconController *getIconController();
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
+            if (![self hasPlayableContent])
+                return;
+
             /* If the user manually paused the video,
                do not resume on screen turn on event */
             if (!_playing && _manuallyPaused)
@@ -512,6 +510,13 @@ extern SBIconController *getIconController();
 
             if (_pauseContentWithMedia && !_mediaPlaying)
                 return;
+
+            /* If animation needs to be added, do that instead of resuming nothing */
+            if (_screenTurnedOn && !_insideApp &&
+                [self hasAnimatingArtwork] && _shouldAddRotation) {
+                [self _addArtworkRotation];
+                return;
+            }
 
             if (!_insideApp)
                 [self _setPlayPauseState:_screenTurnedOn];
@@ -589,6 +594,9 @@ extern SBIconController *getIconController();
 
     _insideApp = insideApp;
 
+    if (![self hasPlayableContent])
+        return;
+
     /* If the user manually paused the video,
        do not resume when app enters background */
     if (!_playing && _manuallyPaused)
@@ -597,7 +605,17 @@ extern SBIconController *getIconController();
     if (_pauseContentWithMedia && !_mediaPlaying)
         return;
 
-    [self _setPlayPauseState:!_insideApp];
+    /* If animation needs to be added, do that instead of resuming nothing */
+    if (!insideApp && [self hasAnimatingArtwork] && _shouldAddRotation)
+        return [self _addArtworkRotation];
+
+    [self _setPlayPauseState:!insideApp];
+}
+
+- (void)_addArtworkRotation {
+    _shouldAddRotation = NO;
+    for (SAViewController *vc in _viewControllers)
+        [vc addArtworkRotation];
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
@@ -749,6 +767,9 @@ extern SBIconController *getIconController();
     NSString *key = CFBridgingRelease(kMRMediaRemoteNowPlayingApplicationIsPlayingUserInfoKey);
     _mediaPlaying = [notification.userInfo[key] boolValue];
 
+    if (![self hasPlayableContent])
+        return;
+
     if (_insideApp || !_screenTurnedOn)
         return;
 
@@ -757,8 +778,7 @@ extern SBIconController *getIconController();
     if (!_playing && _manuallyPaused)
         return;
 
-    if ([self playingContent])
-        [self _setPlayPauseState:_mediaPlaying];
+    [self _setPlayPauseState:_mediaPlaying];
 }
 
 - (void)_updateModeToArtworkWithTrackIdentifier:(NSString *)trackIdentifier {
