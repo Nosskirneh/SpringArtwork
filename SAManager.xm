@@ -750,8 +750,10 @@ extern SBIconController *getIconController();
                 /* Skip showing artwork for canvas track when switching
                    (some weird bug that sends the old artwork when changing track) */
                 if (_previousMode == Canvas && _canvasArtworkImage &&
-                    [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
-                    return;
+                    [SAImageHelper compareImage:_canvasArtworkImage withImage:image]) {
+                    _canvasArtworkImage = nil;
+                    return;   
+                }
 
                 if (_artworkImage && [self _candidateSameAsPreviousArtwork:image]) {
                     if (![self changedContent])
@@ -1053,7 +1055,6 @@ extern SBIconController *getIconController();
     if (!urlString) {
         _canvasURL = nil;
         _canvasAsset = nil;
-        _canvasArtworkImage = nil;
 
         if ([_disabledApps containsObject:kSpotifyBundleID])
             [self _sendCanvasUpdatedEvent];
