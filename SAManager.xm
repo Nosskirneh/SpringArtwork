@@ -135,6 +135,10 @@ extern SBIconController *getIconController();
     );
 }
 
+- (BOOL)hasContent {
+    return [self hasPlayableContent] || _artworkImage;
+}
+
 - (BOOL)hasPlayableContent {
     return [self isCanvasActive] || [self hasAnimatingArtwork];
 }
@@ -362,7 +366,6 @@ extern SBIconController *getIconController();
             }
         }
     }
-    
 
     BOOL updateArtworkFrames;
     current = preferences[kArtworkWidthPercentage];

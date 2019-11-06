@@ -78,7 +78,7 @@
             if ([assetLoader hasLocalAssetForURL:canvasURL]) {
                 sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
             } else {
-                // The compiler doesn't like when I specify AVURLAsset * as type for some reason...
+                // The compiler doesn't like when `AVURLAsset *` is specified as the type for some reason...
                 [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:self.sa_onlyOnWifi completion:^(id asset) {
                     sendCanvasURL(((AVURLAsset *)asset).URL);
                 }];

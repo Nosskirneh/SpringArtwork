@@ -1,8 +1,5 @@
 #import "SADockViewController.h"
 #import "SpringBoard.h"
-#import "SAManager.h"
-
-extern SAManager *manager;
 
 // Only the homescreen controller is allowed to change the dock,
 // otherwise the two will do it simultaneously which obviously causes issues.

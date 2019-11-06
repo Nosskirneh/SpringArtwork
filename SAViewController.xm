@@ -472,7 +472,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (void)_replaceItemWithAsset:(AVAsset *)asset autoPlay:(BOOL)autoPlay {
+- (void)_replaceItemWithAsset:(AVAsset *)asset
+                     autoPlay:(BOOL)autoPlay {
     AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithAsset:asset];
 
     AVPlayer *player = _canvasLayer.player;
@@ -481,7 +482,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [player play];
 }
 
-- (void)_replaceItemWithItem:(AVPlayerItem *)item player:(AVPlayer *)player {
+- (void)_replaceItemWithItem:(AVPlayerItem *)item
+                      player:(AVPlayer *)player {
     [player replaceCurrentItemWithPlayerItem:item];
 
     if (_inCharge) {
@@ -498,6 +500,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     [self.view addSubview:_canvasContainerImageView];
     [self _showCanvasLayer:YES];
+
     return YES;
 }
 
@@ -516,7 +519,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [self _showCanvasLayer:show completion:nil];
 }
 
-- (void)_showCanvasLayer:(BOOL)show completion:(void (^)(void))completion {
+- (void)_showCanvasLayer:(BOOL)show
+              completion:(void (^)(void))completion {
     [self _performLayerOpacityAnimation:_canvasContainerImageView.layer
                                    show:show
                              completion:completion];
