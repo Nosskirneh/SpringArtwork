@@ -750,7 +750,7 @@ extern SBIconController *getIconController();
                     [SAImageHelper compareImage:_canvasArtworkImage withImage:image])
                     return;
 
-                if ([self _candidateSameAsPreviousArtwork:image]) {
+                if (_artworkImage && [self _candidateSameAsPreviousArtwork:image]) {
                     if (![self changedContent])
                         [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
                     return;
@@ -1056,6 +1056,7 @@ extern SBIconController *getIconController();
             [self _sendCanvasUpdatedEvent];
         return;
     } else {
+        _artworkImage = nil;
         _trackIdentifier = nil;
         _artworkIdentifier = nil;
     }
