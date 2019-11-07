@@ -410,7 +410,7 @@ extern SBIconController *getIconController();
         [self _updateArtworkFrames];
 
     if ([self _allowActivate])
-        [self _updateOnMainQueueWithContent:YES];
+        [self _updateOnMainQueueWithContent:[self hasContent]];
 }
 
 - (void)_updateArtworkFrames {
@@ -629,8 +629,10 @@ extern SBIconController *getIconController();
 
 - (void)_addArtworkRotation {
     _shouldAddRotation = NO;
-    for (SAViewController *vc in _viewControllers)
-        [vc addArtworkRotation];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc addArtworkRotation];
+    });
 }
 
 - (void)_checkForRestoreSpotifyConnectIssue {
@@ -893,14 +895,19 @@ extern SBIconController *getIconController();
 
     if (_enabledMode != LockscreenMode)
         [self _setAppLabelsLegibilitySettings:settings revert:NO];
+
     [self _overrideStatusBar:settings];
+
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
 }
 
 - (void)_revertLabels {
-    [self _setAppLabelsLegibilitySettings:[self _getOriginalHomescreenLegibilitySettings] revert:YES];
+    if (_enabledMode != LockscreenMode)
+        [self _setAppLabelsLegibilitySettings:[self _getOriginalHomescreenLegibilitySettings] revert:YES];
+
     [self _revertStatusBar];
+
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
 }
