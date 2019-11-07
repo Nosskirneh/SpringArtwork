@@ -137,7 +137,7 @@ extern SBIconController *getIconController();
 }
 
 - (BOOL)hasContent {
-    return [self hasPlayableContent] || _artworkImage;
+    return [self isCanvasActive] || _artworkImage;
 }
 
 - (BOOL)hasPlayableContent {
@@ -216,7 +216,7 @@ extern SBIconController *getIconController();
 }
 
 - (void)mediaWidgetDidActivate {
-    if (_canvasURL || _artworkImage)
+    if ([self hasContent])
         [self _updateWithContent:YES];
 }
 
@@ -506,15 +506,7 @@ extern SBIconController *getIconController();
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
-            if (![self hasPlayableContent])
-                return;
-
-            /* If the user manually paused the video,
-               do not resume on screen turn on event */
-            if (!_playing && _manuallyPaused)
-                return;
-
-            if (_pauseContentWithMedia && !_mediaPlaying)
+            if (![self _canAutoPlayPause])
                 return;
 
             /* If animation needs to be added, do that instead of resuming nothing */
@@ -591,6 +583,24 @@ extern SBIconController *getIconController();
     return _nowPlayingController.currentState != Inactive;
 }
 
+- (BOOL)_canAutoPlayPause {
+    if (![self hasPlayableContent])
+        return NO;
+
+    /* If the user manually paused the video,
+       do not resume on screen turn on event */
+    if (!_playing && _manuallyPaused)
+        return NO;
+
+    if (_pauseContentWithMedia && !_mediaPlaying)
+        return NO;
+
+    if (![self _allowActivate])
+        return NO;
+
+    return YES;
+}
+
 - (void)_currentAppChanged:(NSNotification *)notification {
     SBApplication *app = notification.object;
     id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
@@ -603,15 +613,7 @@ extern SBIconController *getIconController();
 
     _insideApp = insideApp;
 
-    if (![self hasPlayableContent])
-        return;
-
-    /* If the user manually paused the video,
-       do not resume when app enters background */
-    if (!_playing && _manuallyPaused)
-        return;
-
-    if (_pauseContentWithMedia && !_mediaPlaying)
+    if (![self _canAutoPlayPause])
         return;
 
     /* If animation needs to be added, do that instead of resuming nothing */
