@@ -189,6 +189,8 @@ extern SBIconController *getIconController();
     notify_cancel(_notifyTokenForSettingsChanged);
 
     [self _setModeToNone];
+    _folderColor = nil;
+    _folderBackgroundColor = nil;
     _placeholderImage = nil;
 
     _previousSpotifyURL = nil;
@@ -690,8 +692,6 @@ extern SBIconController *getIconController();
 
     _colorInfo = nil;
     _blendedCDBackgroundColor = nil;
-    _folderColor = nil;
-    _folderBackgroundColor = nil;
     _legibilitySettings = nil;
 
     _artworkImage = nil;
