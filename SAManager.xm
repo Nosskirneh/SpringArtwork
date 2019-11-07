@@ -53,6 +53,7 @@ extern SBIconController *getIconController();
     BOOL _insideApp;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
+    BOOL _hasPendingArtworkChange;
 
     NSString *_canvasURL;
 
@@ -515,9 +516,11 @@ extern SBIconController *getIconController();
                 return;
 
             /* If animation needs to be added, do that instead of resuming nothing */
-            if (_screenTurnedOn && !_insideApp &&
-                [self hasAnimatingArtwork] && _shouldAddRotation) {
-                [self _addArtworkRotation];
+            if (_screenTurnedOn && !_insideApp && [self hasAnimatingArtwork]) {
+                if (_hasPendingArtworkChange)
+                    [self _updateOnMainQueueWithContent:YES];
+                else if (_shouldAddRotation)
+                    [self _addArtworkRotation];
             }
 
             if (!_insideApp)
@@ -561,6 +564,8 @@ extern SBIconController *getIconController();
 }
 
 - (void)_updateWithContent:(BOOL)content {
+    _hasPendingArtworkChange = NO;
+
     id object = nil;
     if (content) {
         object = self;
@@ -608,8 +613,12 @@ extern SBIconController *getIconController();
         return;
 
     /* If animation needs to be added, do that instead of resuming nothing */
-    if (!insideApp && [self hasAnimatingArtwork] && _shouldAddRotation)
-        return [self _addArtworkRotation];
+    if (!_insideApp && [self hasAnimatingArtwork]) {
+        if (_hasPendingArtworkChange)
+            [self _updateOnMainQueueWithContent:YES];
+        else if (_shouldAddRotation)
+            [self _addArtworkRotation];
+    }
 
     [self _setPlayPauseState:!insideApp];
 }
@@ -843,6 +852,7 @@ extern SBIconController *getIconController();
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
+    UIImage *previousImage = _artworkImage;
     _artworkImage = image;
 
     if (image) {
@@ -852,8 +862,20 @@ extern SBIconController *getIconController();
             if (_artworkBackgroundMode == BlurredImage)
                 _blurredImage = [self _blurredImage:image];
 
-            if ([self _allowActivate])
-                [self _updateOnMainQueueWithContent:YES];
+            if ([self _allowActivate]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    /* If this is the not first artwork that's being shown,
+                       we need to wait with the change of artwork if animiating. */
+                    if (previousImage &&
+                        ![self changedContent] &&
+                        [self hasAnimatingArtwork] &&
+                        [self isDirty]) {
+                        _hasPendingArtworkChange = YES;
+                    } else {
+                        [self _updateWithContent:YES];
+                    }
+                });
+            }
         });
         return;
     }
@@ -1044,6 +1066,7 @@ extern SBIconController *getIconController();
     return blurredAndDarkenedImage;
 }
 
+/* This method must be called on the main thread! */
 - (BOOL)isDirty {
     return !_screenTurnedOn ||
            [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
