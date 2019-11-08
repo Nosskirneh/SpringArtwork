@@ -48,6 +48,7 @@
 - (BOOL)_showArtworkViews:(void (^)())completion {
     if (![super _showArtworkViews:completion])
         return NO;
+
     [self _hideDock:YES];
     return YES;
 }
@@ -55,6 +56,7 @@
 - (BOOL)_hideArtworkViews {
     if (![super _hideArtworkViews])
         return NO;
+
     [self _hideDock:NO];
     return YES;
 }
@@ -74,6 +76,7 @@
 - (BOOL)_fadeCanvasLayerIn {
     if (![super _fadeCanvasLayerIn])
         return NO;
+
     [self _hideDock:YES];
     return YES;
 }
@@ -81,6 +84,7 @@
 - (BOOL)_fadeCanvasLayerOut {
     if (![super _fadeCanvasLayerOut])
         return NO;
+
     [self _hideDock:NO];
     return YES;
 }

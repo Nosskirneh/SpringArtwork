@@ -152,6 +152,12 @@ extern SBIconController *getIconController();
     return _mode == Artwork && _animateArtwork && _artworkImage;
 }
 
+/* This method must be called on the main thread! */
+- (BOOL)isDirty {
+    return !_screenTurnedOn ||
+           [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
+}
+
 - (void)setupHaptic {
     _hapticGenerator = [[%c(UIImpactFeedbackGenerator) alloc] initWithStyle:UIImpactFeedbackStyleMedium];
 }
@@ -189,8 +195,6 @@ extern SBIconController *getIconController();
     notify_cancel(_notifyTokenForSettingsChanged);
 
     [self _setModeToNone];
-    _folderColor = nil;
-    _folderBackgroundColor = nil;
     _placeholderImage = nil;
 
     _previousSpotifyURL = nil;
@@ -1073,12 +1077,6 @@ extern SBIconController *getIconController();
 
     CGImageRelease(cgImage);
     return blurredAndDarkenedImage;
-}
-
-/* This method must be called on the main thread! */
-- (BOOL)isDirty {
-    return !_screenTurnedOn ||
-           [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
 }
 
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
