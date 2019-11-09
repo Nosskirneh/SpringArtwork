@@ -152,7 +152,7 @@ extern BOOL hasFrontMostApp();
 }
 
 - (BOOL)isCanvasActive {
-    return _mode == Canvas;
+    return _canvasURL != nil;
 }
 
 - (BOOL)hasAnimatingArtwork {
