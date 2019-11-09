@@ -31,11 +31,13 @@
     }
 
     static SPTVideoURLAssetLoaderImplementation *getVideoURLAssetLoader() {
-        return ((SPTNetworkServiceImplementation *)getSessionServiceForClass(%c(SPTNetworkServiceImplementation), application)).videoAssetLoader;
+        return ((SPTNetworkServiceImplementation *)getSessionServiceForClass(%c(SPTNetworkServiceImplementation),
+                                                                             application)).videoAssetLoader;
     }
 
     static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
-        return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation), session)).trackChecker;
+        return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation),
+                                                                            session)).trackChecker;
     }
 
     static void sendCanvasURL(NSURL *url) {
@@ -62,7 +64,8 @@
             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
             ^(int t) {
                 NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-                self.sa_onlyOnWifi = preferences[kCanvasOnlyWiFi] && [preferences[kCanvasOnlyWiFi] boolValue];
+                self.sa_onlyOnWifi = preferences[kCanvasOnlyWiFi] &&
+                                     [preferences[kCanvasOnlyWiFi] boolValue];
             });
     }
 
@@ -82,7 +85,6 @@
                     sendCanvasURL(((AVURLAsset *)asset).URL);
                 }];
             }
-
         } else {
             sendCanvasURL(nil);
         }

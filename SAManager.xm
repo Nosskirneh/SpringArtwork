@@ -54,6 +54,12 @@ extern BOOL hasFrontMostApp();
     BOOL _dockHidden;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
+
+    /* This is used when using artwork animations.
+       It isn't possible to change the artwork in
+       the background when there are animations present.
+       The solution is to mark the change as pending
+       and check on every unlock, app exit. */
     BOOL _hasPendingArtworkChange;
 
     NSString *_canvasURL;
