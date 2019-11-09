@@ -13,6 +13,7 @@ typedef enum AppearState {
 @property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
 @property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12
 @property (nonatomic, retain) SBWallpaperEffectView *panelFadeOutWallpaperEffectView; // iOS 12
+- (void)sa_checkCreationOfNormalController;
 @end
 
 
@@ -209,6 +210,12 @@ typedef enum NowPlayingState {
 @interface SBLockScreenManager : NSObject
 @property (nonatomic, readonly) SBDashBoardViewController *dashBoardViewController;
 + (id)sharedInstance;
+- (void)sa_playArtworkAnimation:(BOOL)play;
+@end
+
+@interface SBCoverSheetPresentationManager : NSObject
+@property (nonatomic, retain) SBCoverSheetPrimarySlidingViewController *coverSheetSlidingViewController;
++ (id)sharedInstance;
 @end
 
 
@@ -254,4 +261,3 @@ typedef enum {
 - (SBMutableAppStatusBarSettings *)currentStatusBarSettings;
 - (void)_enumerateAssertionsToLevel:(unsigned long long)arg1 withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
 @end
-

@@ -31,6 +31,7 @@ extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
+extern BOOL hasFrontMostApp();
 
 
 @implementation SAManager {
@@ -51,7 +52,6 @@ extern SBIconController *getIconController();
     UIImage *_canvasArtworkImage;
 
     BOOL _dockHidden;
-    BOOL _insideApp;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
     BOOL _hasPendingArtworkChange;
@@ -156,7 +156,7 @@ extern SBIconController *getIconController();
 /* This method must be called on the main thread! */
 - (BOOL)isDirty {
     return !_screenTurnedOn ||
-           [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
+           (hasFrontMostApp() && !_lockscreenPulledDownInApp);
 }
 
 - (void)setupHaptic {
@@ -223,6 +223,27 @@ extern SBIconController *getIconController();
 - (void)mediaWidgetDidActivate {
     if ([self hasContent])
         [self _updateWithContent:YES];
+}
+
+- (void)setLockscreenPulledDownInApp:(BOOL)down {
+    _lockscreenPulledDownInApp = down;
+    if ([self hasPlayableContent] && _playing != down) {
+
+        if (_hasPendingArtworkChange)
+            [self _updateOnMainQueueWithContent:YES];
+        else if (_shouldAddRotation)
+            [self _addArtworkRotation];
+
+        [self _setPlayPauseState:down];
+    }
+}
+
+- (CMTime)canvasCurrentTime {
+    return [_inChargeController canvasCurrentTime];
+}
+
+- (NSNumber *)artworkAnimationTime {
+    return [_inChargeController artworkAnimationTime];
 }
 
 #pragma mark Private
@@ -534,13 +555,13 @@ extern SBIconController *getIconController();
 }
 
 - (void)_setPlayPauseState:(BOOL)newState {
+    _manuallyPaused = NO;
+    _playing = newState;
+
     dispatch_async(dispatch_get_main_queue(), ^{
         for (SAViewController *vc in _viewControllers)
             [vc togglePlayPauseWithState:newState];
     });
-
-    _manuallyPaused = NO;
-    _playing = _canvasURL != nil || _artworkImage != nil;
 }
 
 - (void)_sendCanvasUpdatedEvent {
@@ -1114,6 +1135,16 @@ extern SBIconController *getIconController();
     return blurredAndDarkenedImage;
 }
 
+- (void)_changeModeToCanvas {
+    if (_mode == Canvas)
+        _previousMode = None;
+    else {
+        if (_mode == Artwork)
+            _previousMode = Artwork;
+        _mode = Canvas;
+    }
+}
+
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
@@ -1132,14 +1163,6 @@ extern SBIconController *getIconController();
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
-
-        if (_mode == Canvas)
-            _previousMode = None;
-        else {
-            if (_mode == Artwork)
-                _previousMode = Artwork;
-            _mode = Canvas;
-        }
 
         [self _sendCanvasUpdatedEvent];
     }

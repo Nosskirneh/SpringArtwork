@@ -32,8 +32,10 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
 @property (nonatomic, retain) SAViewController *inChargeController;
 @property (nonatomic, assign) BOOL isSharedWallpaper;
-@property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
+@property (nonatomic, retain, readonly) _UILegibilitySettings *legibilitySettings;
 @property (nonatomic, assign) BOOL shouldAddRotation;
+@property (nonatomic, assign, readonly) BOOL insideApp;
+@property (nonatomic, assign) BOOL lockscreenPulledDownInApp;
 
 /* Settings properties */
 @property (nonatomic, assign, readonly) int artworkWidthPercentage;
@@ -50,6 +52,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)togglePlayManually;
 - (void)setupHaptic;
 
+- (BOOL)hasContent;
 - (BOOL)hasPlayableContent;
 - (BOOL)isCanvasActive;
 - (BOOL)hasAnimatingArtwork;
@@ -62,4 +65,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 - (void)hide:(BOOL)animated;
 - (void)mediaWidgetDidActivate;
+- (CMTime)canvasCurrentTime;
+- (NSNumber *)artworkAnimationTime;
 @end

@@ -112,6 +112,14 @@
         return ((SBIconController *)[%c(SBIconController) sharedInstance]);
     }
 
+    SBCoverSheetPrimarySlidingViewController *getSlidingViewController() {
+        return ((SBCoverSheetPresentationManager *)[%c(SBCoverSheetPresentationManager) sharedInstance]).coverSheetSlidingViewController;
+    }
+
+    BOOL hasFrontMostApp() {
+        return [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
+    }
+
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -241,6 +249,7 @@
    we need to hide/show depending on where the user is looking. */
 %group NotBoth
 %hook SBCoverSheetPrimarySlidingViewController
+
 %property (nonatomic, assign) AppearState appearState;
 
 - (void)_transitionToViewControllerAppearState:(AppearState)appearState
@@ -250,7 +259,7 @@
     self.appearState = appearState;
 }
 
-- (void)_finishTransitionToPresented:(BOOL)finish
+- (void)_finishTransitionToPresented:(BOOL)presented
                             animated:(BOOL)animated
                       withCompletion:(id)completion {
     %orig;
@@ -269,10 +278,12 @@
         return;
 
     // Show when returning from LS?
-    if (manager.enabledMode == HomescreenMode && fromLockscreen)
-        manager.inChargeController.view.hidden = NO;
-    else if (manager.enabledMode == LockscreenMode && fromLockscreen)
-        manager.inChargeController.view.hidden = YES;
+    if (fromLockscreen) {
+        if (manager.enabledMode == HomescreenMode)
+            manager.inChargeController.view.hidden = NO;
+        else if (manager.enabledMode == LockscreenMode)
+            manager.inChargeController.view.hidden = YES;
+    }
 }
 
 %end
@@ -281,6 +292,84 @@
 
 
 %group Lockscreen
+
+    /* We need to manually resume the view controller that transitions
+       to the lockscreen. Note that these methods are specific for the
+       transition view controller and not should not be mixed up with
+       the SBCoverSheetPrimarySlidingViewController's methods
+       _finish and _begin down below. They are general ones to not only
+       targetting the transition view controller. That one needs special
+       patching. Canvas videos doesn't need this as they always play
+       regardless if switching target view. */
+    %hook SBLockScreenManager
+
+    - (void)lockScreenViewControllerWillPresent {
+        %orig;
+
+        [self sa_playArtworkAnimation:YES];
+    }
+
+    - (void)lockScreenViewControllerDidPresent {
+        %orig;
+
+        [self sa_playArtworkAnimation:NO];
+    }
+
+    - (void)lockScreenViewControllerWillDismiss {
+        %orig;
+
+        [self sa_playArtworkAnimation:YES];
+    }
+
+    - (void)lockScreenViewControllerDidDismiss {
+        %orig;
+
+        [self sa_playArtworkAnimation:NO];
+    }
+
+    %new
+    - (void)sa_playArtworkAnimation:(BOOL)play {
+        if (![manager hasAnimatingArtwork])
+            return;
+
+        SBCoverSheetPrimarySlidingViewController *slidingViewController = getSlidingViewController();
+
+        SAViewController *viewController = manager.insideApp ?
+                                           slidingViewController.canvasNormalViewController :
+                                           slidingViewController.canvasFadeOutViewController;
+        if (play) {
+            [viewController updateAnimationStartTime];
+            [viewController addArtworkRotation];
+        } else {
+            [viewController removeArtworkRotation];
+        }
+    }
+
+    %end
+
+    /* This allows content to play or pause when showing
+       or returning from NC pulldown when inside an app. */
+    %hook SBCoverSheetPrimarySlidingViewController
+
+    - (void)_finishTransitionToPresented:(BOOL)presented
+                                animated:(BOOL)animated
+                          withCompletion:(id)completion {
+        if (!presented && hasFrontMostApp())
+            manager.lockscreenPulledDownInApp = NO;
+
+        %orig;
+    }
+
+    - (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
+        if (!fromLockscreen && hasFrontMostApp())
+            manager.lockscreenPulledDownInApp = YES;
+
+        %orig;
+    }
+
+    %end
+
+
     /* Lockscreen background when transitioning to camera */
     %hook SBDashBoardViewController
 
@@ -363,12 +452,18 @@
 }
 %end
 
+%new
+- (void)sa_checkCreationOfNormalController {
+    if (!self.canvasNormalViewController)
+        self.canvasNormalViewController = [[SAViewController alloc] initWithManager:manager];
+    [self.canvasNormalViewController setTargetView:self.panelWallpaperEffectView.blurView];
+}
+
 %group wallpaperEffectView_newiOS11
 - (void)_createPanelWallpaperEffectViewIfNeeded {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView
-                                                                           manager:manager];
+    [self sa_checkCreationOfNormalController];
 }
 %end
 
@@ -376,8 +471,7 @@
 - (void)_createWallpaperEffectViewFullScreen:(BOOL)fullscreen {
     %orig;
 
-    self.canvasNormalViewController = [[SAViewController alloc] initWithTargetView:self.panelWallpaperEffectView.blurView
-                                                                           manager:manager];
+    [self sa_checkCreationOfNormalController];
 }
 %end
 %end

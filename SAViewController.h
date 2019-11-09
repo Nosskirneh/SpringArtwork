@@ -19,6 +19,13 @@
 - (void)updateArtworkWidthPercentage:(int)percentage
 				   yOffsetPercentage:(int)yOffsetPercentage;
 - (void)addArtworkRotation;
+- (void)removeArtworkRotation;
+- (void)performWithoutAnimation:(void (^)(void))block;
+- (void)updateRelevantStartTime;
+- (void)updateCanvasStartTime;
+- (void)updateAnimationStartTime;
+- (CMTime)canvasCurrentTime;
+- (NSNumber *)artworkAnimationTime;
 - (void)performLayerOpacityAnimation:(CALayer *)layer
                                 show:(BOOL)show
                           completion:(void (^)(void))completion;

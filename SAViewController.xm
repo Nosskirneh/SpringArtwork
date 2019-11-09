@@ -20,8 +20,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIImageView *_backgroundArtworkImageView;
     CAShapeLayer *_outerCDLayer;
 
+    BOOL _skipAnimation;
     BOOL _animating;
-    void(^_completion)();
+    void(^_nextArtworkChange)();
+
+    CMTime _canvasStartTime;
+    NSNumber *_artworkAnimationStartTime;
 }
 
 #pragma mark Public
@@ -54,15 +58,39 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
         _canvasLayer.frame = self.view.frame;
         [_canvasContainerImageView.layer addSublayer:_canvasLayer];
-        
-        AVAsset *asset = manager.canvasAsset;
-        if (asset)
-            [self _canvasUpdatedWithAsset:asset isDirty:YES];
+
+        if ([_manager hasContent]) {
+            [self performWithoutAnimation:^ {
+                [self updateRelevantStartTime];
+                [self artworkUpdated:_manager];
+            }];
+        }
 
         [manager addNewViewController:self];
     }
 
     return self;
+}
+
+- (void)performWithoutAnimation:(void (^)(void))block {
+    _skipAnimation = YES;
+    block();
+    _skipAnimation = NO;
+}
+
+- (void)updateRelevantStartTime {
+    if ([_manager isCanvasActive])
+        [self updateCanvasStartTime];
+    else if ([_manager hasAnimatingArtwork])
+        [self updateAnimationStartTime];
+}
+
+- (void)updateCanvasStartTime {
+    _canvasStartTime = [_manager canvasCurrentTime];
+}
+
+- (void)updateAnimationStartTime {
+    _artworkAnimationStartTime = [_manager artworkAnimationTime];
 }
 
 - (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
@@ -180,13 +208,37 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
+// TODO: Fix duration
 - (void)addArtworkRotation {
     CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
-    rotation.fromValue = @(0);
-    rotation.toValue = @(2 * M_PI);
+
+    if (_artworkAnimationStartTime) {
+        rotation.fromValue = _artworkAnimationStartTime;
+        rotation.toValue = @(2 * M_PI + [_artworkAnimationStartTime floatValue]);
+        _artworkAnimationStartTime = nil;
+    } else {
+        rotation.fromValue = @(0);
+        rotation.toValue = @(2 * M_PI);
+    }
+
     rotation.duration = 15.0;
     rotation.repeatCount = INFINITY;
-    [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
+    [_artworkImageView.layer addAnimation:rotation forKey:@"transform.rotation"];
+}
+
+- (void)removeArtworkRotation {
+    [_artworkImageView.layer removeAllAnimations];
+}
+
+- (CMTime)canvasCurrentTime {
+    AVPlayerItem *item = _canvasLayer.player.currentItem;
+    if (!item)
+        return kCMTimeInvalid;
+    return item.currentTime;
+}
+
+- (NSNumber *)artworkAnimationTime {
+    return [_artworkImageView.layer.presentationLayer valueForKeyPath:@"transform.rotation"];
 }
 
 - (void)performLayerOpacityAnimation:(CALayer *)layer
@@ -236,7 +288,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                   changedContent:(BOOL)changedContent {
     if (_animating) {
         __weak typeof(self) weakSelf = self;
-        _completion = ^{
+        _nextArtworkChange = ^{
             [weakSelf _noCheck_ArtworkUpdatedWithImage:artwork
                                           blurredImage:blurredImage
                                                  color:color
@@ -268,7 +320,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     /* Not already visible, so we don't need to
        animate the image change but only the layer. */
-    if (changedContent || ![self _isShowingArtworkView]) {
+    if (_skipAnimation || changedContent || ![self _isShowingArtworkView]) {
         [self _setArtwork:artwork];
         [self _setBlurredImage:blurredImage color:color];
 
@@ -414,17 +466,25 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (BOOL)_showArtworkViews:(void (^)())completion {
-    if ([self _isShowingArtworkView])
+    if ([self _isShowingArtworkView]) {
+        completion();
         return NO;
+    }
+
+    [self.view addSubview:_artworkContainer];
+    if (_skipAnimation) {
+        _artworkImageView.layer.opacity = 1.0;
+        completion();
+        return YES;
+    }
 
     _animating = YES;
-    [self.view addSubview:_artworkContainer];
-    [self _performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^{
+    [self performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^{
         _animating = NO;
 
-        if (_completion) {
-            _completion();
-            _completion = nil;
+        if (_nextArtworkChange) {
+            _nextArtworkChange();
+            _nextArtworkChange = nil;
         }
 
         if (completion)
@@ -527,6 +587,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     AVPlayer *player = _canvasLayer.player;
     [self _replaceItemWithItem:newItem player:player];
+    if (CMTIME_IS_VALID(_canvasStartTime)) {
+        [player seekToTime:_canvasStartTime];
+        _canvasStartTime = kCMTimeInvalid;
+    }
+
     if (autoPlay)
         [player play];
 }
@@ -570,6 +635,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_showCanvasLayer:(BOOL)show
               completion:(void (^)(void))completion {
+    if (_skipAnimation) {
+        _canvasContainerImageView.layer.opacity = show ? 1.0 : 0.0;
+        completion();
+        return;
+    }
+
     [self performLayerOpacityAnimation:_canvasContainerImageView.layer
                                    show:show
                              completion:completion];
