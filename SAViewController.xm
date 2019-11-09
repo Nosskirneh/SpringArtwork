@@ -208,7 +208,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-// TODO: Fix duration
 - (void)addArtworkRotation {
     CABasicAnimation *rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
 
@@ -586,7 +585,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     AVPlayerItem *newItem = [[AVPlayerItem alloc] initWithAsset:asset];
 
     AVPlayer *player = _canvasLayer.player;
-    [self _replaceItemWithItem:newItem player:player];
+    [self _player:player replaceItemWithItem:newItem];
+    [self _player:player seekAndPlay:autoPlay];
+}
+
+- (void)_player:(AVPlayer *)player seekAndPlay:(BOOL)autoPlay {
     if (CMTIME_IS_VALID(_canvasStartTime)) {
         [player seekToTime:_canvasStartTime];
         _canvasStartTime = kCMTimeInvalid;
@@ -596,8 +599,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [player play];
 }
 
-- (void)_replaceItemWithItem:(AVPlayerItem *)item
-                      player:(AVPlayer *)player {
+- (void)_player:(AVPlayer *)player replaceItemWithItem:(AVPlayerItem *)item {
     [player replaceCurrentItemWithPlayerItem:item];
 
     if (_inCharge) {
