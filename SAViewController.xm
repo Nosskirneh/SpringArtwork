@@ -466,14 +466,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (BOOL)_showArtworkViews:(void (^)())completion {
     if ([self _isShowingArtworkView]) {
-        completion();
+        if (completion)
+            completion();
         return NO;
     }
 
     [self.view addSubview:_artworkContainer];
     if (_skipAnimation) {
         _artworkImageView.layer.opacity = 1.0;
-        completion();
+        if (completion)
+            completion();
         return YES;
     }
 
@@ -639,7 +641,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
               completion:(void (^)(void))completion {
     if (_skipAnimation) {
         _canvasContainerImageView.layer.opacity = show ? 1.0 : 0.0;
-        completion();
+        if (completion)
+            completion();
         return;
     }
 
