@@ -1,6 +1,5 @@
 #import "Spotify.h"
 #import "SpringBoard.h"
-#import "SADockViewController.h"
 #import "SAManager.h"
 #import "Common.h"
 #import <AVFoundation/AVAsset.h>
@@ -135,18 +134,17 @@
                                                                                            manager:manager
                                                                                           inCharge:YES];
             else {
-                Class c = manager.hideDockBackground ? %c(SADockViewController) : %c(SAViewController);
-                self.homescreenCanvasViewController = [[c alloc] initWithTargetView:wallpaperView
-                                                                            manager:manager
-                                                                           inCharge:YES];
+                self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                           manager:manager
+                                                                                          inCharge:YES];
             }
         } else {
             BOOL homescreen = variant == 1;
             if (homescreen) {
                 if (manager.enabledMode != LockscreenMode)
-                    self.homescreenCanvasViewController = [[SADockViewController alloc] initWithTargetView:wallpaperView
-                                                                                                   manager:manager
-                                                                                                  inCharge:YES];
+                    self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                               manager:manager
+                                                                                              inCharge:YES];
             } else if (manager.enabledMode != HomescreenMode)
                 self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
                                                                                            manager:manager

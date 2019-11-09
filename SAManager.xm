@@ -50,6 +50,7 @@ extern SBIconController *getIconController();
     NSString *_artworkIdentifier;
     UIImage *_canvasArtworkImage;
 
+    BOOL _dockHidden;
     BOOL _insideApp;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
@@ -561,6 +562,38 @@ extern SBIconController *getIconController();
     }
 }
 
+- (void)_tryHideDock:(BOOL)hide {
+    if (hide == _dockHidden) {
+        HBLogDebug(@"dock already hidden...");
+        return;
+    }
+
+    HBLogDebug(@"will hide (%d) dock!", hide);
+
+    [self _hideDock:hide];
+}
+
+- (void)_hideDock:(BOOL)hide {
+    _dockHidden = hide;
+
+    SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
+    SBDockView *dockView = [rootFolderController.contentView dockView];
+    if (!dockView)
+        return;
+
+    UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
+
+    if (!hide)
+        background.hidden = NO;
+
+    [_inChargeController performLayerOpacityAnimation:background.layer
+                                                 show:!hide
+                                           completion:^{
+        if (hide)
+            background.hidden = YES;
+    }];
+}
+
 - (void)_updateWithContent:(BOOL)content {
     _hasPendingArtworkChange = NO;
 
@@ -568,8 +601,10 @@ extern SBIconController *getIconController();
     if (content) {
         object = self;
         [self _overrideLabels];
+        [self _tryHideDock:YES];
     } else {
         [self _revertLabels];
+        [self _tryHideDock:NO];
     }
 
     for (SAViewController *vc in _viewControllers)

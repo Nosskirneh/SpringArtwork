@@ -189,6 +189,34 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [_artworkImageView.layer addAnimation:rotation forKey:@"Spin"];
 }
 
+- (void)performLayerOpacityAnimation:(CALayer *)layer
+                                 show:(BOOL)show
+                           completion:(void (^)(void))completion {
+    float from;
+    float to;
+    if (show) {
+        from = 0.0;
+        to = 1.0;
+    } else {
+        from = 1.0;
+        to = 0.0;
+    }
+    layer.opacity = from;
+
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    animation.duration = ANIMATION_DURATION;
+    animation.toValue = [NSNumber numberWithFloat:to];
+    animation.fromValue = [NSNumber numberWithFloat:from];
+
+    [CATransaction setCompletionBlock:completion];
+    [layer addAnimation:animation forKey:@"timeViewFadeIn"];
+    layer.opacity = to;
+    [CATransaction commit];
+}
+
 #pragma mark Private
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
@@ -409,7 +437,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (![self _isShowingArtworkView])
         return NO;
 
-    [self _performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^{
+    [self performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^{
         [_artworkContainer removeFromSuperview];
         _artworkImageView.image = nil;
     }];
@@ -542,37 +570,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)_showCanvasLayer:(BOOL)show
               completion:(void (^)(void))completion {
-    [self _performLayerOpacityAnimation:_canvasContainerImageView.layer
+    [self performLayerOpacityAnimation:_canvasContainerImageView.layer
                                    show:show
                              completion:completion];
-}
-
-- (void)_performLayerOpacityAnimation:(CALayer *)layer
-                                 show:(BOOL)show
-                           completion:(void (^)(void))completion {
-    float from;
-    float to;
-    if (show) {
-        from = 0.0;
-        to = 1.0;
-    } else {
-        from = 1.0;
-        to = 0.0;
-    }
-    layer.opacity = from;
-
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-
-    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-    animation.duration = ANIMATION_DURATION;
-    animation.toValue = [NSNumber numberWithFloat:to];
-    animation.fromValue = [NSNumber numberWithFloat:from];
-
-    [CATransaction setCompletionBlock:completion];
-    [layer addAnimation:animation forKey:@"timeViewFadeIn"];
-    layer.opacity = to;
-    [CATransaction commit];
 }
 
 @end
