@@ -400,7 +400,8 @@ extern BOOL hasFrontMostApp();
         if (pauseContentWithMedia != _pauseContentWithMedia) {
             if (pauseContentWithMedia) {
                 [self _subscribeToMediaPlayPause];
-                [self _playPauseChanged:nil];
+                if (![self isDirty])
+                    [self _setPlayPauseState:[[%c(SBMediaController) sharedInstance] isPlaying]];
             } else {
                 [self _unsubscribeToMediaPlayPause];
             }
