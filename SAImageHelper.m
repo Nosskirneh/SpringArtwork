@@ -119,11 +119,11 @@ typedef union {
                     newRGB = 0;
 
                 if (p == 0)
-                    [reds addObject:[NSString stringWithFormat:@"%i",newRGB]];
+                    [reds addObject:[NSString stringWithFormat:@"%i", newRGB]];
                 else if (p == 1)
-                    [greens addObject:[NSString stringWithFormat:@"%i",newRGB]];
+                    [greens addObject:[NSString stringWithFormat:@"%i", newRGB]];
                 else if (p == 2)
-                    [blues addObject:[NSString stringWithFormat:@"%i",newRGB]];
+                    [blues addObject:[NSString stringWithFormat:@"%i", newRGB]];
             }
         }
  
@@ -176,15 +176,15 @@ typedef union {
         int b = [rgb[2] intValue];
         bool exclude = NO;
         for (NSString *ranged_key in ranges) {
-            NSArray *ranged_rgb = [ranged_key componentsSeparatedByString:@","];
+            NSArray *rangedRGB = [ranged_key componentsSeparatedByString:@","];
  
-            int ranged_r = [ranged_rgb[0] intValue];
-            int ranged_g = [ranged_rgb[1] intValue];
-            int ranged_b = [ranged_rgb[2] intValue];
+            int rangedR = [rangedRGB[0] intValue];
+            int rangedG = [rangedRGB[1] intValue];
+            int rangedB = [rangedRGB[2] intValue];
  
-            if ((r >= ranged_r - range && r <= ranged_r + range) &&
-                (g >= ranged_g - range && g <= ranged_g + range) &&
-                (b >= ranged_b - range && b <= ranged_b + range))
+            if ((r >= rangedR - range && r <= rangedR + range) &&
+                (g >= rangedG - range && g <= rangedG + range) &&
+                (b >= rangedB - range && b <= rangedB + range))
                 exclude = YES;
         }
  
@@ -198,7 +198,10 @@ typedef union {
         float r = [rgb[0] floatValue];
         float g = [rgb[1] floatValue];
         float b = [rgb[2] floatValue];
-        UIColor *color = [UIColor colorWithRed:(r / 255.0f) green:(g / 255.0f) blue:(b / 255.0f) alpha:1.0f];
+        UIColor *color = [UIColor colorWithRed:(r / 255.0f)
+                                         green:(g / 255.0f)
+                                          blue:(b / 255.0f)
+                                         alpha:1.0f];
         [colorArray addObject:color];
     }
 
@@ -224,7 +227,8 @@ typedef union {
 }
 
 + (UIImage *)stringToImage:(NSString *)string {
-    NSData *data = [[NSData alloc] initWithBase64EncodedString:string options:NSDataBase64DecodingIgnoreUnknownCharacters];
+    NSData *data = [[NSData alloc] initWithBase64EncodedString:string
+                                                       options:NSDataBase64DecodingIgnoreUnknownCharacters];
     return [UIImage imageWithData:data];
 }
 
@@ -250,7 +254,9 @@ typedef union {
 
     if (colorSpaceModel == kCGColorSpaceModelRGB){
         const CGFloat *componentColors = CGColorGetComponents(color.CGColor);
-        colorBrightness = ((componentColors[0] * 299) + (componentColors[1] * 587) + (componentColors[2] * 114)) / 1000;
+        colorBrightness = ((componentColors[0] * 299) +
+                           (componentColors[1] * 587) +
+                           (componentColors[2] * 114)) / 1000;
     } else {
         [color getWhite:&colorBrightness alpha:0];
     }
