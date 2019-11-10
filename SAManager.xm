@@ -49,7 +49,10 @@ extern BOOL hasFrontMostApp();
 
     NSString *_trackIdentifier;
     NSString *_artworkIdentifier;
+
     UIImage *_canvasArtworkImage;
+    BOOL _useCanvasArtworkTimer;
+    NSTimer *_canvasArtworkTimer;
 
     BOOL _dockHidden;
     BOOL _screenTurnedOn;
@@ -827,23 +830,69 @@ extern BOOL hasFrontMostApp();
                 _trackIdentifier = trackIdentifier;
                 /* Skip showing artwork for canvas track when switching
                    (some weird bug that sends the old artwork when changing track) */
+
+                // In case the previous canvas track has the same artwork as the next
+                // non-canvas track, we need to hide the canvas stuff here. But we cannot do
+                // that since we don't know if it is the bug, where the artwork for the
+                // previous canvas track is sent, or not.
+
+                // Solution:
+                // The "real" artwork is sent very quickly after the "incorrect" one.
+                // If we didn't receive a new (read: "real") artwork during some time period,
+                // consider the first and only received artwork as real.
+                // However, if another artwork (that's not same on the pixels) does come within
+                // that time, discard the first artwork (read: "incorrect") and stop the timer.
+
+                // The timer should only be used when changed content from canvas to artwork
+                // (_canvasURL = nil => useTimer).
                 if (_previousMode == Canvas && _canvasArtworkImage &&
                     [SAImageHelper compareImage:_canvasArtworkImage withImage:image]) {
-                    _canvasArtworkImage = nil;
-                    return;   
-                }
 
-                if (_artworkImage && [self _candidateSameAsPreviousArtwork:image]) {
-                    if (![self changedContent])
-                        [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
+                    if (_useCanvasArtworkTimer) {
+                        _useCanvasArtworkTimer = NO;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            // 0.5f was not enough
+                            _canvasArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:1.2f
+                                                                                   target:self
+                                                                                 selector:@selector(_canvasArtworkTimerFired:)
+                                                                                 userInfo:nil
+                                                                                  repeats:NO];
+                        });
+                    } else {
+                        _canvasArtworkImage = nil;
+                    }
                     return;
+                } else if (_canvasArtworkTimer) {
+                    // If a second new artwork event occurred before
+                    // the timer fired, cancel the timer.
+                    [_canvasArtworkTimer invalidate];
                 }
 
-                [self _updateArtworkWithImage:image];
-                _artworkIdentifier = artworkIdentifier;
+                [self _secondPartForImage:image
+                        artworkIdentifier:artworkIdentifier];
             }];
         }
     ];
+}
+
+- (void)_secondPartForImage:(UIImage *)image
+          artworkIdentifier:(NSString *)artworkIdentifier {
+    if (_artworkImage && [self _candidateSameAsPreviousArtwork:image]) {
+        if (![self changedContent])
+            [self _updateModeToArtworkWithTrackIdentifier:_trackIdentifier];
+        return;
+    }
+
+    [self _updateArtworkWithImage:image];
+    _artworkIdentifier = artworkIdentifier;
+}
+
+- (void)_canvasArtworkTimerFired:(NSTimer *)timer {
+    NSString *artworkIdentifier = timer.userInfo[@"artworkIdentifier"];
+    [self _secondPartForImage:_canvasArtworkImage
+            artworkIdentifier:artworkIdentifier];
+    _canvasArtworkImage = nil;
+    timer = nil;
 }
 
 - (void)_playPauseChanged:(NSNotification *)notification {
@@ -1154,6 +1203,7 @@ extern BOOL hasFrontMostApp();
 - (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
+        _useCanvasArtworkTimer = YES;
         _canvasURL = nil;
         _canvasAsset = nil;
 
@@ -1161,6 +1211,12 @@ extern BOOL hasFrontMostApp();
             [self _sendCanvasUpdatedEvent];
         return;
     } else {
+        _useCanvasArtworkTimer = NO;
+        if (_canvasArtworkTimer) {
+            [_canvasArtworkTimer invalidate];
+            _canvasArtworkTimer = nil;
+        }
+
         _artworkImage = nil;
         _trackIdentifier = nil;
         _artworkIdentifier = nil;
