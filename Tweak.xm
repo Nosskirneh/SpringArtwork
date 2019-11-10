@@ -194,9 +194,9 @@
 
     - (void)_updateToState:(long long)newState {
         if (self.currentState == Paused && newState == Inactive)
-            [manager hide:YES];
+            [manager mediaWidgetDidActivate:NO];
         else if (newState == Playing && self.currentState != newState)
-            [manager mediaWidgetDidActivate];
+            [manager mediaWidgetDidActivate:YES];
 
         %orig;
     }

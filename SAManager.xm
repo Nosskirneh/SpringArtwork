@@ -190,7 +190,7 @@ extern BOOL hasFrontMostApp();
     [_viewControllers addObject:viewController];
 }
 
-- (void)hide:(BOOL)animated {
+- (void)hide {
     [self _setModeToNone];
     [self _updateOnMainQueueWithContent:NO];
 }
@@ -229,9 +229,11 @@ extern BOOL hasFrontMostApp();
     return !_canvasURL && _artworkBackgroundMode != BlurredImage;
 }
 
-- (void)mediaWidgetDidActivate {
-    if ([self hasContent])
-        [self _updateWithContent:YES];
+- (void)mediaWidgetDidActivate:(BOOL)activate {
+    if ([self hasContent]) {
+        activate ? [self _updateWithContent:YES] :
+                   [self hide];
+    }
 }
 
 - (void)setLockscreenPulledDownInApp:(BOOL)down {
