@@ -756,6 +756,8 @@ extern BOOL hasFrontMostApp();
 }
 
 - (void)_setModeToNone {
+    [self _setPlayPauseState:NO];
+
     _mode = None;
     _previousMode = None;
 
