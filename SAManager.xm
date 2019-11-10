@@ -595,12 +595,8 @@ extern BOOL hasFrontMostApp();
 }
 
 - (void)_tryHideDock:(BOOL)hide {
-    if (hide == _dockHidden) {
-        HBLogDebug(@"dock already hidden...");
+    if (hide == _dockHidden)
         return;
-    }
-
-    HBLogDebug(@"will hide (%d) dock!", hide);
 
     [self _hideDock:hide];
 }

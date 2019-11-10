@@ -259,8 +259,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
     animation.duration = ANIMATION_DURATION;
-    animation.toValue = [NSNumber numberWithFloat:to];
-    animation.fromValue = [NSNumber numberWithFloat:from];
+    animation.toValue = @(to);
+    animation.fromValue = @(from);
 
     [CATransaction setCompletionBlock:completion];
     [layer addAnimation:animation forKey:@"timeViewFadeIn"];
