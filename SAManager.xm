@@ -1226,6 +1226,7 @@ extern BOOL hasFrontMostApp();
         _canvasURL = urlString;
         _canvasAsset = [AVAsset assetWithURL:[NSURL URLWithString:urlString]];
 
+        [self _changeModeToCanvas];
         [self _sendCanvasUpdatedEvent];
     }
 }
