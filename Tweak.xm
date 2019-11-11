@@ -353,19 +353,42 @@
        or returning from NC pulldown when inside an app. */
     %hook SBCoverSheetPrimarySlidingViewController
 
+    %property (nonatomic, assign) BOOL pulling;
+
+    - (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
+        if (!fromLockscreen && self.pulling && hasFrontMostApp())
+            manager.lockscreenPulledDownInApp = YES;
+
+        %orig;
+    }
+
     - (void)_finishTransitionToPresented:(BOOL)presented
                                 animated:(BOOL)animated
                           withCompletion:(id)completion {
-        if (!presented && hasFrontMostApp())
+        if (!presented && manager.lockscreenPulledDownInApp && hasFrontMostApp())
             manager.lockscreenPulledDownInApp = NO;
 
         %orig;
     }
 
-    - (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
-        if (!fromLockscreen && hasFrontMostApp())
-            manager.lockscreenPulledDownInApp = YES;
-
+    /* This is to prevent setting lockscreenPulledDownInApp
+       when locking the device when inside an app. */
+    - (void)grabberTongueBeganPulling:(id)tongue
+                         withDistance:(double)distance
+                          andVelocity:(double)velocity {
+        self.pulling = YES;
+        %orig;
+    }
+    - (void)grabberTongueEndedPulling:(id)tongue
+                         withDistance:(double)distance
+                          andVelocity:(double)velocity {
+        self.pulling = NO;
+        %orig;
+    }
+    - (void)grabberTongueCanceledPulling:(id)tongue
+                            withDistance:(double)distance
+                             andVelocity:(double)velocity {
+        self.pulling = NO;
         %orig;
     }
 

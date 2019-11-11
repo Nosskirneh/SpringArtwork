@@ -9,6 +9,7 @@ typedef enum AppearState {
 
 @interface SBCoverSheetPrimarySlidingViewController : UIViewController
 @property (nonatomic, assign) AppearState appearState;
+@property (nonatomic, assign) BOOL pulling;
 @property (nonatomic, retain) SAViewController *canvasNormalViewController;
 @property (nonatomic, retain) SAViewController *canvasFadeOutViewController;
 @property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12
