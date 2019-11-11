@@ -568,6 +568,9 @@ extern BOOL hasFrontMostApp();
 }
 
 - (void)_setPlayPauseState:(BOOL)newState {
+    if (_playing == newState)
+        return;
+
     _manuallyPaused = NO;
     _playing = newState;
 
