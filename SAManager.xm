@@ -31,6 +31,7 @@ extern SBDashBoardViewController *getDashBoardViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
+extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 extern BOOL hasFrontMostApp();
 
 
@@ -630,11 +631,13 @@ extern BOOL hasFrontMostApp();
     if (content) {
         object = self;
         [self _overrideLabels];
-        [self _tryHideDock:YES];
     } else {
         [self _revertLabels];
-        [self _tryHideDock:NO];
     }
+
+    if (_enabledMode != HomescreenMode)
+        [getSlidingViewController() sa_hideWallpaperView:content];
+    [self _tryHideDock:content];
 
     for (SAViewController *vc in _viewControllers)
         [vc artworkUpdated:object];

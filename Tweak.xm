@@ -474,6 +474,13 @@
 
     self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView
                                                                             manager:manager];
+
+}
+
+%new
+- (void)sa_hideWallpaperView:(BOOL)hide {
+    UIView *blurView = self.panelFadeOutWallpaperEffectView.blurView;
+    MSHookIvar<UIView *>(blurView, "_wallpaperView").hidden = hide;
 }
 %end
 

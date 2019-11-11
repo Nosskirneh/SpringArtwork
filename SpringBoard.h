@@ -15,6 +15,7 @@ typedef enum AppearState {
 @property (nonatomic, retain) SBWallpaperEffectView *panelWallpaperEffectView; // iOS 11 and 12
 @property (nonatomic, retain) SBWallpaperEffectView *panelFadeOutWallpaperEffectView; // iOS 12
 - (void)sa_checkCreationOfNormalController;
+- (void)sa_hideWallpaperView:(BOOL)hide;
 @end
 
 
