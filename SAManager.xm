@@ -709,54 +709,24 @@ extern BOOL hasFrontMostApp();
     });
 }
 
-- (void)_checkForRestoreSpotifyConnectIssue {
-    if (!_artworkImage && !_canvasURL &&
-        (_previousSpotifyURL || _previousSpotifyArtworkImage)) {
-        _canvasURL = _previousSpotifyURL;
-        _canvasAsset = _previousSpotifyAsset;
-        _artworkImage = _previousSpotifyArtworkImage;
-
-        if ([self _allowActivate])
-            [self _updateWithContent:YES];
-
-        _previousSpotifyURL = nil;
-        _previousSpotifyAsset = nil;
-        _previousSpotifyArtworkImage = nil;
-    }
-}
-
-- (void)_checkForStoreSpotifyConnectIssue:(NSString *)newBundleID {
-    if (!newBundleID && [_bundleID isEqualToString:kSpotifyBundleID]) {
-        _previousSpotifyURL = _canvasURL;
-        _previousSpotifyAsset = _canvasAsset;
-        _previousSpotifyArtworkImage = _artworkImage;
-    }
-}
-
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
     SBMediaController *mediaController = notification.object;
     NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
 
     if (!bundleID) {
-        [self _checkForStoreSpotifyConnectIssue:bundleID];
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
     } else if ([_disabledApps containsObject:bundleID]) {
         [self _unsubscribeToArtworkChanges];
     } else {
         [self _subscribeToArtworkChanges];
-        if ([bundleID isEqualToString:kSpotifyBundleID]) {
-            _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
-            [self _checkForRestoreSpotifyConnectIssue];
-        } else {
-            [self _setModeToNone];
-            [self _updateOnMainQueueWithContent:NO];
 
-            if ([bundleID isEqualToString:kDeezerBundleID])
-                _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
-            else
-                _placeholderImage = nil;
-        }
+        if ([bundleID isEqualToString:kSpotifyBundleID])
+            _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+        else if ([bundleID isEqualToString:kDeezerBundleID])
+            _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
+        else
+            _placeholderImage = nil;
     }
     _bundleID = bundleID;
 }
