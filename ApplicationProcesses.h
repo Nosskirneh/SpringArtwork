@@ -1,7 +1,7 @@
 #import <SpringBoard/SBUserAgent.h>
 #import <SpringBoard/SBApplication.h>
 
-@interface SpringBoard (Processes)
+@interface SpringBoard : NSObject
 - (SBUserAgent *)pluginUserAgent;
 @end
 

@@ -32,7 +32,6 @@ extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
 extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
-extern BOOL hasFrontMostApp();
 
 
 @implementation SAManager {
@@ -163,10 +162,9 @@ extern BOOL hasFrontMostApp();
     return _mode == Artwork && _animateArtwork && _artworkImage;
 }
 
-/* This method must be called on the main thread! */
 - (BOOL)isDirty {
     return !_screenTurnedOn ||
-           (hasFrontMostApp() && !_lockscreenPulledDownInApp);
+           (_insideApp && !_lockscreenPulledDownInApp);
 }
 
 - (void)setupHaptic {
@@ -882,7 +880,7 @@ extern BOOL hasFrontMostApp();
     if (![self hasPlayableContent])
         return;
 
-    if ((_insideApp && !_lockscreenPulledDownInApp) || !_screenTurnedOn)
+    if ([self isDirty])
         return;
 
     /* If the user manually paused the video,
@@ -962,18 +960,16 @@ extern BOOL hasFrontMostApp();
                 _blurredImage = [self _blurredImage:image];
 
             if ([self _allowActivate]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    /* If this is the not first artwork that's being shown,
-                       we need to wait with the change of artwork if animiating. */
-                    if (previousImage &&
-                        ![self changedContent] &&
-                        [self hasAnimatingArtwork] &&
-                        [self isDirty]) {
-                        _hasPendingArtworkChange = YES;
-                    } else {
-                        [self _updateWithContent:YES];
-                    }
-                });
+                /* If this is the not first artwork that's being shown,
+                   we need to wait with the change of artwork if animiating. */
+                if (previousImage &&
+                    ![self changedContent] &&
+                    [self hasAnimatingArtwork] &&
+                    [self isDirty]) {
+                    _hasPendingArtworkChange = YES;
+                } else {
+                    [self _updateOnMainQueueWithContent:YES];
+                }
             }
         });
         return;

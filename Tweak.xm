@@ -118,10 +118,6 @@
         return ((SBCoverSheetPresentationManager *)[%c(SBCoverSheetPresentationManager) sharedInstance]).coverSheetSlidingViewController;
     }
 
-    BOOL hasFrontMostApp() {
-        return [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication];
-    }
-
     %hook SBWallpaperController
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -175,7 +171,7 @@
 
         if (event.type != UIEventSubtypeMotionShake ||
             ![manager hasPlayableContent] ||
-            [(SpringBoard *)[UIApplication sharedApplication] _accessibilityFrontMostApplication] ||
+            [manager isDirty] ||
             !manager.shakeToPause)
             return;
 
@@ -356,7 +352,7 @@
     %property (nonatomic, assign) BOOL pulling;
 
     - (void)_beginTransitionFromAppeared:(BOOL)fromLockscreen {
-        if (!fromLockscreen && self.pulling && hasFrontMostApp())
+        if (!fromLockscreen && self.pulling && manager.insideApp)
             manager.lockscreenPulledDownInApp = YES;
 
         %orig;
@@ -365,7 +361,7 @@
     - (void)_finishTransitionToPresented:(BOOL)presented
                                 animated:(BOOL)animated
                           withCompletion:(id)completion {
-        if (!presented && manager.lockscreenPulledDownInApp && hasFrontMostApp())
+        if (!presented && manager.lockscreenPulledDownInApp && manager.insideApp)
             manager.lockscreenPulledDownInApp = NO;
 
         %orig;

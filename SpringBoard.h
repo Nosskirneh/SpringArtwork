@@ -43,10 +43,6 @@ typedef enum AppearState {
 @end
 
 
-@interface SpringBoard : NSObject
-- (id)_accessibilityFrontMostApplication;
-@end
-
 
 @interface _UILegibilitySettings : NSObject
 @property (nonatomic, retain) UIColor *primaryColor;
