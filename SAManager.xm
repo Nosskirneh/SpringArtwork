@@ -73,9 +73,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
        It's just that there are no artwork or canvas events being fired by
        that point. */
     NSString *_bundleID;
-    NSString *_previousSpotifyURL;
-    AVAsset *_previousSpotifyAsset;
-    UIImage *_previousSpotifyArtworkImage;
+    NSString *_previousCanvasURL;
+    AVAsset *_previousCanvasAsset;
     // ---
 
     Mode _mode;
@@ -206,8 +205,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [self _setModeToNone];
     _placeholderImage = nil;
 
-    _previousSpotifyURL = nil;
-    _previousSpotifyAsset = nil;
+    _previousCanvasURL = nil;
+    _previousCanvasAsset = nil;
 
     _canvasThumbnail = nil;
     _canvasArtworkImage = nil;
@@ -229,13 +228,28 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)mediaWidgetDidActivate:(BOOL)activate {
-    if ([self hasContent]) {
-        activate ? [self _updateWithContent:YES] :
-                   [self hide];
+    if ([self hasContent] || _previousCanvasURL) {
+        BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
+        if (activate) {
+            /* Restore canvas if any */
+            if (isSpotify && _previousCanvasURL) {
+                _canvasURL = _previousCanvasURL;
+                _canvasAsset = _previousCanvasAsset;
+            }
+            [self _updateWithContent:YES];
+        } else {
+            /* Store canvas if any */
+            if (isSpotify) {
+                _previousCanvasURL = _canvasURL;
+                _previousCanvasAsset = _canvasAsset;
+            }
+            [self hide];
+        }
     }
 }
 
 - (void)setLockscreenPulledDownInApp:(BOOL)down {
+    HBLogDebug(@"setLockscreenPulledDownInApp: %d, _canAutoPlayPause: %d", down, [self _canAutoPlayPause]);
     _lockscreenPulledDownInApp = down;
     if (_playing != down && [self _canAutoPlayPause]) {
 
@@ -350,8 +364,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (current) {
         if (canvasEnabled != _canvasEnabled) {
             if (!canvasEnabled) {
-                _previousSpotifyURL = _canvasURL;
-                _previousSpotifyAsset = _canvasAsset;
+                _previousCanvasURL = _canvasURL;
+                _previousCanvasAsset = _canvasAsset;
 
                 _artworkImage = _canvasArtworkImage;
                 _canvasURL = nil;
@@ -371,9 +385,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 if (!animateArtwork)
                     [self _unregisterAutoPlayPauseEvents];
             } else {
-                if (_previousSpotifyURL) {
-                    _canvasURL = _previousSpotifyURL;
-                    _canvasAsset = _previousSpotifyAsset;
+                if (_previousCanvasURL) {
+                    _canvasURL = _previousCanvasURL;
+                    _canvasAsset = _previousCanvasAsset;
                     _canvasArtworkImage = _artworkImage;
 
                     _mode = Canvas;
@@ -754,8 +768,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)_nowPlayingChanged:(NSNotification *)notification {
     // Reset these on track change
-    _previousSpotifyURL = nil;
-    _previousSpotifyAsset = nil;
+    _previousCanvasURL = nil;
+    _previousCanvasAsset = nil;
 
     NSDictionary *userInfo = notification.userInfo;
 
