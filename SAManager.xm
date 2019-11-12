@@ -677,6 +677,9 @@ extern BOOL hasFrontMostApp();
 
 - (void)_currentAppChanged:(NSNotification *)notification {
     SBApplication *app = notification.object;
+    if ([app.bundleIdentifier isEqualToString:@"com.apple.MusicUIService"])
+        return;
+
     id<ProcessStateInfo> processState = [app respondsToSelector:@selector(internalProcessState)] ?
                                         app.internalProcessState : app.processState;
     BOOL insideApp = processState.foreground && processState.visibility != ForegroundObscured;
