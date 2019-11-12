@@ -239,7 +239,7 @@ extern BOOL hasFrontMostApp();
 
 - (void)setLockscreenPulledDownInApp:(BOOL)down {
     _lockscreenPulledDownInApp = down;
-    if ([self hasPlayableContent] && _playing != down) {
+    if (_playing != down && [self _canAutoPlayPause]) {
 
         if (_hasPendingArtworkChange)
             [self _updateOnMainQueueWithContent:YES];
@@ -882,7 +882,7 @@ extern BOOL hasFrontMostApp();
     if (![self hasPlayableContent])
         return;
 
-    if (_insideApp || !_screenTurnedOn)
+    if ((_insideApp && !_lockscreenPulledDownInApp) || !_screenTurnedOn)
         return;
 
     /* If the user manually paused the video,
