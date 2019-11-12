@@ -556,7 +556,7 @@ extern BOOL hasFrontMostApp();
                     [self _addArtworkRotation];
             }
 
-            if (!_insideApp)
+            if (!_insideApp && [self hasContent])
                 [self _setPlayPauseState:_screenTurnedOn];
         });
 
