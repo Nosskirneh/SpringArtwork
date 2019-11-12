@@ -534,10 +534,8 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([manager hasPlayableContent]) {
-        MSHookIvar<UIView *>(self, "_homeScreenContentBackdropView").hidden = NO;
-        MSHookIvar<UIImageView *>(self, "_homeScreenBlurredContentSnapshotImageView").hidden = YES;
-    }
+    MSHookIvar<UIView *>(self, "_homeScreenContentBackdropView").hidden = NO;
+    MSHookIvar<UIImageView *>(self, "_homeScreenBlurredContentSnapshotImageView").hidden = YES;
 }
 
 %end
@@ -549,11 +547,9 @@
 - (void)_updateBackdropViewIfNeeded {
     %orig;
 
-    if ([manager hasPlayableContent]) {
-        MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
-        MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
-        [[%c(SBIconController) sharedInstance] contentView].hidden = NO;
-    }
+    MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
+    MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
+    [[%c(SBIconController) sharedInstance] contentView].hidden = NO;
 }
 
 %end
