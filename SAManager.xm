@@ -174,6 +174,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (![self hasPlayableContent])
         return;
 
+    /* If animation was previously manually paused, we need
+       to add it again if the artwork image changed. */
+    if (_manuallyPaused && _shouldAddRotation)
+        [self _addArtworkRotation];
+
     [_hapticGenerator impactOccurred];
     for (SAViewController *vc in _viewControllers)
         [vc togglePlayPause];
@@ -224,7 +229,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (BOOL)useBackgroundColor {
-    return !_canvasURL && _artworkBackgroundMode != BlurredImage;
+    return ![self isCanvasActive] &&
+           _artworkBackgroundMode != BlurredImage;
 }
 
 - (void)mediaWidgetDidActivate:(BOOL)activate {
