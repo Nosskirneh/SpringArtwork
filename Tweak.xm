@@ -170,9 +170,9 @@
         %orig;
 
         if (event.type != UIEventSubtypeMotionShake ||
+            !manager.shakeToPause ||
             ![manager hasPlayableContent] ||
-            [manager isDirty] ||
-            !manager.shakeToPause)
+            [manager isDirty])
             return;
 
         [manager togglePlayManually];

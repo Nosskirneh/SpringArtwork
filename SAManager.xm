@@ -171,9 +171,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)togglePlayManually {
-    if (![self hasPlayableContent])
-        return;
-
     /* If animation was previously manually paused, we need
        to add it again if the artwork image changed. */
     if (_manuallyPaused && _shouldAddRotation)
