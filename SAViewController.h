@@ -2,33 +2,18 @@
 #import <AVFoundation/AVPlayerLayer.h>
 #import <AVFoundation/AVPlayer.h>
 #import <AVFoundation/AVAudioSession.h>
+#import "SAViewControllerManager.h"
+#import "SAAnimatingViewController.h"
 
-@interface SAViewController : UIViewController
+@interface SAViewController : UIViewController<SAContentViewController, SAAnimatingViewController>
 /* Public */
 - (id)initWithManager:(id)manager;
 - (id)initWithTargetView:(UIView *)targetView
-				 manager:(id)manager;
+                 manager:(id<SAViewControllerManager>)manager;
 - (id)initWithTargetView:(UIView *)targetView
-				 manager:(id)manager
-				inCharge:(BOOL)inCharge;
+                 manager:(id<SAViewControllerManager>)manager
+                inCharge:(BOOL)inCharge;
 - (void)setTargetView:(UIView *)targetView;
-- (void)replayVideo;
-- (void)togglePlayPauseWithState:(BOOL)playState;
-- (void)togglePlayPause;
-- (void)artworkUpdated:(id)manager;
-- (void)updateArtworkWidthPercentage:(int)percentage
-				   yOffsetPercentage:(int)yOffsetPercentage;
-- (void)addArtworkRotation;
-- (void)removeArtworkRotation;
-- (void)performWithoutAnimation:(void (^)(void))block;
-- (void)updateRelevantStartTime;
-- (void)updateCanvasStartTime;
-- (void)updateAnimationStartTime;
-- (CMTime)canvasCurrentTime;
-- (NSNumber *)artworkAnimationTime;
-- (void)performLayerOpacityAnimation:(CALayer *)layer
-                                show:(BOOL)show
-                          completion:(void (^)(void))completion;
 @end
 
 

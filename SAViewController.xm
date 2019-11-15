@@ -169,7 +169,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _artworkImageView.frame = imageViewFrame;
 }
 
-- (void)artworkUpdated:(SAManager *)manager {
+- (void)artworkUpdated:(id<SAViewControllerManager>)manager {
     if (manager) {
         BOOL changedContent = [manager changedContent];
         if (manager.canvasAsset) {

@@ -1,4 +1,5 @@
 #import "SAImageHelper.h"
+#import "SAViewControllerManager.h"
 #import "SpringBoard.h"
 #import "SettingsKeys.h"
 
@@ -13,13 +14,9 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)impactOccurred;
 @end
 
-@protocol SAViewControllerManager
-- (void)addNewViewController:(SAViewController *)viewController;
-- (void)_videoEnded;
-@end
-
 @interface SAManager : NSObject<SAViewControllerManager>
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
+@property (nonatomic, retain, readonly) UIImage *canvasThumbnail;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
 @property (nonatomic, retain, readonly) UIColor *blendedCDBackgroundColor;
 @property (nonatomic, retain, readonly) UIColor *folderColor;
@@ -27,7 +24,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) BOOL useBackgroundColor;
 @property (nonatomic, retain, readonly) UIImage *artworkImage;
 @property (nonatomic, retain, readonly) UIImage *blurredImage;
-@property (nonatomic, retain, readonly) UIImage *canvasThumbnail;
 
 @property (nonatomic, assign, readonly) EnabledMode enabledMode;
 @property (nonatomic, retain) SAViewController *inChargeController;
