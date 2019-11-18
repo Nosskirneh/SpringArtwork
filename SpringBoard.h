@@ -44,6 +44,12 @@ typedef enum AppearState {
 
 
 
+@interface SBFolderIconImageView : UIImageView
+@property (nonatomic, retain) SBWallpaperEffectView *backgroundView;
+- (void)sa_colorizeFolderBackground:(UIColor *)color;
+@end
+
+
 @interface _UILegibilitySettings : NSObject
 @property (nonatomic, retain) UIColor *primaryColor;
 + (id)sharedInstanceForStyle:(NSInteger)style;
@@ -72,7 +78,7 @@ typedef enum AppearState {
 @end
 
 @interface SBFolderBackgroundView : UIView {
-    UIImageView *_tintView;;
+    UIImageView *_tintView;
 }
 - (UIColor *)_tintViewBackgroundColorAtFullAlpha;
 @end
@@ -87,27 +93,6 @@ typedef enum AppearState {
 }
 @end
 
-@interface SBFolderController : UIViewController
-@property (assign, nonatomic) id folderDelegate;
-@property (nonatomic, copy, readonly) NSArray *iconListViews;
-@end
-
-@interface SBRootFolderController : SBFolderController
-@property (nonatomic, readonly) SBRootFolderView *contentView;
-@end
-
-@interface SBFolderController (Extra)
-@property (nonatomic, readonly) SBFloatyFolderView *contentView;
-@end
-
-
-@interface SBIconController : NSObject
-@property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
-+ (id)sharedInstance;
-- (SBRootFolderController *)_rootFolderController;
-- (SBFolderController *)_openFolderController;
-- (UIView *)contentView;
-@end
 
 
 @interface SBIcon : NSObject
@@ -116,8 +101,14 @@ typedef enum AppearState {
 @interface SBFolderIcon : SBIcon
 @end
 
+@class SBIconController;
+
 @interface SBIconView : UIView
 @property (assign, nonatomic) SBIconController *delegate;
+
+// iOS 13 only
+@property (nonatomic,retain) UIView * folderIconBackgroundView;
+- (SBFolderIconImageView *)_folderIconImageView;
 @end
 
 @interface SBIconBlurryBackgroundView : UIView
@@ -142,12 +133,15 @@ typedef enum AppearState {
 @end
 
 @interface SBIconListModel : NSObject
-- (void)enumerateFolderIconsUsingBlock:(void (^)(SBFolderIcon *))completion;
+- (void)enumerateFolderIconsUsingBlock:(void (^)(SBFolderIcon *))block;
 @end
 
 @interface SBIconListView : UIView
 @property (nonatomic, retain) SBIconListModel *model;
 @property (nonatomic, retain) SBIconViewMap *viewMap;
+
+- (SBIconView *)iconViewForIcon:(SBIcon *)icon;
+- (void)enumerateIconsUsingBlock:(void (^)(SBIcon *))block;
 @end
 
 @interface SBRootIconListView : SBIconListView
@@ -158,6 +152,9 @@ typedef enum AppearState {
 @property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
 @property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 + (id)sharedInstance;
+- (UIView *)sa_newWallpaperViewCreated:(UIView *)wallpaperView
+                               variant:(long long)variant
+                                shared:(BOOL)shared;
 - (_UILegibilitySettings *)legibilitySettingsForVariant:(long long)variant;
 - (CGImage *)homescreenLightForegroundBlurImage;
 @end
@@ -172,42 +169,58 @@ typedef enum AppearState {
 
 
 
-typedef enum NowPlayingState {
-    Inactive,
-    Paused,
-    Playing
-} NowPlayingState;
-
-@interface SBLockScreenNowPlayingController : NSObject
-@property (assign, getter=isEnabled, nonatomic) BOOL enabled;
-@property (nonatomic, readonly) NowPlayingState currentState;
+@interface SBFolderController : UIViewController
+@property (assign, nonatomic) id folderDelegate;
+@property (nonatomic, copy, readonly) NSArray *iconListViews;
 @end
 
-@interface SBDashBoardNotificationAdjunctListViewController : UIViewController
-@property (nonatomic, retain) SBLockScreenNowPlayingController *nowPlayingController;
+@interface SBRootFolderController : SBFolderController
+@property (nonatomic, readonly) SBIconListView *currentIconListView;
+@property (nonatomic, readonly) SBRootFolderView *contentView;
 @end
 
-@interface SBDashBoardCombinedListViewController : UIViewController
-@property (nonatomic, retain) SBDashBoardNotificationAdjunctListViewController *adjunctListViewController;
+@interface SBFolderController (Extra)
+@property (nonatomic, readonly) SBFloatyFolderView *contentView;
 @end
 
-@interface SBDashBoardMainPageContentViewController : UIViewController
-@property (nonatomic, readonly) SBDashBoardCombinedListViewController *combinedListViewController;
+
+@interface SBIconController : NSObject
+@property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
++ (id)sharedInstance;
+- (SBRootFolderController *)_rootFolderController;
+- (SBFolderController *)_openFolderController;
+- (UIView *)contentView;
 @end
 
-@interface SBDashBoardView : UIView
+
+
+
+@protocol CoverSheetView
 @property (nonatomic, retain) SAViewController *canvasViewController;
 @end
 
-@interface SBDashBoardViewController : UIViewController
-@property (setter=_setMainPageContentViewController:, nonatomic, retain) SBDashBoardMainPageContentViewController *mainPageContentViewController;
-@property (nonatomic, retain) SBDashBoardView *view;
+@interface CSCoverSheetView : UIView<CoverSheetView>
+@end
+
+@interface SBDashBoardView : UIView<CoverSheetView>
+@end
+
+
+@protocol CoverSheetViewController
+@property (nonatomic, retain) UIView<CoverSheetView> *view;
 @property (nonatomic, retain) SBDashBoardLegibilityProvider *legibilityProvider;
 - (void)_updateActiveAppearanceForReason:(id)reason;
 @end
 
+@interface CSCoverSheetViewController : UIViewController<CoverSheetViewController>
+@end
+
+@interface SBDashBoardViewController : UIViewController<CoverSheetViewController>
+@end
+
 @interface SBLockScreenManager : NSObject
-@property (nonatomic, readonly) SBDashBoardViewController *dashBoardViewController;
+@property (nonatomic, readonly) SBDashBoardViewController *dashBoardViewController; // iOS 11 & 12
+@property (nonatomic, readonly) CSCoverSheetViewController *coverSheetViewController; // iOS 13
 + (id)sharedInstance;
 - (void)sa_playArtworkAnimation:(BOOL)play;
 @end
@@ -251,12 +264,13 @@ typedef enum {
 @property (nonatomic, readonly) AssertionLevel level;
 @property (nonatomic, retain) _UILegibilitySettings *sa_legibilitySettings;
 @property (nonatomic, copy, readonly) SBMutableAppStatusBarSettings *settings;
-- (void)modifySettingsWithBlock:(void (^)(SBMutableAppStatusBarSettings *))arg1;
+- (void)modifySettingsWithBlock:(void (^)(SBMutableAppStatusBarSettings *))block;
 @end
 
 
 @interface SBAppStatusBarAssertionManager : NSObject
 + (id)sharedInstance;
 - (SBMutableAppStatusBarSettings *)currentStatusBarSettings;
-- (void)_enumerateAssertionsToLevel:(unsigned long long)arg1 withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
+- (void)_enumerateAssertionsToLevel:(unsigned long long)level
+                          withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
 @end

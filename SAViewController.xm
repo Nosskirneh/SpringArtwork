@@ -606,7 +606,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     if (_inCharge) {
         [[NSNotificationCenter defaultCenter] addObserver:_manager
-                                                 selector:@selector(_videoEnded)
+                                                 selector:@selector(videoEnded)
                                                      name:AVPlayerItemDidPlayToEndTimeNotification
                                                    object:item];
     }

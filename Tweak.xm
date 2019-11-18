@@ -95,6 +95,29 @@
 %end
 
 
+%group SBWallpaperController_iOS12
+%hook SBWallpaperController
+- (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config
+                                              forVariant:(long long)variant
+                                                  shared:(BOOL)shared
+                                                 options:(unsigned long long)options {
+    return [self sa_newWallpaperViewCreated:%orig variant:variant shared:shared];
+}
+%end
+%end
+
+%group SBWallpaperController_iOS13
+%hook SBWallpaperController
+- (UIView *)_makeWallpaperViewWithConfiguration:(id)config
+                                     forVariant:(long long)variant
+                                         shared:(BOOL)shared
+                                        options:(unsigned long long)options {
+    return [self sa_newWallpaperViewCreated:%orig variant:variant shared:shared];
+}
+%end
+%end
+
+
 %group SpringBoard
     SAManager *manager;
 
@@ -102,8 +125,11 @@
         return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
     }
 
-    SBDashBoardViewController *getDashBoardViewController() {
-        return ((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).dashBoardViewController;
+    UIViewController<CoverSheetViewController> *getCoverSheetViewController() {
+        SBLockScreenManager *lockscreenManager = (SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance];
+        if ([lockscreenManager respondsToSelector:@selector(coverSheetViewController)])
+            return lockscreenManager.coverSheetViewController;
+        return lockscreenManager.dashBoardViewController;
     }
 
     SBWallpaperController *getWallpaperController() {
@@ -127,12 +153,10 @@
         return %orig;
     }
 
-    - (UIView *)_makeAndInsertWallpaperViewWithConfiguration:(id)config
-                                                  forVariant:(long long)variant
-                                                      shared:(BOOL)shared
-                                                     options:(unsigned long long)options {
-        UIView *wallpaperView = %orig;
-
+    %new
+    - (UIView *)sa_newWallpaperViewCreated:(UIView *)wallpaperView
+                                   variant:(long long)variant
+                                    shared:(BOOL)shared {
         manager.isSharedWallpaper = shared;
         if (shared) {
             if (manager.enabledMode == LockscreenMode)
@@ -156,7 +180,6 @@
                                                                                            manager:manager
                                                                                           inCharge:YES];
         }
-
         return wallpaperView;
     }
 
@@ -181,21 +204,27 @@
     %end
 
 
-    /* Hide views when the media widget is hidden due to inactivity */
-    %hook SBLockScreenNowPlayingController
+    /* Hide views when the media widget is hidden due to inactivity.
+       SBLockScreenNowPlayingController is not used any longer on iOS 13,
+       but this works just as good on iOS 11 and 12. */
+    %hook AdjunctListModel
 
-    - (void)setEnabled:(BOOL)enabled {
-        %orig(YES);
+    - (void)_handleLockScreenContentActionInvalidation:(id)action {
+
+        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
+            [manager mediaWidgetDidActivate:NO];
+
+        %orig;
     }
 
-    - (void)_updateToState:(long long)newState {
-        if (self.currentState != Inactive && newState == Inactive)
-            [manager mediaWidgetDidActivate:NO];
-        else if (self.currentState == Inactive && newState != Inactive)
+    - (void)_handleLockScreenContentActionAddition:(id)action {
+        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
             [manager mediaWidgetDidActivate:YES];
 
         %orig;
     }
+
+    - (void)suspendItemHandling {}
 
     %end
 
@@ -226,20 +255,22 @@
     }
 
     %end
+%end
 
 
-    /* Dynamic wallpapers send themselves to the front after unlock.
-       This overrides that. */
-    %hook SBFProceduralWallpaperView
+// Does not exist in iOS 13
+%group SBFProceduralWallpaperView
+/* Dynamic wallpapers send themselves to the front after unlock.
+   This overrides that. */
+%hook SBFProceduralWallpaperView
 
-    - (void)prepareToAppear {
-        %orig;
+- (void)prepareToAppear {
+    %orig;
 
-        [self sendSubviewToBack:self.proceduralWallpaper];
-    }
+    [self sendSubviewToBack:self.proceduralWallpaper];
+}
 
-    %end
-    // ---
+%end
 %end
 
 
@@ -392,23 +423,26 @@
 
 
     /* Lockscreen background when transitioning to camera */
-    %hook SBDashBoardViewController
+    %hook CoverSheetViewController
 
     - (void)loadView {
         %orig;
 
-        self.view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
+        UIViewController<CoverSheetViewController> *_self = (UIViewController<CoverSheetViewController> *)self;
+        UIView<CoverSheetView> *view = (UIView<CoverSheetView> *)_self.view;
+        view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
     }
 
     %end
 
-    %hook SBDashBoardView
+    %hook CoverSheetView
     %property (nonatomic, retain) SAViewController *canvasViewController;
 
     - (void)setWallpaperEffectView:(UIView *)effectView {
         %orig;
 
-        [self.canvasViewController setTargetView:effectView];
+        UIView<CoverSheetView> *_self = (UIView<CoverSheetView> *)self;
+        [_self.canvasViewController setTargetView:effectView];
     }
 
     %end
@@ -437,7 +471,7 @@
     /* Fix for fake statusbar which is visible when bringing down the lockscreen from
        the homescreen. This is not perfect since it still has a black shadow that then
        jumps to a white one, but it's better than a complete white status bar. */
-    %hook SBDashBoardViewController
+    %hook CoverSheetViewController
 
     - (UIStatusBar *)_createFakeStatusBar {
         if (manager.enabledMode == HomescreenMode)
@@ -553,8 +587,8 @@
 // ---
 
 
-%group FolderIcons
 /* Folder icons */
+%group FolderIcons_iOS12
 %hook SBFolderIconView
 
 %new
@@ -572,10 +606,10 @@
 
     if (icon) {
         UIColor *color = manager.folderColor;
-        if (color)
-            [self sa_colorizeFolderBackground:[self iconBackgroundView] color:color];
+        [self sa_colorizeFolderBackground:[self iconBackgroundView] color:color];
     }
 }
+
 %end
 
 %hook SBFolderIconBackgroundView
@@ -591,11 +625,34 @@
 }
 
 %end
+%end
+
+%group FolderIcons_iOS13
+%hook SBFolderIconImageView
+
+%new
+- (void)sa_colorizeFolderBackground:(UIColor *)color {
+    SBWallpaperEffectView *backgroundView = self.backgroundView;
+    backgroundView.blurView.hidden = color != nil;
+    backgroundView.backgroundColor = color;
+}
+
+- (void)setIcon:(SBIcon *)icon location:(id)location animated:(BOOL)animated {
+    %orig;
+
+    UIColor *color = icon ? manager.folderColor : nil;
+    [self sa_colorizeFolderBackground:color];
+}
+
+%end
+%end
 // ---
 
 
+%group FolderIcons
 /* Background of an open folder */
 %hook SBFloatyFolderView
+
 - (void)enumeratePageBackgroundViewsUsingBlock:(void(^)(SBFloatyFolderBackgroundClipView *))block {
     UIColor *color = manager.folderBackgroundColor;
     if (!color)
@@ -620,7 +677,10 @@
     if (!color)
         color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.8];
 
-    MSHookIvar<UIView *>(backgroundView, "_tintView").backgroundColor = color;
+    UIView *view = MSHookIvar<UIView *>(backgroundView, "_blurView");
+    if (!view)
+        view = MSHookIvar<UIView *>(backgroundView, "_tintView");
+    view.backgroundColor = color;
 }
 
 %end
@@ -679,7 +739,16 @@ static inline void initTrial() {
 
 __attribute__((always_inline, visibility("hidden")))
 static inline void initLockscreen() {
-    %init(Lockscreen);
+    Class coverSheetViewControllerClass = %c(CSCoverSheetViewController);
+    if (!coverSheetViewControllerClass)
+        coverSheetViewControllerClass = %c(SBDashBoardViewController);
+
+    Class coverSheetViewClass = %c(CSCoverSheetView);
+    if (!coverSheetViewClass)
+        coverSheetViewClass = %c(SBDashBoardView);
+
+    %init(Lockscreen, CoverSheetViewController = coverSheetViewControllerClass,
+                      CoverSheetView = coverSheetViewClass);
 
     if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
         %init(newiOS11);
@@ -693,7 +762,12 @@ static inline void initLockscreen() {
 __attribute__((always_inline, visibility("hidden")))
 static inline void initHomescreen() {
     %init(Homescreen);
+
     %init(FolderIcons);
+    if (%c(SBFolderIconView))
+        %init(FolderIcons_iOS12);
+    else // the class used in iOS 13 exist on iOS 12, but hooking it crashes instantly (?)
+        %init(FolderIcons_iOS13);
 
     if (%c(SBHomeScreenBackdropView))
         %init(SwitcherBackdrop_iOS12);
@@ -735,7 +809,23 @@ static inline void initHomescreen() {
         // ---
 
         [manager setupWithPreferences:preferences];
-        %init(SpringBoard);
+        Class adjunctListModelClass = %c(CSAdjunctListModel);
+        if (!adjunctListModelClass)
+            adjunctListModelClass = %c(SBDashBoardAdjunctListModel);
+
+        %init(SpringBoard, AdjunctListModel = adjunctListModelClass);
+
+        if ([%c(SBWallpaperController) instancesRespondToSelector:@selector(_makeWallpaperViewWithConfiguration:
+                                                                                                     forVariant:
+                                                                                                         shared:
+                                                                                                        options:)])
+            %init(SBWallpaperController_iOS13);
+        else
+            %init(SBWallpaperController_iOS12);
+
+        if (%c(SBFProceduralWallpaperView))
+            %init(SBFProceduralWallpaperView);
+
         %init;
 
         if (manager.enabledMode != BothMode) {

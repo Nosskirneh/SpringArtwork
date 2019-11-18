@@ -16,7 +16,6 @@
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
 #define kSBMediaNowPlayingAppChangedNotification @"SBMediaNowPlayingAppChangedNotification"
-#define kSpringBoardFinishedStartup "com.apple.springboard.finishedstartup"
 
 
 @interface NSValue (Missing)
@@ -27,7 +26,7 @@
 - (void)unregisterForMessageName:(NSString *)name;
 @end
 
-extern SBDashBoardViewController *getDashBoardViewController();
+extern UIViewController<CoverSheetViewController> *getCoverSheetViewController();
 extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
@@ -57,6 +56,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _dockHidden;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
+    BOOL _mediaWidgetActive;
 
     /* This is used when using artwork animations.
        It isn't possible to change the artwork in
@@ -90,9 +90,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _canvasEnabled;
     BOOL _animateArtwork;
     BOOL _pauseContentWithMedia;
-
-    /* Storing this as a ivar to prevent always having to traverse all the properties */
-    SBLockScreenNowPlayingController *_nowPlayingController;
 }
 
 #pragma mark Public
@@ -122,25 +119,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
         ^(int _) {
             [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
-        }
-    );
-
-    /* This is called once when SpringBoard finished loading,
-       thus traversing UI properties is possible here. */
-    int springBoardLoadedToken;
-    notify_register_dispatch(kSpringBoardFinishedStartup,
-        &springBoardLoadedToken,
-        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
-        ^(int _) {
-            SBDashBoardNotificationAdjunctListViewController *adjunctVC = getDashBoardViewController().
-                                                                          mainPageContentViewController.
-                                                                          combinedListViewController.
-                                                                          adjunctListViewController;
-            _nowPlayingController = MSHookIvar<SBLockScreenNowPlayingController *>(adjunctVC,
-                                                                                   "_nowPlayingController");
-            [_nowPlayingController setEnabled:YES];
-
-            notify_cancel(springBoardLoadedToken);
         }
     );
 }
@@ -231,6 +209,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)mediaWidgetDidActivate:(BOOL)activate {
+    _mediaWidgetActive = activate;
+
     if ([self hasContent] || _previousCanvasURL) {
         BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
         if (activate) {
@@ -252,7 +232,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)setLockscreenPulledDownInApp:(BOOL)down {
-    HBLogDebug(@"setLockscreenPulledDownInApp: %d, _canAutoPlayPause: %d", down, [self _canAutoPlayPause]);
     _lockscreenPulledDownInApp = down;
     if (_playing != down && [self _canAutoPlayPause]) {
 
@@ -273,12 +252,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return [_inChargeController artworkAnimationTime];
 }
 
-#pragma mark Private
-
-- (void)_videoEnded {
+- (void)videoEnded {
     for (SAViewController *vc in _viewControllers)
         [vc replayVideo];
 }
+
+#pragma mark Private
 
 - (void)_fillPropertiesFromSettings:(NSDictionary *)preferences {
     id current = preferences[kEnabledMode];
@@ -669,7 +648,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 /* Only allow activate when the media widget is showing */
 - (BOOL)_allowActivate {
-    return _nowPlayingController.currentState != Inactive;
+    return _mediaWidgetActive;
 }
 
 - (BOOL)_canAutoPlayPause {
@@ -953,10 +932,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)_getColorInfoWithStaticColorForImage:(UIImage *)image {
-    UIColor *staticColor = _artworkBackgroundMode == StaticColor ?
-                           _staticColor : nil;
+    UIColor *customColor = nil;
+    if (_artworkBackgroundMode == StaticColor)
+        customColor = _staticColor;
+
     _colorInfo = [SAImageHelper colorsForImage:_artworkImage
-                     withStaticBackgroundColor:staticColor];
+                     withStaticBackgroundColor:customColor];
 
     UIColor *toMixColor = [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
                           UIColor.blackColor : UIColor.whiteColor;
@@ -966,7 +947,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)_updateArtworkWithImage:(UIImage *)image {
-    UIImage *previousImage = _artworkImage;
+    BOOL coldArtworkStart = _artworkImage = nil;
     _artworkImage = image;
 
     if (image) {
@@ -979,7 +960,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             if ([self _allowActivate]) {
                 /* If this is the not first artwork that's being shown,
                    we need to wait with the change of artwork if animiating. */
-                if (previousImage &&
+                if (!coldArtworkStart &&
                     ![self changedContent] &&
                     [self hasAnimatingArtwork] &&
                     [self isDirty]) {
@@ -1025,7 +1006,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (_UILegibilitySettings *)_getOriginalLockscreenLegibilitySettings {
-    return [getDashBoardViewController().legibilityProvider currentLegibilitySettings];
+    return [getCoverSheetViewController().legibilityProvider currentLegibilitySettings];
 }
 
 - (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings
@@ -1044,17 +1025,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (void)_colorFolderIconsWithIconController:(SBIconController *)iconController
                        rootFolderController:(SBRootFolderController *)rootFolderController
                                      revert:(BOOL)revert {
-    UIColor *color;
     if (!revert && (_canvasThumbnail || _artworkImage) && _tintFolderIcons) {
-        color = _colorInfo.backgroundColor;
+        UIColor *color = _colorInfo.backgroundColor;
         if ([SAImageHelper colorIsLight:color])
             color = [SAImageHelper darkerColorForColor:color];
         else
             color = [SAImageHelper lighterColorForColor:color];
         _folderColor = [color colorWithAlphaComponent:0.8];
         _folderBackgroundColor = [color colorWithAlphaComponent:0.6];
-
-        [self _colorizeFolderIcons:rootFolderController.iconListViews color:_folderColor animate:YES];
     } else if (!_folderColor) {
         return; // If we haven't already colorized, don't bother reverting it
     } else {
@@ -1062,6 +1040,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         _folderBackgroundColor = nil;
         [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
     }
+
+    if ([%c(SBIconView) instancesRespondToSelector:@selector(sa_colorizeFolderBackground:)])
+        [self _colorizeVisibleFolderIcons:rootFolderController.currentIconListView
+                                    color:_folderColor
+                                  animate:YES];
+    else
+        [self _colorizeFolderIcons:rootFolderController.iconListViews
+                             color:_folderColor
+                           animate:YES];
 
     // If there is any open folder, colorize the background
     SBFolderController *openedFolder = [iconController _openFolderController];
@@ -1073,6 +1060,30 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     }
 }
 
+// iOS 13
+- (void)_colorizeVisibleFolderIcons:(SBIconListView *)listView
+                              color:(UIColor *)color
+                            animate:(BOOL)animate {
+    [listView enumerateIconsUsingBlock:^(SBIcon *icon) {
+        if (![icon isKindOfClass:%c(SBFolderIcon)])
+            return;
+
+        SBIconView *iconView = [listView iconViewForIcon:icon];
+        if (animate) {
+            [UIView transitionWithView:iconView.folderIconBackgroundView
+                              duration:ANIMATION_DURATION
+                               options:UIViewAnimationOptionTransitionCrossDissolve
+                            animations:^{
+                                [[iconView _folderIconImageView] sa_colorizeFolderBackground:color];
+                            }
+                            completion:nil];
+        } else {
+            [[iconView _folderIconImageView] sa_colorizeFolderBackground:color];
+        }
+    }];
+}
+
+// iOS 12
 - (void)_colorizeFolderIcons:(NSArray<SBRootIconListView *> *)iconListViews
                        color:(UIColor *)color
                      animate:(BOOL)animate {
@@ -1164,7 +1175,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)_updateLockscreenLabels {
-    [getDashBoardViewController() _updateActiveAppearanceForReason:nil];
+    [getCoverSheetViewController() _updateActiveAppearanceForReason:nil];
 }
 
 - (UIImage *)_blurredImage:(UIImage *)image {
