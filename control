@@ -1,7 +1,7 @@
 Package: se.nosskirneh.springartwork
 Name: SpringArtwork
 Depends: mobilesubstrate, firmware (>= 11.0), com.rpetrich.rocketbootstrap (>> 1.0.6) | firmware (<= 12.0), com.rpetrich.rocketbootstrap, preferenceloader, org.thebigboss.libcolorpicker
-Version: 1.0~beta2
+Version: 1.0~beta3
 Depiction: https://henrikssonbrothers.com/cydia/repo/depictions/?p=se.nosskirneh.springartwork
 Architecture: iphoneos-arm
 Description: Make your wallpaper awesome!

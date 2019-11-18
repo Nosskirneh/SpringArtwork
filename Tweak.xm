@@ -764,7 +764,8 @@ static inline void initHomescreen() {
     %init(Homescreen);
 
     %init(FolderIcons);
-    if (%c(SBFolderIconView))
+    if (%c(SBFolderIconView) &&
+        [%c(SBRootIconListView) instancesRespondToSelector:@selector(viewMap)])
         %init(FolderIcons_iOS12);
     else // the class used in iOS 13 exist on iOS 12, but hooking it crashes instantly (?)
         %init(FolderIcons_iOS13);

@@ -1041,7 +1041,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
     }
 
-    if ([%c(SBIconView) instancesRespondToSelector:@selector(sa_colorizeFolderBackground:)])
+    if ([%c(SBFolderIconImageView) instancesRespondToSelector:@selector(sa_colorizeFolderBackground:)])
         [self _colorizeVisibleFolderIcons:rootFolderController.currentIconListView
                                     color:_folderColor
                                   animate:YES];
