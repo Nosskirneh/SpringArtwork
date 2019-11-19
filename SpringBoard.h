@@ -24,6 +24,18 @@ typedef enum AppearState {
 @end
 
 
+/* iOS 11 media widget inactivity */
+typedef enum NowPlayingState {
+    Inactive,
+    Paused,
+    Playing
+} NowPlayingState;
+
+@interface SBLockScreenNowPlayingController : NSObject
+@property (nonatomic, readonly) NowPlayingState currentState;
+@end
+//---
+
 
 // iOS 12
 @interface SBHomeScreenBackdropView : UIView {

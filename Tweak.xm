@@ -204,31 +204,6 @@
     %end
 
 
-    /* Hide views when the media widget is hidden due to inactivity.
-       SBLockScreenNowPlayingController is not used any longer on iOS 13,
-       but this works just as good on iOS 11 and 12. */
-    %hook AdjunctListModel
-
-    - (void)_handleLockScreenContentActionInvalidation:(id)action {
-
-        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
-            [manager mediaWidgetDidActivate:NO];
-
-        %orig;
-    }
-
-    - (void)_handleLockScreenContentActionAddition:(id)action {
-        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
-            [manager mediaWidgetDidActivate:YES];
-
-        %orig;
-    }
-
-    - (void)suspendItemHandling {}
-
-    %end
-
-
     /* Both LS & HS */
     %hook SBAppStatusBarSettingsAssertion
 
@@ -256,6 +231,54 @@
 
     %end
 %end
+
+
+/* Hide views when the media widget is hidden due to inactivity. */
+%group MediaWidgetInactivity_iOS13
+    /* SBLockScreenNowPlayingController exists but is not used any
+       longer on iOS 13, but this works just as good on iOS 12. */
+    %hook AdjunctListModel
+
+    - (void)_handleLockScreenContentActionInvalidation:(id)action {
+
+        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
+            [manager mediaWidgetDidActivate:NO];
+
+        %orig;
+    }
+
+    - (void)_handleLockScreenContentActionAddition:(id)action {
+        if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
+            [manager mediaWidgetDidActivate:YES];
+
+        %orig;
+    }
+
+    - (void)suspendItemHandling {}
+
+    %end
+%end
+
+%group MediaWidgetInactivity_iOS11
+    /* AdjunctListModel does not exist on iOS 11. */
+    %hook SBLockScreenNowPlayingController
+
+    - (void)setEnabled:(BOOL)enabled {
+        %orig(YES);
+    }
+
+    - (void)_updateToState:(long long)newState {
+        if (self.currentState != Inactive && newState == Inactive)
+            [manager mediaWidgetDidActivate:NO];
+        else if (self.currentState == Inactive && newState != Inactive)
+            [manager mediaWidgetDidActivate:YES];
+
+        %orig;
+    }
+
+    %end
+%end
+// ---
 
 
 // Does not exist in iOS 13
@@ -776,6 +799,11 @@ static inline void initHomescreen() {
         %init(SwitcherBackdrop_iOS11);
 }
 
+__attribute__((always_inline, visibility("hidden")))
+static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) {
+    %init(MediaWidgetInactivity_iOS13, AdjunctListModel = adjunctListModelClass);
+}
+
 %ctor {
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
@@ -811,10 +839,17 @@ static inline void initHomescreen() {
 
         [manager setupWithPreferences:preferences];
         Class adjunctListModelClass = %c(CSAdjunctListModel);
-        if (!adjunctListModelClass)
+        if (!adjunctListModelClass) {
             adjunctListModelClass = %c(SBDashBoardAdjunctListModel);
+            if (!adjunctListModelClass) // iOS 11
+                %init(MediaWidgetInactivity_iOS11);
+            else
+                initMediaWidgetInactivity_iOS13(adjunctListModelClass);
+        } else {
+            initMediaWidgetInactivity_iOS13(adjunctListModelClass);
+        }
 
-        %init(SpringBoard, AdjunctListModel = adjunctListModelClass);
+        %init(SpringBoard);
 
         if ([%c(SBWallpaperController) instancesRespondToSelector:@selector(_makeWallpaperViewWithConfiguration:
                                                                                                      forVariant:
