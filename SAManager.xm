@@ -669,7 +669,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     if (_enabledMode != HomescreenMode)
         [getSlidingViewController() sa_hideWallpaperView:content];
-    [self _tryHideDock:content];
+
+    if (_hideDockBackground)
+        [self _tryHideDock:content];
 
     for (SAViewController *vc in _viewControllers)
         [vc artworkUpdated:object];
