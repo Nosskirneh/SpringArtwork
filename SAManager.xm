@@ -90,8 +90,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _artworkEnabled;
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
-    BOOL _canvasEnabled;
+
     BOOL _animateArtwork;
+    NSNumber *_blurRadius;
+    BOOL _canvasEnabled;
     BOOL _pauseContentWithMedia;
 }
 
@@ -291,6 +293,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         _staticColor = nil;
     }
 
+    current = preferences[kOnlyBackground];
+    _onlyBackground = current && [current boolValue];
+
+    current = preferences[kBlurRadius];
+    _blurRadius = current ? current : @(5.0f);
+
     current = preferences[kAnimateArtwork];
     _animateArtwork = current && [current boolValue];
 
@@ -344,47 +352,52 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         }
     }
 
+    current = preferences[kOnlyBackground];
+    if (current) {
+        BOOL onlyBackground = current && [current boolValue];
+        if (onlyBackground != _onlyBackground)
+            [self _updateArtworkImage:onlyBackground];
+    }
+
     current = preferences[kAnimateArtwork];
-    BOOL animateArtwork = !current || ![current boolValue];
+    BOOL animateArtwork = current && [current boolValue];
     current = preferences[kCanvasEnabled];
     BOOL canvasEnabled = !current || [current boolValue];
 
-    if (current) {
-        if (canvasEnabled != _canvasEnabled) {
-            if (!canvasEnabled) {
-                _previousCanvasURL = _canvasURL;
-                _previousCanvasAsset = _canvasAsset;
+    if (current && canvasEnabled != _canvasEnabled) {
+        if (!canvasEnabled) {
+            _previousCanvasURL = _canvasURL;
+            _previousCanvasAsset = _canvasAsset;
 
-                _artworkImage = _canvasArtworkImage;
-                _canvasURL = nil;
-                _canvasAsset = nil;
-                _canvasThumbnail = nil;
-                _canvasArtworkImage = nil;
-                [self _getColorInfoWithStaticColorForImage:_artworkImage];
+            _artworkImage = _canvasArtworkImage;
+            _canvasURL = nil;
+            _canvasAsset = nil;
+            _canvasThumbnail = nil;
+            _canvasArtworkImage = nil;
+            [self _getColorInfoWithStaticColorForImage:_artworkImage];
 
-                if (_mode == Canvas) {
-                    _mode = Artwork;
-                    _previousMode = Canvas;
-                }
-                [self _unregisterEventsForCanvasMode];
-
-                /* Don't disable auto play pause events
-                   if artwork animation is enabled. */
-                if (!animateArtwork)
-                    [self _unregisterAutoPlayPauseEvents];
-            } else {
-                if (_previousCanvasURL) {
-                    _canvasURL = _previousCanvasURL;
-                    _canvasAsset = _previousCanvasAsset;
-                    _canvasArtworkImage = _artworkImage;
-
-                    _mode = Canvas;
-                    _previousMode = Artwork;
-                }
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self _registerEventsForCanvasMode];
-                });
+            if (_mode == Canvas) {
+                _mode = Artwork;
+                _previousMode = Canvas;
             }
+            [self _unregisterEventsForCanvasMode];
+
+            /* Don't disable auto play pause events
+               if artwork animation is enabled. */
+            if (!animateArtwork)
+                [self _unregisterAutoPlayPauseEvents];
+        } else {
+            if (_previousCanvasURL) {
+                _canvasURL = _previousCanvasURL;
+                _canvasAsset = _previousCanvasAsset;
+                _canvasArtworkImage = _artworkImage;
+
+                _mode = Canvas;
+                _previousMode = Artwork;
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self _registerEventsForCanvasMode];
+            });
         }
     }
 
@@ -443,6 +456,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         }
     }
 
+    if (_artworkBackgroundMode == BlurredImage) {
+        current = preferences[kBlurRadius];
+        if (current && ![current isEqualToNumber:_blurRadius] && _artworkImage) {
+            _blurRadius = current;
+            _blurredImage = [self _blurredImage:_artworkImage];
+        }
+    }
+
     [self _fillPropertiesFromSettings:preferences];
 
     if (updateArtworkFrames)
@@ -457,6 +478,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         for (SAViewController *vc in _viewControllers)
             [vc updateArtworkWidthPercentage:_artworkWidthPercentage
                            yOffsetPercentage:_artworkYOffsetPercentage];
+    });
+}
+
+- (void)_updateArtworkImage:(BOOL)onlyBackground {
+    UIImage *artwork = onlyBackground ? nil : _artworkImage;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc setArtwork:artwork];
     });
 }
 
@@ -1203,7 +1232,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
     [filter setValue:inputImage forKey:kCIInputImageKey];
-    [filter setValue:[NSNumber numberWithFloat:5.0f] forKey:@"inputRadius"];
+    [filter setValue:_blurRadius forKey:@"inputRadius"];
 
     CIImage *result = [filter valueForKey:kCIOutputImageKey];
     CGImageRef cgImage = [context createCGImage:result fromRect:inputImage.extent];

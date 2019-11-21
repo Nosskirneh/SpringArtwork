@@ -41,9 +41,13 @@
         [super setEnabled:enable forSpecifiersAfterSpecifier:specifier];
         if (enable)
             [self checkStaticColorEnableStateWithKey:key];
-    } else if ([key isEqualToString:kArtworkBackgroundMode])
+    } else if ([key isEqualToString:kArtworkBackgroundMode]) {
         [super setEnabled:[value intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
+
+        [super setEnabled:[value intValue] == BlurredImage
+             forSpecifier:[self specifierForID:kBlurRadius]];
+    }
 
     [super setPreferenceValue:value specifier:specifier];
 }

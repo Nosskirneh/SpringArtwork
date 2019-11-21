@@ -13,6 +13,9 @@ NSString *const kArtworkEnabled = @"artworkEnabled";
 NSString *const kDisabledApps = @"disabledApps";
 NSString *const kArtworkBackgroundMode = @"artworkBackgroundMode";
 NSString *const kStaticColor = @"staticColor";
+
+NSString *const kOnlyBackground = @"onlyBackground";
+NSString *const kBlurRadius = @"blurRadius";
 NSString *const kAnimateArtwork = @"animateArtwork";
 NSString *const kArtworkWidthPercentage = @"artworkWidthPercentage";
 NSString *const kArtworkYOffsetPercentage = @"artworkYOffsetPercentage";

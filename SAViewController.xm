@@ -268,6 +268,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     [CATransaction commit];
 }
 
+- (void)setArtwork:(UIImage *)artwork {
+    /* If call came from change of settings, it might be that the artwork is still the same.
+       Hence, compare the image pointer before updating. */
+    if (artwork == _artworkImageView.image)
+        return;
+
+    _artworkImageView.image = artwork;
+}
+
 #pragma mark Private
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
@@ -320,7 +329,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     /* Not already visible, so we don't need to
        animate the image change but only the layer. */
     if (_skipAnimation || changedContent || ![self _isShowingArtworkView]) {
-        [self _setArtwork:artwork];
+        if (!_manager.onlyBackground)
+            [self setArtwork:artwork];
         [self _setBlurredImage:blurredImage color:color];
 
         /* Only wait with add of animation if changing content
@@ -343,13 +353,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 - (void)_animateArtworkChange:(UIImage *)artwork
                  blurredImage:(UIImage *)blurredImage
                         color:(UIColor *)color {
-    [UIView transitionWithView:_artworkImageView
-                      duration:ANIMATION_DURATION
-                       options:UIViewAnimationOptionTransitionCrossDissolve
-                    animations:^{
-                        [self _setArtwork:artwork];
-                    }
-                    completion:nil];
+    if (!_manager.onlyBackground) {
+        [UIView transitionWithView:_artworkImageView
+                          duration:ANIMATION_DURATION
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:^{
+                            [self setArtwork:artwork];
+                        }
+                        completion:nil];
+    }
 
     [UIView transitionWithView:_backgroundArtworkImageView
                       duration:ANIMATION_DURATION
@@ -367,15 +379,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _backgroundArtworkImageView.image = nil;
         _backgroundArtworkImageView.backgroundColor = color;
     }
-}
-
-- (void)_setArtwork:(UIImage *)artwork {
-    /* If call came from change of settings, it might be that the artwork is still the same.
-       Hence, compare the image pointer before updating. */
-    if (artwork == _artworkImageView.image)
-        return;
-
-    _artworkImageView.image = artwork;
 }
 
 - (void)_prepareSpinArtwork {

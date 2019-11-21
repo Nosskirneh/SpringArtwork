@@ -14,6 +14,7 @@
                  manager:(id<SAViewControllerManager>)manager
                 inCharge:(BOOL)inCharge;
 - (void)setTargetView:(UIView *)targetView;
+- (void)setArtwork:(UIImage *)artwork;
 @end
 
 
