@@ -12,6 +12,7 @@
 #import <AVFoundation/AVAsset.h>
 #import <AVFoundation/AVAssetImageGenerator.h>
 #import <libcolorpicker.h>
+#import "ColorFlow.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -57,6 +58,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
     BOOL _mediaWidgetActive;
+
+    BOOL _colorFlowEnabled;
 
     /* This is used when using artwork animations.
        It isn't possible to change the artwork in
@@ -121,6 +124,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _updateConfigurationWithDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
         }
     );
+
+    _colorFlowEnabled = %c(CFWPrefsManager) &&
+                        ((CFWPrefsManager *)[%c(CFWPrefsManager) sharedInstance]).lockScreenEnabled;
 }
 
 - (BOOL)hasContent {
@@ -931,10 +937,23 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return NO;
 }
 
+- (UIColor *)_getColorFlowBackgroundColor:(UIImage *)image {
+    if (![%c(CFWColorInfo) respondsToSelector:@selector(colorInfoWithAnalyzedInfo:)] ||
+        ![%c(CFWBucket) respondsToSelector:@selector(analyzeImage:resize:)]) {
+        return nil;
+    }
+
+    AnalyzedInfo info = [%c(CFWBucket) analyzeImage:image resize:YES];
+    CFWColorInfo *colorInfo = [%c(CFWColorInfo) colorInfoWithAnalyzedInfo:info];
+    return colorInfo.backgroundColor;
+} 
+
 - (void)_getColorInfoWithStaticColorForImage:(UIImage *)image {
     UIColor *customColor = nil;
     if (_artworkBackgroundMode == StaticColor)
         customColor = _staticColor;
+    else if (_artworkBackgroundMode == MatchingColor && _colorFlowEnabled)
+        customColor = [self _getColorFlowBackgroundColor:image];
 
     _colorInfo = [SAImageHelper colorsForImage:_artworkImage
                      withStaticBackgroundColor:customColor];
