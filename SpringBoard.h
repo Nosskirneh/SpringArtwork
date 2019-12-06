@@ -52,6 +52,7 @@ typedef enum NowPlayingState {
     UIImageView *_homeScreenBlurredContentSnapshotImageView;
 }
 @property (nonatomic, retain) SAViewController *canvasViewController;
++ (id)sharedInstance;
 @end
 
 
