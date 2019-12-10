@@ -668,18 +668,20 @@
 %group FolderIcons_iOS13
 %hook SBFolderIconImageView
 
-%new
-- (void)sa_colorizeFolderBackground:(UIColor *)color {
-    SBWallpaperEffectView *backgroundView = self.backgroundView;
-    backgroundView.blurView.hidden = color != nil;
-    backgroundView.backgroundColor = color;
-}
-
-- (void)setIcon:(SBIcon *)icon location:(id)location animated:(BOOL)animated {
+- (void)updateImageAnimated:(BOOL)animated {
     %orig;
 
-    UIColor *color = icon ? manager.folderColor : nil;
+    UIColor *color = self.icon ? manager.folderColor : nil;
     [self sa_colorizeFolderBackground:color];
+}
+
+%new
+- (void)sa_colorizeFolderBackground:(UIColor *)color {
+    SBWallpaperEffectView *backgroundView = [self backgroundView];
+    if ([backgroundView isKindOfClass:%c(SBWallpaperEffectView)]) {
+        backgroundView.blurView.hidden = color != nil;
+        backgroundView.backgroundColor = color;
+    }
 }
 
 %end

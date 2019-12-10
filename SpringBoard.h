@@ -56,9 +56,11 @@ typedef enum NowPlayingState {
 @end
 
 
+@class SBIcon;
 
 @interface SBFolderIconImageView : UIImageView
 @property (nonatomic, retain) SBWallpaperEffectView *backgroundView;
+@property (nonatomic, readonly) SBIcon *icon;
 - (void)sa_colorizeFolderBackground:(UIColor *)color;
 @end
 
