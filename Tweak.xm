@@ -604,8 +604,10 @@
 }
 
 %end
+%end
 
-/* On iOS 12 and 13, this is needed to avoid getting the homescreen layout
+%group SBDeckSwitcherViewController_iOS13
+/* On iOS 13, this is needed to avoid getting the homescreen layout
    being hidden when opening the app switcher. Why that happens is beyond me.
    Another solution that I tried before was to hide `SBIconController`'s `contentView`.
    While that looked perfectly fine, it prevent icons from being rearranged on the
@@ -810,6 +812,9 @@ static inline void initHomescreen() {
         %init(SwitcherBackdrop_iOS12);
     else
         %init(SwitcherBackdrop_iOS11);
+
+    if ([%c(SBDeckSwitcherViewController) instancesRespondToSelector:@selector(_updateHomeScreenContentRequirement)])
+        %init(SBDeckSwitcherViewController_iOS13);
 }
 
 __attribute__((always_inline, visibility("hidden")))
