@@ -654,4 +654,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                              completion:completion];
 }
 
+// Needed in order to show on iOS 13.3+ lockscreen
+- (BOOL)_canShowWhileLocked {
+    return YES;
+}
+
 @end
