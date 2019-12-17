@@ -6,12 +6,16 @@
 - (void)selectSegment:(int)index;
 @end
 
-@interface PSSegmentTableCell : PSControlTableCell 
+@interface PSSegmentTableCell : PSControlTableCell
 @property (retain) UISegmentedControl *control;
 @end
 
-@interface PSSwitchTableCell : PSControlTableCell 
+@interface PSSwitchTableCell : PSControlTableCell
 @property (retain) UISwitch *control;
+@end
+
+@interface PSSliderTableCell : PSControlTableCell
+@property (retain) UISlider *control;
 @end
 
 #define kRequiresRespring @"requiresRespring"
@@ -74,6 +78,9 @@
             } else if ([cell isKindOfClass:%c(PSSwitchTableCell)]) {
                 PSSwitchTableCell *switchCell = (PSSwitchTableCell *)cell;
                 [switchCell.control setOn:[pickedValue boolValue] animated:YES];
+            } else if ([cell isKindOfClass:%c(PSSliderTableCell)]) {
+                PSSliderTableCell *sliderCell = (PSSliderTableCell *)cell;
+                [sliderCell.control setValue:[pickedValue floatValue] animated:YES];
             }
 
             [self preferenceValueChanged:pickedValue specifier:specifier];
