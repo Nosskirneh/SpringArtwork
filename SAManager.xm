@@ -445,7 +445,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _colorInfo = nil;
 
                 if (artworkBackgroundMode == BlurredImage)
-                    _blurredImage = [self _blurredImage:_artworkImage];
+                    [self _updateBlur];
                 else if (artworkBackgroundMode == StaticColor)
                     [self _updateStaticColor:preferences];
 
@@ -460,7 +460,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         current = preferences[kBlurRadius];
         if (current && ![current isEqualToNumber:_blurRadius] && _artworkImage) {
             _blurRadius = current;
-            _blurredImage = [self _blurredImage:_artworkImage];
+            [self _updateBlur];
         }
     }
 
@@ -1013,7 +1013,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _getColorInfoWithStaticColorForImage:image];
 
             if (_artworkBackgroundMode == BlurredImage)
-                _blurredImage = [self _blurredImage:image];
+                [self _updateBlur];
 
             if ([self _allowActivate]) {
                 /* If this is the not first artwork that's being shown,
@@ -1236,20 +1236,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [getCoverSheetViewController() _updateActiveAppearanceForReason:nil];
 }
 
-- (UIImage *)_blurredImage:(UIImage *)image {
-    CIContext *context = [CIContext contextWithOptions:nil];
-    CIImage *inputImage = [[CIImage alloc] initWithImage:image];
+- (void)_updateBlur {
+    _blurredImage = _artworkImage;
 
-    CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
-    [filter setValue:inputImage forKey:kCIInputImageKey];
-    [filter setValue:_blurRadius forKey:@"inputRadius"];
+    UIBlurEffectStyle style = [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
+                              UIBlurEffectStyleLight : UIBlurEffectStyleDark;
 
-    CIImage *result = [filter valueForKey:kCIOutputImageKey];
-    CGImageRef cgImage = [context createCGImage:result fromRect:inputImage.extent];
-    UIImage *blurredAndDarkenedImage = [UIImage imageWithCGImage:cgImage];
-
-    CGImageRelease(cgImage);
-    return blurredAndDarkenedImage;
+    _blurEffect = [SABlurEffect effectWithStyle:style blurRadius:_blurRadius];
 }
 
 - (void)_changeModeToCanvas {

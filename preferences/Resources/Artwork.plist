@@ -108,6 +108,10 @@
             <string>PSGroupCell</string>
             <key>label</key>
             <string>Blur radius</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+            <key>footerText</key>
+            <string>Requires artwork change.</string>
         </dict>
         <dict>
             <key>id</key>

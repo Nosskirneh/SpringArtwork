@@ -2,6 +2,7 @@
 #import "SAManager.h"
 #import "SpringBoard.h"
 #import "Common.h"
+#import "SABlurEffect.h"
 
 static void setNoInterruptionMusic(AVPlayer *player) {
     AVAudioSessionMediaPlayerOnly *session = [player playerAVAudioSession];
@@ -19,6 +20,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIImageView *_artworkImageView;
     UIImageView *_backgroundArtworkImageView;
     CAShapeLayer *_outerCDLayer;
+    UIVisualEffectView *_visualEffectView;
 
     BOOL _skipAnimation;
     BOOL _animating;
@@ -43,6 +45,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
         _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
         _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
+        if (manager.blurredImage)
+            [self _updateBlurEffect:YES];
+
         [_artworkContainer addSubview:_backgroundArtworkImageView];
 
         _artworkImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
@@ -372,12 +377,32 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                     completion:nil];
 }
 
+- (void)_updateBlurEffect:(BOOL)blur {
+    if (!blur) {
+        [_visualEffectView removeFromSuperview];
+        _visualEffectView = nil;
+        return;
+    }
+
+    if (_visualEffectView) {
+        HBLogDebug(@"setting new effect: %@", _manager.blurEffect);
+        [_visualEffectView _resetEffect];
+        [_visualEffectView setEffect:_manager.blurEffect];
+    } else {
+        _visualEffectView = [[UIVisualEffectView alloc] initWithEffect:_manager.blurEffect];
+        [_visualEffectView setFrame:self.view.frame];
+        [_backgroundArtworkImageView addSubview:_visualEffectView];
+    }
+}
+
 - (void)_setBlurredImage:(UIImage *)blurredImage color:(UIColor *)color {
-    if (blurredImage)
+    if (blurredImage) {
         _backgroundArtworkImageView.image = blurredImage;
-    else if (color) {
+        [self _updateBlurEffect:YES];
+    } else if (color) {
         _backgroundArtworkImageView.image = nil;
         _backgroundArtworkImageView.backgroundColor = color;
+        [self _updateBlurEffect:NO];
     }
 }
 
