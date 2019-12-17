@@ -804,9 +804,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (!trackIdentifier || !metadata)
         return;
 
-    NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
-    if (!artworkIdentifier || [_artworkIdentifier isEqualToString:artworkIdentifier])
-        return;
+    /* Apple changed the structure in iOS 13 music app;
+       the artworkIdentifier is not included anymore */
+    NSString *artworkIdentifier;
+    if (![[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){13,0,0}] ||
+        ![_bundleID isEqualToString:kMusicBundleID]) {
+        artworkIdentifier = metadata[@"artworkIdentifier"];
+        if (!artworkIdentifier || [_artworkIdentifier isEqualToString:artworkIdentifier])
+            return;
+    } else {
+        artworkIdentifier = trackIdentifier;
+    }
 
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
         onCompletion:^(MPCMediaRemoteController *controller) {

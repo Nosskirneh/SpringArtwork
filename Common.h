@@ -1,6 +1,7 @@
 #import "SettingsKeys.h"
 
 #define kSpotifyBundleID @"com.spotify.client"
+#define kMusicBundleID @"com.apple.Music"
 #define kDeezerBundleID @"com.deezer.Deezer"
 
 #define ANIMATION_DURATION 0.75
