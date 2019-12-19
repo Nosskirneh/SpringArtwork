@@ -86,7 +86,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     Mode _previousMode;
 
     NSMutableArray *_viewControllers;
+
     UIImage *_placeholderImage;
+    NSTimer *_placeholderArtworkTimer;
 
     BOOL _tintFolderIcons;
     BOOL _artworkEnabled;
@@ -924,8 +926,25 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 }
 
                 // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
-                if ([self _candidatePlaceholderImage:image])
+                if ([self _candidatePlaceholderImage:image]) {
+                    // In case listening to an offline track in Spotify for example,
+                    // there is no real artwork being sent after the placeholder. To solve that,
+                    // we need to start a timer here and if some other call was received after that,
+                    // cancel it. Otherwise hide all views.
+                    if ([self hasContent] && ![self isCanvasActive]) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:1.2f
+                                                                                        target:self
+                                                                                      selector:@selector(hide)
+                                                                                      userInfo:nil
+                                                                                       repeats:NO];
+                        });
+                    }
                     return;
+                } else if (_placeholderArtworkTimer) {
+                    [_placeholderArtworkTimer invalidate];
+                    _placeholderArtworkTimer = nil;
+                }
 
                 if (_canvasURL) {
                     _canvasArtworkImage = image;
@@ -1356,6 +1375,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _sendCanvasUpdatedEvent];
         return;
     } else {
+        if (_placeholderArtworkTimer) {
+            [_placeholderArtworkTimer invalidate];
+            _placeholderArtworkTimer = nil;
+        }
+
         _useCanvasArtworkTimer = NO;
         if (_canvasArtworkTimer) {
             [_canvasArtworkTimer invalidate];
