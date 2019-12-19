@@ -396,11 +396,18 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     /* Animating change of an image when an UIVisualEffectView is placed
        above results in no animation. The solution is to take a snapshot,
        append it to the superview, hide the real view, change it without
-       animation and then fade the real view in with animation. */
-    __block UIView *snapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:NO];
-    [_artworkContainer insertSubview:snapshot belowSubview:_backgroundArtworkImageView];
-    _backgroundArtworkImageView.alpha = 0.0f;
+       animation and then fade the real view in with animation.
+
+       To avoid UI glitches with the blur, a snapshot on the resulting
+       view is also taken which is then replaced with the real view. */
+    __block UIView *oldSnapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:NO];
+    [_artworkContainer insertSubview:oldSnapshot belowSubview:_backgroundArtworkImageView];
+
     [self _setBlurredImage:blurredImage color:color];
+    __block UIView *newSnapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:YES];
+    _backgroundArtworkImageView.alpha = 0.0f;
+
+    [_artworkContainer insertSubview:newSnapshot belowSubview:_artworkImageView];
 
     [UIView transitionWithView:_artworkContainer
                       duration:ANIMATION_DURATION
@@ -412,8 +419,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                             [self setArtwork:artwork];
                     }
                     completion:^(BOOL _) {
-                        [snapshot removeFromSuperview];
-                        snapshot = nil;
+                        [oldSnapshot removeFromSuperview];
+                        oldSnapshot = nil;
+
+                        _backgroundArtworkImageView.alpha = 1.0f;
+                        [newSnapshot removeFromSuperview];
+                        newSnapshot = nil;
                     }];
 }
 
