@@ -628,16 +628,20 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
+            BOOL contentVisible = _screenTurnedOn && !_insideApp;
+
             if (![self _canAutoPlayPause]) {
-                if (_shouldRemoveRotation)
+                // Check pending animation removal
+                if (_shouldRemoveRotation && contentVisible)
                     [self _removeArtworkRotation];
                 return;
             }
 
             /* If animation needs to be added, do that instead of resuming nothing */
-            if (_screenTurnedOn && !_insideApp && [self hasAnimatingArtwork]) {
+            if (contentVisible && [self hasAnimatingArtwork]) {
                 if (_hasPendingArtworkChange)
                     [self _updateOnMainQueueWithContent:YES];
+                // Check pending animation addition
                 else if (_shouldAddRotation)
                     [self _addArtworkRotation];
             }
@@ -775,8 +779,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     /* Don't update if nothing changed */
     if (_insideApp == insideApp)
         return;
-
     _insideApp = insideApp;
+
+    BOOL contentVisible = !_insideApp && ![self _isDeviceLocked];
 
     if (![self _canAutoPlayPause]) {
         if (_shouldRemoveRotation)
@@ -785,7 +790,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     }
 
     /* If animation needs to be added, do that instead of resuming nothing */
-    if (!_insideApp && [self hasAnimatingArtwork]) {
+    if (contentVisible && [self hasAnimatingArtwork]) {
         if (_hasPendingArtworkChange)
             [self _updateOnMainQueueWithContent:YES];
         else if (_shouldAddRotation)
@@ -809,6 +814,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         for (SAViewController *vc in _viewControllers)
             [vc removeArtworkRotation];
     });
+}
+
+- (BOOL)_isDeviceLocked {
+    SpringBoard *springBoard = (SpringBoard *)[%c(SpringBoard) sharedApplication];
+    return [[springBoard pluginUserAgent] deviceIsLocked];
+
 }
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
