@@ -31,7 +31,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, retain) SAViewController *inChargeController;
 @property (nonatomic, assign) BOOL isSharedWallpaper;
 @property (nonatomic, retain, readonly) _UILegibilitySettings *legibilitySettings;
-@property (nonatomic, assign) BOOL shouldAddRotation;
 @property (nonatomic, assign, readonly) BOOL insideApp;
 @property (nonatomic, assign) BOOL lockscreenPulledDownInApp;
 
@@ -67,4 +66,5 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (NSNumber *)artworkAnimationTime;
 
 - (int)artworkCornerRadiusPercentage;
+- (void)setShouldAddRotation;
 @end

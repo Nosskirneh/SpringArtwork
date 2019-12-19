@@ -67,6 +67,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
        The solution is to mark the change as pending
        and check on every unlock, app exit. */
     BOOL _hasPendingArtworkChange;
+    BOOL _shouldAddRotation;
+    BOOL _shouldRemoveRotation;
 
     NSString *_canvasURL;
 
@@ -145,7 +147,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (BOOL)hasAnimatingArtwork {
-    return _mode == Artwork && _animateArtwork && _artworkImage;
+    return _mode == Artwork && _animateArtwork && !_onlyBackground && _artworkImage;
 }
 
 - (BOOL)isDirty {
@@ -242,14 +244,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)setLockscreenPulledDownInApp:(BOOL)down {
     _lockscreenPulledDownInApp = down;
-    if (_playing != down && [self _canAutoPlayPause]) {
+    if (_playing != down) {
+        if ([self _canAutoPlayPause]) {
+            if (_hasPendingArtworkChange)
+                [self _updateOnMainQueueWithContent:YES];
+            else if (_shouldAddRotation)
+                [self _addArtworkRotation];
 
-        if (_hasPendingArtworkChange)
-            [self _updateOnMainQueueWithContent:YES];
-        else if (_shouldAddRotation)
-            [self _addArtworkRotation];
-
-        [self _setPlayPauseState:down];
+            [self _setPlayPauseState:down];
+        } else if (_shouldRemoveRotation) {
+            [self _removeArtworkRotation];
+        }
     }
 }
 
@@ -268,6 +273,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (int)artworkCornerRadiusPercentage {
     return _animateArtwork ? 100 : _artworkCornerRadiusPercentage;
+}
+
+- (void)setShouldAddRotation {
+    _shouldAddRotation = YES;
 }
 
 #pragma mark Private
@@ -422,10 +431,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         _animateArtwork = animateArtwork;
         [self _updateArtworkCornerRadius];
 
-        if (animateArtwork)
+        if (animateArtwork) {
             [self _registerAutoPlayPauseEvents];
-        else if (!canvasEnabled)
-            [self _unregisterAutoPlayPauseEvents];
+        } else {
+            // Restore views from previous animation
+            _shouldRemoveRotation = YES;
+
+            if (!canvasEnabled)
+                [self _unregisterAutoPlayPauseEvents];
+        }
     }
 
     current = preferences[kPauseContentWithMedia];
@@ -511,6 +525,18 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)_updateArtworkImage:(BOOL)onlyBackground {
     UIImage *artwork = onlyBackground ? nil : _artworkImage;
+
+    if (_animateArtwork) {
+        if (onlyBackground) {
+            _shouldAddRotation = NO;
+            _shouldRemoveRotation = YES;
+        }
+        else {
+            _shouldRemoveRotation = NO;
+            _shouldAddRotation = YES;
+        }
+    }
+
     dispatch_async(dispatch_get_main_queue(), ^{
         for (SAViewController *vc in _viewControllers)
             [vc setArtwork:artwork];
@@ -602,8 +628,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
-            if (![self _canAutoPlayPause])
+            if (![self _canAutoPlayPause]) {
+                if (_shouldRemoveRotation)
+                    [self _removeArtworkRotation];
                 return;
+            }
 
             /* If animation needs to be added, do that instead of resuming nothing */
             if (_screenTurnedOn && !_insideApp && [self hasAnimatingArtwork]) {
@@ -749,8 +778,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     _insideApp = insideApp;
 
-    if (![self _canAutoPlayPause])
+    if (![self _canAutoPlayPause]) {
+        if (_shouldRemoveRotation)
+            [self _removeArtworkRotation];
         return;
+    }
 
     /* If animation needs to be added, do that instead of resuming nothing */
     if (!_insideApp && [self hasAnimatingArtwork]) {
@@ -768,6 +800,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     dispatch_async(dispatch_get_main_queue(), ^{
         for (SAViewController *vc in _viewControllers)
             [vc addArtworkRotation];
+    });
+}
+
+- (void)_removeArtworkRotation {
+    _shouldRemoveRotation = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc removeArtworkRotation];
     });
 }
 

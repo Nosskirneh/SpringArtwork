@@ -242,6 +242,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)removeArtworkRotation {
     [_artworkImageView.layer removeAllAnimations];
+    _artworkImageView.layer.transform = CATransform3DIdentity;
+    [self _destroySpinArtwork];
 }
 
 - (CMTime)canvasCurrentTime {
@@ -427,10 +429,18 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _outerCDLayer.fillColor = _manager.blendedCDBackgroundColor.CGColor;
 }
 
+- (void)_destroySpinArtwork {
+    [_outerCDLayer removeFromSuperlayer];
+    _outerCDLayer = nil;
+
+    _artworkImageView.layer.mask = nil;
+    _artworkImageView.layer.borderWidth = 0.0f;
+}
+
 - (void)_tryAddArtworkAnimation {
     if ([_manager isDirty]) {
         if (_inCharge)
-            _manager.shouldAddRotation = YES;
+            [_manager setShouldAddRotation];
     } else {
         [self addArtworkRotation];
     }
