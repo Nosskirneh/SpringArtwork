@@ -537,7 +537,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return NO;
     }
 
+    /* Using snapshots here as well to avoid blur glitch */
+    _artworkContainer.alpha = 1.0f;
+    __block UIView *snapshot = [_artworkContainer snapshotViewAfterScreenUpdates:YES];
+    [self.view insertSubview:snapshot aboveSubview:_artworkContainer];
+
+    _artworkContainer.alpha = 0.0f;
     [self.view addSubview:_artworkContainer];
+
     if (_skipAnimation) {
         _artworkImageView.layer.opacity = 1.0;
         if (completion)
@@ -546,8 +553,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 
     _animating = YES;
-    [self performLayerOpacityAnimation:_artworkContainer.layer show:YES completion:^{
+    [self performLayerOpacityAnimation:snapshot.layer show:YES completion:^{
         _animating = NO;
+
+         _artworkContainer.alpha = 1.0f;
+        [snapshot removeFromSuperview];
+        snapshot = nil;
 
         if (_nextArtworkChange) {
             _nextArtworkChange();
