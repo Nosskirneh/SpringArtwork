@@ -125,6 +125,19 @@
         [self setEnabled:enabled forSpecifier:_specifiers[i]];
 }
 
+- (void)setEnabled:(BOOL)enabled forSpecifiersAfterSpecifier:(PSSpecifier *)specifier
+                                         excludedIdentifiers:(NSSet *)excludedIdentifiers {
+    if (!excludedIdentifiers)
+        return [self setEnabled:enabled forSpecifiersAfterSpecifier:specifier];
+
+    long long index = [self indexOfSpecifier:specifier];
+    for (int i = index + 1; i < _specifiers.count; i++) {
+        PSSpecifier *specifier = _specifiers[i];
+        if (![excludedIdentifiers containsObject:specifier.identifier])
+            [self setEnabled:enabled forSpecifier:specifier];
+    }
+}
+
 - (void)presentOKAlertWithTitle:(NSString *)title message:(NSString *)message {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
                                                                    message:message

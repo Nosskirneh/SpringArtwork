@@ -93,6 +93,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     BOOL _animateArtwork;
     NSNumber *_blurRadius;
+    int _artworkCornerRadiusPercentage;
     BOOL _canvasEnabled;
     BOOL _pauseContentWithMedia;
 }
@@ -265,6 +266,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [vc replayVideo];
 }
 
+- (int)artworkCornerRadiusPercentage {
+    return _animateArtwork ? 100 : _artworkCornerRadiusPercentage;
+}
+
 #pragma mark Private
 
 - (void)_fillPropertiesFromSettings:(NSDictionary *)preferences {
@@ -301,6 +306,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     current = preferences[kAnimateArtwork];
     _animateArtwork = current && [current boolValue];
+
+    current = preferences[kArtworkCornerRadiusPercentage];
+    _artworkCornerRadiusPercentage = current ? [current intValue] : 10;
 
     current = preferences[kArtworkWidthPercentage];
     _artworkWidthPercentage = current ? [current intValue] : 70;
@@ -359,6 +367,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _updateArtworkImage:onlyBackground];
     }
 
+    current = preferences[kArtworkCornerRadiusPercentage];
+    if (current) {
+        int artworkCornerRadiusPercentage = [current intValue];
+        if (artworkCornerRadiusPercentage != _artworkCornerRadiusPercentage) {
+            _artworkCornerRadiusPercentage = artworkCornerRadiusPercentage;
+            [self _updateArtworkCornerRadius];
+        }
+    }
+
     current = preferences[kAnimateArtwork];
     BOOL animateArtwork = current && [current boolValue];
     current = preferences[kCanvasEnabled];
@@ -402,6 +419,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     }
 
     if (_animateArtwork != animateArtwork) {
+        _animateArtwork = animateArtwork;
+        [self _updateArtworkCornerRadius];
+
         if (animateArtwork)
             [self _registerAutoPlayPauseEvents];
         else if (!canvasEnabled)
@@ -471,6 +491,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     if ([self _allowActivate])
         [self _updateOnMainQueueWithContent:[self hasContent]];
+}
+
+- (void)_updateArtworkCornerRadius {
+    int cornerRadiusPercentage = [self artworkCornerRadiusPercentage];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc updateArtworkCornerRadius:cornerRadiusPercentage];
+    });
 }
 
 - (void)_updateArtworkFrames {

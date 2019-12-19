@@ -48,6 +48,7 @@ extern NSString *const kStaticColor;
 extern NSString *const kOnlyBackground;
 extern NSString *const kBlurRadius;
 extern NSString *const kAnimateArtwork;
+extern NSString *const kArtworkCornerRadiusPercentage;
 extern NSString *const kArtworkWidthPercentage;
 extern NSString *const kArtworkYOffsetPercentage;
 

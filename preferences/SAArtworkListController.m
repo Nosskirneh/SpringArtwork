@@ -30,6 +30,9 @@
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
+    else if ([key isEqualToString:kAnimateArtwork] && preferences[key])
+        [super setEnabled:![preferences[key] boolValue]
+             forSpecifier:[self specifierForID:kArtworkCornerRadiusPercentage]];
 
     return [super readPreferenceValue:specifier];
 }
@@ -47,6 +50,9 @@
 
         [super setEnabled:[value intValue] == BlurredImage
              forSpecifier:[self specifierForID:kBlurRadius]];
+    } else if ([key isEqualToString:kAnimateArtwork]) {
+        [super setEnabled:![value boolValue]
+             forSpecifier:[self specifierForID:kArtworkCornerRadiusPercentage]];
     }
 
     [super setPreferenceValue:value specifier:specifier];

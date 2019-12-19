@@ -6,6 +6,8 @@
 }
 - (void)setEnabled:(BOOL)enabled forSpecifier:(PSSpecifier *)specifier;
 - (void)setEnabled:(BOOL)enabled forSpecifiersAfterSpecifier:(PSSpecifier *)specifier;
+- (void)setEnabled:(BOOL)enabled forSpecifiersAfterSpecifier:(PSSpecifier *)specifier
+										 excludedIdentifiers:(NSSet *)excludedIdentifiers;
 - (void)presentOKAlertWithTitle:(NSString *)title message:(NSString *)message;
 - (void)presentAlertWithTitle:(NSString *)title
                       message:(NSString *)message

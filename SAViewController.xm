@@ -53,6 +53,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _artworkImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
         [self updateArtworkWidthPercentage:manager.artworkWidthPercentage
                          yOffsetPercentage:manager.artworkYOffsetPercentage];
+
+        int cornerRadius = [manager artworkCornerRadiusPercentage];
+        if (cornerRadius != 0)
+            [self updateArtworkCornerRadius:cornerRadius];
         _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
         [_artworkContainer addSubview:_artworkImageView];
 
@@ -172,6 +176,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         imageViewFrame.origin.y += yOffsetPercentage / 100.0 *
                                    self.view.frame.size.height;
     _artworkImageView.frame = imageViewFrame;
+}
+
+- (void)updateArtworkCornerRadius:(int)percentage {
+    _artworkImageView.clipsToBounds = percentage != 0;
+    _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2 *
+                                           (percentage / 100.0);
 }
 
 - (void)artworkUpdated:(id<SAViewControllerManager>)manager {
@@ -385,7 +395,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 
     if (_visualEffectView) {
-        HBLogDebug(@"setting new effect: %@", _manager.blurEffect);
         [_visualEffectView _resetEffect];
         [_visualEffectView setEffect:_manager.blurEffect];
     } else {
@@ -411,10 +420,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _artworkImageView.layer.mask = [self _createLayerArtworkMask];
         [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
 
-        _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2;
         _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
         _artworkImageView.layer.borderWidth = 1.0f;
-        _artworkImageView.clipsToBounds = YES;
     }
 
     _outerCDLayer.fillColor = _manager.blendedCDBackgroundColor.CGColor;

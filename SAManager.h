@@ -65,4 +65,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 - (void)mediaWidgetDidActivate:(BOOL)activate;
 - (CMTime)canvasCurrentTime;
 - (NSNumber *)artworkAnimationTime;
+
+- (int)artworkCornerRadiusPercentage;
 @end

@@ -11,6 +11,7 @@
 - (void)performLayerOpacityAnimation:(CALayer *)layer
                                 show:(BOOL)show
                           completion:(void (^)(void))completion;
+- (void)updateArtworkCornerRadius:(int)percentage;
 @end
 
 @protocol SAAnimatingViewController
