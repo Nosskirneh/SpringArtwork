@@ -12,6 +12,7 @@
                                 show:(BOOL)show
                           completion:(void (^)(void))completion;
 - (void)updateArtworkCornerRadius:(int)percentage;
+- (void)updateBlurEffect:(BOOL)blur;
 @end
 
 @protocol SAAnimatingViewController

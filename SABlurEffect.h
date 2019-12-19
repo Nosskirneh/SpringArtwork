@@ -5,7 +5,11 @@
 @end
 
 
+@interface UIBlurEffect (Private)
+@property (nonatomic, readonly) long long _style;
+@end
 
 @interface UIVisualEffectView (Private)
-- (void)_resetEffect;
+- (void)_commonInit;
+- (void)_updateEffectsFromLegacyEffect;
 @end

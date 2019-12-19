@@ -479,7 +479,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _colorInfo = nil;
 
                 if (artworkBackgroundMode == BlurredImage)
-                    [self _updateBlur];
+                    [self _updateBlurEffect];
                 else if (artworkBackgroundMode == StaticColor)
                     [self _updateStaticColor:preferences];
 
@@ -494,6 +494,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         current = preferences[kBlurRadius];
         if (current && ![current isEqualToNumber:_blurRadius] && _artworkImage) {
             _blurRadius = current;
+            [self _updateBlurEffect];
             [self _updateBlur];
         }
     }
@@ -505,6 +506,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     if ([self _allowActivate])
         [self _updateOnMainQueueWithContent:[self hasContent]];
+}
+
+- (void)_updateBlur {
+    BOOL blur = ![_blurRadius isEqualToNumber:@0];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc updateBlurEffect:blur];
+    });
 }
 
 - (void)_updateArtworkCornerRadius {
@@ -1092,7 +1101,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _getColorInfoWithStaticColorForImage:image];
 
             if (_artworkBackgroundMode == BlurredImage)
-                [self _updateBlur];
+                [self _updateBlurEffect];
 
             if ([self _allowActivate]) {
                 /* If this is the not first artwork that's being shown,
@@ -1315,13 +1324,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [getCoverSheetViewController() _updateActiveAppearanceForReason:nil];
 }
 
-- (void)_updateBlur {
+- (void)_updateBlurEffect {
     _blurredImage = _artworkImage;
 
     UIBlurEffectStyle style = [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
                               UIBlurEffectStyleLight : UIBlurEffectStyleDark;
 
-    _blurEffect = [SABlurEffect effectWithStyle:style blurRadius:_blurRadius];
+    // Only update blur effect if a change was detected
+    if (_blurEffect._style != style || ![_blurRadius isEqualToNumber:_blurEffect.blurRadius])
+        _blurEffect = [SABlurEffect effectWithStyle:style blurRadius:_blurRadius];
 }
 
 - (void)_changeModeToCanvas {

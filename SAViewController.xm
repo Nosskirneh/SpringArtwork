@@ -46,7 +46,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
         _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
         if (manager.blurredImage)
-            [self _updateBlurEffect:YES];
+            [self updateBlurEffect:YES];
 
         [_artworkContainer addSubview:_backgroundArtworkImageView];
 
@@ -294,6 +294,29 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _artworkImageView.image = artwork;
 }
 
+- (void)updateBlurEffect:(BOOL)blur {
+    if (!blur) {
+        [_visualEffectView removeFromSuperview];
+        _visualEffectView = nil;
+        return;
+    }
+
+    if (_visualEffectView) {
+        if (_visualEffectView.effect == _manager.blurEffect)
+            return;
+
+        [_visualEffectView setEffect:_manager.blurEffect];
+
+        // Force update of blur
+        [_visualEffectView _commonInit];
+        [_visualEffectView _updateEffectsFromLegacyEffect];
+    } else {
+        _visualEffectView = [[UIVisualEffectView alloc] initWithEffect:_manager.blurEffect];
+        [_visualEffectView setFrame:self.view.frame];
+        [_backgroundArtworkImageView addSubview:_visualEffectView];
+    }
+}
+
 #pragma mark Private
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
@@ -389,31 +412,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                     completion:nil];
 }
 
-- (void)_updateBlurEffect:(BOOL)blur {
-    if (!blur) {
-        [_visualEffectView removeFromSuperview];
-        _visualEffectView = nil;
-        return;
-    }
-
-    if (_visualEffectView) {
-        [_visualEffectView _resetEffect];
-        [_visualEffectView setEffect:_manager.blurEffect];
-    } else {
-        _visualEffectView = [[UIVisualEffectView alloc] initWithEffect:_manager.blurEffect];
-        [_visualEffectView setFrame:self.view.frame];
-        [_backgroundArtworkImageView addSubview:_visualEffectView];
-    }
-}
-
 - (void)_setBlurredImage:(UIImage *)blurredImage color:(UIColor *)color {
     if (blurredImage) {
         _backgroundArtworkImageView.image = blurredImage;
-        [self _updateBlurEffect:YES];
+        [self updateBlurEffect:YES];
     } else if (color) {
         _backgroundArtworkImageView.image = nil;
         _backgroundArtworkImageView.backgroundColor = color;
-        [self _updateBlurEffect:NO];
+        [self updateBlurEffect:NO];
     }
 }
 
