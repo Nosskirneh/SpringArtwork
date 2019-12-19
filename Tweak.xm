@@ -610,7 +610,7 @@
 /* On iOS 13, this is needed to avoid getting the homescreen layout
    being hidden when opening the app switcher. Why that happens is beyond me.
    Another solution that I tried before was to hide `SBIconController`'s `contentView`.
-   While that looked perfectly fine, it prevent icons from being rearranged on the
+   While that looked perfectly fine, it prevented icons from being rearranged on the
    home screen. The `_updateBackdropType` method needs to be nuked. */
 %hook SBDeckSwitcherViewController
 - (void)_updateHomeScreenContentRequirement {

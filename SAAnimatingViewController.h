@@ -13,6 +13,7 @@
                           completion:(void (^)(void))completion;
 - (void)updateArtworkCornerRadius:(int)percentage;
 - (void)updateBlurEffect:(BOOL)blur;
+- (void)setArtwork:(UIImage *)artwork;
 @end
 
 @protocol SAAnimatingViewController
