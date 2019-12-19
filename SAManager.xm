@@ -933,7 +933,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                     // cancel it. Otherwise hide all views.
                     if ([self hasContent] && ![self isCanvasActive]) {
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:1.2f
+                            _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
                                                                                         target:self
                                                                                       selector:@selector(hide)
                                                                                       userInfo:nil
