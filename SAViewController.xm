@@ -393,23 +393,28 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 - (void)_animateArtworkChange:(UIImage *)artwork
                  blurredImage:(UIImage *)blurredImage
                         color:(UIColor *)color {
-    if (!_manager.onlyBackground) {
-        [UIView transitionWithView:_artworkImageView
-                          duration:ANIMATION_DURATION
-                           options:UIViewAnimationOptionTransitionCrossDissolve
-                        animations:^{
-                            [self setArtwork:artwork];
-                        }
-                        completion:nil];
-    }
+    /* Animating change of an image when an UIVisualEffectView is placed
+       above results in no animation. The solution is to take a snapshot,
+       append it to the superview, hide the real view, change it without
+       animation and then fade the real view in with animation. */
+    __block UIView *snapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:NO];
+    [_artworkContainer insertSubview:snapshot belowSubview:_backgroundArtworkImageView];
+    _backgroundArtworkImageView.alpha = 0.0f;
+    [self _setBlurredImage:blurredImage color:color];
 
-    [UIView transitionWithView:_backgroundArtworkImageView
+    [UIView transitionWithView:_artworkContainer
                       duration:ANIMATION_DURATION
                        options:UIViewAnimationOptionTransitionCrossDissolve
                     animations:^{
-                        [self _setBlurredImage:blurredImage color:color];
+                        _backgroundArtworkImageView.alpha = 1.0f;
+
+                        if (!_manager.onlyBackground)
+                            [self setArtwork:artwork];
                     }
-                    completion:nil];
+                    completion:^(BOOL _) {
+                        [snapshot removeFromSuperview];
+                        snapshot = nil;
+                    }];
 }
 
 - (void)_setBlurredImage:(UIImage *)blurredImage color:(UIColor *)color {
