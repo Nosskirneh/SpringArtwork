@@ -28,6 +28,9 @@
     NSString *key = [specifier propertyForKey:kKey];
     if ([key isEqualToString:kArtworkEnabled] && preferences[key] && ![preferences[key] boolValue])
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
+    else if ([key isEqualToString:kOnlyBackground] && preferences[key] && [preferences[key] boolValue])
+        [super setEnabled:NO forSpecifiersAfterSpecifier:specifier
+                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius]]];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
     else if ([key isEqualToString:kAnimateArtwork] && preferences[key])
@@ -44,6 +47,9 @@
         [super setEnabled:enable forSpecifiersAfterSpecifier:specifier];
         if (enable)
             [self checkStaticColorEnableStateWithKey:key];
+    } else if ([key isEqualToString:kOnlyBackground]) {
+        [super setEnabled:![value boolValue] forSpecifiersAfterSpecifier:specifier
+                                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius]]];
     } else if ([key isEqualToString:kArtworkBackgroundMode]) {
         [super setEnabled:[value intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
