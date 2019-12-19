@@ -401,7 +401,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
        To avoid UI glitches with the blur, a snapshot on the resulting
        view is also taken which is then replaced with the real view. */
     __block UIView *oldSnapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:NO];
-    [_artworkContainer insertSubview:oldSnapshot belowSubview:_backgroundArtworkImageView];
+    [_artworkContainer insertSubview:oldSnapshot aboveSubview:_backgroundArtworkImageView];
 
     [self _setBlurredImage:blurredImage color:color];
     __block UIView *newSnapshot = [_backgroundArtworkImageView snapshotViewAfterScreenUpdates:YES];
@@ -422,7 +422,6 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                         [oldSnapshot removeFromSuperview];
                         oldSnapshot = nil;
 
-                        _backgroundArtworkImageView.alpha = 1.0f;
                         [newSnapshot removeFromSuperview];
                         newSnapshot = nil;
                     }];
