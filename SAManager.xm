@@ -835,24 +835,23 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
     SBMediaController *mediaController = notification.object;
-    NSString *bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
+    _bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
 
-    if (!bundleID) {
+    if (!_bundleID) {
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
-    } else if ([_disabledApps containsObject:bundleID]) {
+    } else if ([_disabledApps containsObject:_bundleID]) {
         [self _unsubscribeToArtworkChanges];
     } else {
         [self _subscribeToArtworkChanges];
 
-        if ([bundleID isEqualToString:kSpotifyBundleID])
+        if ([_bundleID isEqualToString:kSpotifyBundleID])
             _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
-        else if ([bundleID isEqualToString:kDeezerBundleID])
+        else if ([_bundleID isEqualToString:kDeezerBundleID])
             _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
         else
             _placeholderImage = nil;
-    }
-    _bundleID = bundleID;
+        }
 }
 
 - (void)_setModeToNone {
