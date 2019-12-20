@@ -305,7 +305,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         else
             _staticColor = nil;
     } else {
-        _artworkBackgroundMode = MatchingColor;
+        _artworkBackgroundMode = BlurredImage;
         _staticColor = nil;
     }
 
@@ -313,7 +313,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _onlyBackground = current && [current boolValue];
 
     current = preferences[kBlurRadius];
-    _blurRadius = current ? current : @(5.0f);
+    _blurRadius = current ? current : @(22.0f);
 
     current = preferences[kAnimateArtwork];
     _animateArtwork = current && [current boolValue];
