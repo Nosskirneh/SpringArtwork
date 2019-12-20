@@ -783,10 +783,9 @@ static inline void initLockscreen() {
     if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createFadeOutWallpaperEffectView)])
         %init(newiOS11);
 
-    if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded)])
-        %init(wallpaperEffectView_newiOS11);
-    else
-        %init(wallpaperEffectView_oldiOS11);
+    [%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:@selector(_createPanelWallpaperEffectViewIfNeeded)] ?
+        (%init(wallpaperEffectView_newiOS11)) :
+        (%init(wallpaperEffectView_oldiOS11));
 }
 
 __attribute__((always_inline, visibility("hidden")))
@@ -800,10 +799,8 @@ static inline void initHomescreen() {
     else // the class used in iOS 13 exist on iOS 12, but hooking it crashes instantly (?)
         %init(FolderIcons_iOS13);
 
-    if (%c(SBHomeScreenBackdropView))
-        %init(SwitcherBackdrop_iOS12);
-    else
-        %init(SwitcherBackdrop_iOS11);
+    %c(SBHomeScreenBackdropView) ? (%init(SwitcherBackdrop_iOS12)) :
+                                   (%init(SwitcherBackdrop_iOS11));
 }
 
 __attribute__((always_inline, visibility("hidden")))
@@ -848,23 +845,18 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
         Class adjunctListModelClass = %c(CSAdjunctListModel);
         if (!adjunctListModelClass) {
             adjunctListModelClass = %c(SBDashBoardAdjunctListModel);
-            if (!adjunctListModelClass) // iOS 11
-                %init(MediaWidgetInactivity_iOS11);
-            else
-                initMediaWidgetInactivity_iOS13(adjunctListModelClass);
+            !adjunctListModelClass ? (%init(MediaWidgetInactivity_iOS11)) :
+                                     initMediaWidgetInactivity_iOS13(adjunctListModelClass);
         } else {
             initMediaWidgetInactivity_iOS13(adjunctListModelClass);
         }
 
         %init(SpringBoard);
 
-        if ([%c(SBWallpaperController) instancesRespondToSelector:@selector(_makeWallpaperViewWithConfiguration:
-                                                                                                     forVariant:
-                                                                                                         shared:
-                                                                                                        options:)])
-            %init(SBWallpaperController_iOS13);
-        else
-            %init(SBWallpaperController_iOS12);
+        [%c(SBWallpaperController) instancesRespondToSelector:
+            @selector(_makeWallpaperViewWithConfiguration:forVariant:shared:options:)] ?
+            (%init(SBWallpaperController_iOS13)) :
+            (%init(SBWallpaperController_iOS12));
 
         if (%c(SBFProceduralWallpaperView))
             %init(SBFProceduralWallpaperView);
