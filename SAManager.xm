@@ -930,7 +930,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                     // there is no real artwork being sent after the placeholder. To solve that,
                     // we need to start a timer here and if some other call was received after that,
                     // cancel it. Otherwise hide all views.
-                    if ([self hasContent] && ![self isCanvasActive]) {
+                    if ([self hasContent]) {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
                                                                                         target:self
