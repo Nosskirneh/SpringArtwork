@@ -484,7 +484,7 @@
             return legibilitySettingsForDarkText(info.hasDarkTextColor);
 
         return %orig;
-    }    
+    }
 
     %end
     // ---
@@ -594,6 +594,14 @@
 %end
 
 %group SwitcherBackdrop_iOS12
+/* On iOS 12 and 13, the homescreen becomes hidden after the snapshot is taken.
+   If we simply unhide it in the _updateBackdropViewIfNeeded method below,
+   it results in home screen layout not being editible. So instead we're just
+   making sure it never hides in the first place. */
+%hook SBIconContentView
+- (void)setHidden:(BOOL)hide {}
+%end
+
 %hook SBHomeScreenBackdropView
 
 - (void)_updateBackdropViewIfNeeded {
@@ -602,24 +610,6 @@
     MSHookIvar<UIView *>(self, "_materialView").hidden = NO;
     MSHookIvar<UIImageView *>(self, "_blurredContentSnapshotImageView").hidden = YES;
 }
-
-%end
-%end
-
-%group SBDeckSwitcherViewController_iOS13
-/* On iOS 13, this is needed to avoid getting the homescreen layout
-   being hidden when opening the app switcher. Why that happens is beyond me.
-   Another solution that I tried before was to hide `SBIconController`'s `contentView`.
-   While that looked perfectly fine, it prevented icons from being rearranged on the
-   home screen. The `_updateBackdropType` method needs to be nuked. */
-%hook SBDeckSwitcherViewController
-- (void)_updateHomeScreenContentRequirement {
-    SBUIController *controller = [%c(SBUIController) sharedInstance];
-    UIView *backdropView = MSHookIvar<UIView *>(controller, "_homeScreenBackdropView");
-    MSHookIvar<UIView *>(backdropView, "_materialView").hidden = NO;
-}
-- (void)_updateBackdropType {}
-
 %end
 %end
 // ---
@@ -814,9 +804,6 @@ static inline void initHomescreen() {
         %init(SwitcherBackdrop_iOS12);
     else
         %init(SwitcherBackdrop_iOS11);
-
-    if ([%c(SBDeckSwitcherViewController) instancesRespondToSelector:@selector(_updateHomeScreenContentRequirement)])
-        %init(SBDeckSwitcherViewController_iOS13);
 }
 
 __attribute__((always_inline, visibility("hidden")))
