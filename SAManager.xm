@@ -878,26 +878,141 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _trackIdentifier = nil;
 }
 
+/* Backup mechanism to get the artwork data */
+- (void)_getArtworkFromMediaRemote {
+    [self _fetchArtwork:^(UIImage *image, NSString *trackIdentifier, NSString *artworkIdentifier) {
+        [self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier](image);
+    }];
+}
+
+- (void)_fetchArtwork:(void (^)(UIImage *, NSString *, NSString *))completion {
+    MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
+        NSDictionary *dict = (__bridge NSDictionary *)information;
+
+        NSData *imageData = dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoArtworkData];
+        if (!imageData)
+            return completion(nil, nil, nil);
+
+        // HBLogDebug(@"We got the information: %@ – %@",
+        //            dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoTitle],
+        //            dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoArtist]);
+
+        completion([UIImage imageWithData:imageData],
+                   dict[kMRMediaRemoteNowPlayingInfoContentItemIdentifier],
+                   dict[kMRMediaRemoteNowPlayingInfoArtworkIdentifier]);
+    });
+}
+
+- (void (^)(UIImage *))_processImageCompletion:(NSString *)trackIdentifier
+                             artworkIdentifier:(NSString *)artworkIdentifier {
+    return ^(UIImage *image) {
+        if (!image) {
+            #ifdef DEBUG
+            HBLogError(@"No artwork for this track!");
+            #endif
+            return;
+        }
+
+        // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
+        if ([self _candidatePlaceholderImage:image]) {
+            // In case listening to an offline track in Spotify for example,
+            // there is no real artwork being sent after the placeholder. To solve that,
+            // we need to start a timer here and if some other call was received after that,
+            // cancel it. Otherwise hide all views.
+            if ([self hasContent]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
+                                                                                target:self
+                                                                              selector:@selector(hide)
+                                                                              userInfo:nil
+                                                                               repeats:NO];
+                });
+            }
+            return;
+        } else if (_placeholderArtworkTimer) {
+            [_placeholderArtworkTimer invalidate];
+            _placeholderArtworkTimer = nil;
+        }
+
+        if (_canvasURL) {
+            _canvasArtworkImage = image;
+            return;
+        }
+
+        [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
+
+        _trackIdentifier = trackIdentifier;
+        /* Skip showing artwork for canvas track when switching
+           (some weird bug that sends the old artwork when changing track) */
+
+        // In case the previous canvas track has the same artwork as the next
+        // non-canvas track, we need to hide the canvas stuff here. But we cannot do
+        // that since we don't know if it is the bug, where the artwork for the
+        // previous canvas track is sent, or not.
+
+        // Solution:
+        // The "real" artwork is sent very quickly after the "incorrect" one.
+        // If we didn't receive a new (read: "real") artwork during some time period,
+        // consider the first and only received artwork as real.
+        // However, if another artwork (that's not same on the pixels) does come within
+        // that time, discard the first artwork (read: "incorrect") and stop the timer.
+
+        // The timer should only be used when changed content from canvas to artwork
+        // (_canvasURL = nil => useTimer).
+        if (_previousMode == Canvas && _canvasArtworkImage &&
+            [SAImageHelper compareImage:_canvasArtworkImage withImage:image]) {
+
+            if (_useCanvasArtworkTimer) {
+                _useCanvasArtworkTimer = NO;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    // 0.5f was not enough
+                    _canvasArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:1.2f
+                                                                           target:self
+                                                                         selector:@selector(_canvasArtworkTimerFired:)
+                                                                         userInfo:nil
+                                                                          repeats:NO];
+                });
+            } else {
+                _canvasArtworkImage = nil;
+            }
+            return;
+        } else if (_canvasArtworkTimer) {
+            // If a second new artwork event occurred before
+            // the timer fired, cancel the timer.
+            [_canvasArtworkTimer invalidate];
+        }
+
+        [self _secondPartForImage:image
+                artworkIdentifier:artworkIdentifier];
+    };
+}
+
 - (void)_nowPlayingChanged:(NSNotification *)notification {
     // Reset these on track change
     _previousCanvasURL = nil;
     _previousCanvasAsset = nil;
 
     NSDictionary *userInfo = notification.userInfo;
-
     NSArray *contentItems = userInfo[@"kMRMediaRemoteUpdatedContentItemsUserInfoKey"];
+
+    /* It seems that in the case of no contentItems available,
+       invoking the media remote request down below once results
+       in the next notification calls have provides them.
+       This seems to happen on some 3rd party media clients on
+       iOS 13. */
     if (!contentItems || contentItems.count == 0)
-        return;
+        return [self _getArtworkFromMediaRemote];
 
     MRContentItem *contentItem = contentItems[0];
     NSDictionary *info = [contentItem dictionaryRepresentation];
 
     NSString *trackIdentifier = info[@"identifier"];
     NSDictionary *metadata = info[@"metadata"];
+
     if (!trackIdentifier || !metadata)
         return;
 
-    /* Apple changed the structure in iOS 13 music app;
+    /* Apple changed the structure in the iOS 13 Music app;
        the artworkIdentifier is not included anymore */
     NSString *artworkIdentifier;
     if (![[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){13,0,0}] ||
@@ -920,86 +1035,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             else
                 request = [controller contentItemArtworkForIdentifier:trackIdentifier
                                                                  size:CGSizeMake(width, width)];
-            [request onCompletion:^(UIImage *image) {
-                if (!image) {
-                    #ifdef DEBUG
-                    HBLogError(@"No artwork for this track!");
-                    #endif
-                    return;
-                }
-
-                // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
-                if ([self _candidatePlaceholderImage:image]) {
-                    // In case listening to an offline track in Spotify for example,
-                    // there is no real artwork being sent after the placeholder. To solve that,
-                    // we need to start a timer here and if some other call was received after that,
-                    // cancel it. Otherwise hide all views.
-                    if ([self hasContent]) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
-                                                                                        target:self
-                                                                                      selector:@selector(hide)
-                                                                                      userInfo:nil
-                                                                                       repeats:NO];
-                        });
-                    }
-                    return;
-                } else if (_placeholderArtworkTimer) {
-                    [_placeholderArtworkTimer invalidate];
-                    _placeholderArtworkTimer = nil;
-                }
-
-                if (_canvasURL) {
-                    _canvasArtworkImage = image;
-                    return;
-                }
-
-                [self _updateModeToArtworkWithTrackIdentifier:trackIdentifier];
-
-                _trackIdentifier = trackIdentifier;
-                /* Skip showing artwork for canvas track when switching
-                   (some weird bug that sends the old artwork when changing track) */
-
-                // In case the previous canvas track has the same artwork as the next
-                // non-canvas track, we need to hide the canvas stuff here. But we cannot do
-                // that since we don't know if it is the bug, where the artwork for the
-                // previous canvas track is sent, or not.
-
-                // Solution:
-                // The "real" artwork is sent very quickly after the "incorrect" one.
-                // If we didn't receive a new (read: "real") artwork during some time period,
-                // consider the first and only received artwork as real.
-                // However, if another artwork (that's not same on the pixels) does come within
-                // that time, discard the first artwork (read: "incorrect") and stop the timer.
-
-                // The timer should only be used when changed content from canvas to artwork
-                // (_canvasURL = nil => useTimer).
-                if (_previousMode == Canvas && _canvasArtworkImage &&
-                    [SAImageHelper compareImage:_canvasArtworkImage withImage:image]) {
-
-                    if (_useCanvasArtworkTimer) {
-                        _useCanvasArtworkTimer = NO;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            // 0.5f was not enough
-                            _canvasArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:1.2f
-                                                                                   target:self
-                                                                                 selector:@selector(_canvasArtworkTimerFired:)
-                                                                                 userInfo:nil
-                                                                                  repeats:NO];
-                        });
-                    } else {
-                        _canvasArtworkImage = nil;
-                    }
-                    return;
-                } else if (_canvasArtworkTimer) {
-                    // If a second new artwork event occurred before
-                    // the timer fired, cancel the timer.
-                    [_canvasArtworkTimer invalidate];
-                }
-
-                [self _secondPartForImage:image
-                        artworkIdentifier:artworkIdentifier];
-            }];
+            [request onCompletion:[self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier]];
         }
     ];
 }

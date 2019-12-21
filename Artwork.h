@@ -25,3 +25,8 @@
 - (MPCFuture *)contentItemArtworkForIdentifier:(NSString *)identifier
                                           size:(CGSize)size;
 @end
+
+
+
+#define kMRMediaRemoteNowPlayingInfoContentItemIdentifier @"kMRMediaRemoteNowPlayingInfoContentItemIdentifier"
+#define kMRMediaRemoteNowPlayingInfoArtworkIdentifier @"kMRMediaRemoteNowPlayingInfoArtworkIdentifier"
