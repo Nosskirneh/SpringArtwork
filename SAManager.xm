@@ -913,21 +913,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (void (^)(UIImage *))_processImageCompletion:(NSString *)trackIdentifier
                              artworkIdentifier:(NSString *)artworkIdentifier {
     return ^(UIImage *image) {
-        if (!image) {
-            #ifdef DEBUG
-            HBLogError(@"No artwork for this track!");
-            #endif
-            return;
-        }
-
         // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
-        if ([self _candidatePlaceholderImage:image]) {
+        if (!image || [self _candidatePlaceholderImage:image]) {
             // In case listening to an offline track in Spotify for example,
             // there is no real artwork being sent after the placeholder. To solve that,
             // we need to start a timer here and if some other call was received after that,
             // cancel it. Otherwise hide all views.
             if ([self hasContent]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    [_placeholderArtworkTimer invalidate];
                     _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
                                                                                 target:self
                                                                               selector:@selector(hide)
