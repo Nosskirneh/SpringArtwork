@@ -245,6 +245,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _previousCanvasURL = _canvasURL;
                 _previousCanvasAsset = _canvasAsset;
             }
+
             [self hide];
         }
     }
@@ -1014,16 +1015,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         return;
 
     /* Apple changed the structure in the iOS 13 Music app;
-       the artworkIdentifier is not included anymore */
-    NSString *artworkIdentifier;
-    if (![[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){13,0,0}] ||
-        ![_bundleID isEqualToString:kMusicBundleID]) {
-        artworkIdentifier = metadata[@"artworkIdentifier"];
-        if (!artworkIdentifier || [_artworkIdentifier isEqualToString:artworkIdentifier])
-            return;
-    } else {
-        artworkIdentifier = trackIdentifier;
-    }
+       the artworkIdentifier is not always included anymore */
+    NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
+    if (!artworkIdentifier)
+        return [self _getArtworkFromMediaRemote];
+    else if ([_artworkIdentifier isEqualToString:artworkIdentifier])
+        return;
 
     [[%c(MPCMediaRemoteController) controllerForPlayerPath:[%c(MPCPlayerPath) deviceActivePlayerPath]]
         onCompletion:^(MPCMediaRemoteController *controller) {
@@ -1036,7 +1033,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             else
                 request = [controller contentItemArtworkForIdentifier:trackIdentifier
                                                                  size:CGSizeMake(width, width)];
-            [request onCompletion:[self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier]];
+            [request onCompletion:[self _processImageCompletion:trackIdentifier
+                                              artworkIdentifier:artworkIdentifier]];
         }
     ];
 }
