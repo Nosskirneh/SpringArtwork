@@ -88,7 +88,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     NSMutableArray *_viewControllers;
 
-    UIImage *_placeholderImage;
+    NSArray<UIImage *> *_ignoredImages;
     NSTimer *_placeholderArtworkTimer;
 
     BOOL _tintFolderIcons;
@@ -198,7 +198,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     notify_cancel(_notifyTokenForSettingsChanged);
 
     [self _setModeToNone];
-    _placeholderImage = nil;
+    _ignoredImages = nil;
 
     _previousCanvasURL = nil;
     _previousCanvasAsset = nil;
@@ -850,12 +850,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [self _subscribeToArtworkChanges];
 
         if ([_bundleID isEqualToString:kSpotifyBundleID])
-            _placeholderImage = [SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64];
+            _ignoredImages = @[[SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64]];
         else if ([_bundleID isEqualToString:kDeezerBundleID])
-            _placeholderImage = [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64];
+            _ignoredImages = @[[SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64],
+                               [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_iOS13_BASE64]];
         else
-            _placeholderImage = nil;
-        }
+            _ignoredImages = nil;
+    }
 }
 
 - (void)_setModeToNone {
@@ -1117,8 +1118,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (candidate.size.width != candidate.size.height)
         return NO;
 
-    if (_placeholderImage)
-        return [SAImageHelper compareImage:candidate withImage:_placeholderImage];
+    if (_ignoredImages) {
+        for (UIImage *ignoredImage in _ignoredImages)
+            if ([SAImageHelper compareImage:candidate withImage:ignoredImage])
+                return YES;
+    }
     return NO;
 }
 
