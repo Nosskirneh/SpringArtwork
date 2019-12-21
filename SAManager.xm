@@ -192,6 +192,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (void)setTrialEnded {
     _trialEnded = YES;
 
+    /* Used to guard against uninitialized tweak due to trial invalidity */
+    if (_didInit)
+        return;
+
     [self _unsubscribeToArtworkChanges];
     [self _unregisterEventsForCanvasMode];
     [self _unregisterAutoPlayPauseEvents];
@@ -209,9 +213,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _artworkEnabled = NO;
     _canvasEnabled = NO;
 
-    /* Used to guard against uninitialized tweak due to trial invalidity */
-    if (_didInit)
-        [self _updateWithContent:NO];
+    [self _updateWithContent:NO];
     _viewControllers = nil;
     _inChargeController = nil;
 }
