@@ -354,10 +354,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (current) {
         BOOL tintFolderIcons = [current boolValue];
         if (tintFolderIcons != _tintFolderIcons) {
-            SBIconController *iconController = getIconController();
-            [self _colorFolderIconsWithIconController:iconController
-                                 rootFolderController:[iconController _rootFolderController]
-                                               revert:!tintFolderIcons];
+            _tintFolderIcons = tintFolderIcons;
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                SBIconController *iconController = getIconController();
+                [self _colorFolderIconsWithIconController:iconController
+                                     rootFolderController:[iconController _rootFolderController]
+                                                   revert:!tintFolderIcons];
+            });
         }
     }
 
@@ -1246,7 +1250,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     } else {
         _folderColor = nil;
         _folderBackgroundColor = nil;
-        [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
+        if (%c(_SBIconWallpaperBackgroundProvider))
+            [[%c(_SBIconWallpaperBackgroundProvider) sharedInstance] _updateAllClients];
     }
 
     if ([%c(SBFolderIconImageView) instancesRespondToSelector:@selector(sa_colorizeFolderBackground:)])
