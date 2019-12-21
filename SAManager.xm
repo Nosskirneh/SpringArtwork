@@ -54,6 +54,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _useCanvasArtworkTimer;
     NSTimer *_canvasArtworkTimer;
 
+    BOOL _didInit;
     BOOL _dockHidden;
     BOOL _screenTurnedOn;
     BOOL _mediaPlaying;
@@ -105,6 +106,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 #pragma mark Public
 
 - (void)setupWithPreferences:(NSDictionary *)preferences {
+    _didInit = YES;
     _screenTurnedOn = YES;
 
     [self _fillPropertiesFromSettings:preferences];
@@ -207,7 +209,9 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _artworkEnabled = NO;
     _canvasEnabled = NO;
 
-    [self _updateWithContent:NO];
+    /* Used to guard against uninitialized tweak due to trial invalidity */
+    if (_didInit)
+        [self _updateWithContent:NO];
     _viewControllers = nil;
     _inChargeController = nil;
 }
