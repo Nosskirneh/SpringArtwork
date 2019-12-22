@@ -750,8 +750,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [self _revertLabels];
     }
 
-    if (_enabledMode != HomescreenMode)
-        [getSlidingViewController() sa_hideWallpaperView:content];
+    SBCoverSheetPrimarySlidingViewController *slidingViewController = getSlidingViewController();
+    // This method is only initiated on some firmwares
+    if (_enabledMode != HomescreenMode &&
+        [slidingViewController respondsToSelector:@selector(sa_hideWallpaperView)])
+        [slidingViewController sa_hideWallpaperView:content];
 
     if (_hideDockBackground)
         [self _tryHideDock:content];
