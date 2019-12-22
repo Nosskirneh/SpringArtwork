@@ -596,13 +596,25 @@
 %group SwitcherBackdrop_iOS12
 /* On iOS 12 and 13, the homescreen becomes hidden after the snapshot is taken.
    If we simply unhide it in the _updateBackdropViewIfNeeded method below,
-   it results in home screen layout not being editible. So instead we're just
-   making sure it never hides in the first place. */
-%hook SBIconContentView
-- (void)setHidden:(BOOL)hide {}
-%end
+   it results in home screen layout not being editible. Hooking the setHidden
+   method of the SBIconContentView view results in the same thing. The solution
+   is to nuke the two methods down below if the backdrop is used for the app
+   switcher. */
 
 %hook SBHomeScreenBackdropView
+- (void)beginRequiringBackdropViewForReason:(NSString *)reason {
+    if ([reason isEqualToString:@"SBAppSwitcherBackdropRequiringReason"])
+        return;
+
+    %orig;
+}
+
+- (void)endRequiringBackdropViewForReason:(NSString *)reason {
+    if ([reason isEqualToString:@"SBAppSwitcherBackdropRequiringReason"])
+        return;
+
+    %orig;
+}
 
 - (void)_updateBackdropViewIfNeeded {
     %orig;
