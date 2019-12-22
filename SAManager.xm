@@ -1279,16 +1279,23 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             return;
 
         SBIconView *iconView = [listView iconViewForIcon:icon];
+        SBFolderIconImageView *folderIconImageView = [iconView _folderIconImageView];
+        if (![folderIconImageView respondsToSelector:@selector(sa_colorizeFolderBackground:)]) {
+            HBLogError(@"%@ (supposed to be %@) does not respond to sa_colorizeFolderBackground:",
+                       folderIconImageView, %c(SBFolderIconImageView));
+            return;
+        }
+
         if (animate) {
             [UIView transitionWithView:iconView.folderIconBackgroundView
                               duration:ANIMATION_DURATION
                                options:UIViewAnimationOptionTransitionCrossDissolve
                             animations:^{
-                                [[iconView _folderIconImageView] sa_colorizeFolderBackground:color];
+                                [folderIconImageView sa_colorizeFolderBackground:color];
                             }
                             completion:nil];
         } else {
-            [[iconView _folderIconImageView] sa_colorizeFolderBackground:color];
+            [folderIconImageView sa_colorizeFolderBackground:color];
         }
     }];
 }
