@@ -667,9 +667,8 @@
                  withFallbackColor:(CGColorRef)color {
     UIColor *folderColor = manager.folderColor;
     if (folderColor)
-        %orig(rect, nil, folderColor.CGColor);
-    else
-        %orig;
+        return %orig(rect, nil, folderColor.CGColor);
+    %orig;
 }
 
 %end
