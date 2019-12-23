@@ -602,15 +602,23 @@
    switcher. */
 
 %hook SBHomeScreenBackdropView
+
+%new
+- (NSString *)sa_appSwitcherBackdropReason {
+    if (@available(iOS 13, *))
+        return @"SBAppSwitcherBackdropRequiringReason";
+    return @"App Switcher Visible"; // iOS 12 and earlier
+}
+
 - (void)beginRequiringBackdropViewForReason:(NSString *)reason {
-    if ([reason isEqualToString:@"SBAppSwitcherBackdropRequiringReason"])
+    if ([reason isEqualToString:[self sa_appSwitcherBackdropReason]])
         return;
 
     %orig;
 }
 
 - (void)endRequiringBackdropViewForReason:(NSString *)reason {
-    if ([reason isEqualToString:@"SBAppSwitcherBackdropRequiringReason"])
+    if ([reason isEqualToString:[self sa_appSwitcherBackdropReason]])
         return;
 
     %orig;

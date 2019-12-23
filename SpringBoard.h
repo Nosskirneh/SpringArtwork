@@ -42,6 +42,7 @@ typedef enum NowPlayingState {
     UIView *_materialView;
     UIImageView *_blurredContentSnapshotImageView;
 }
+- (NSString *)sa_appSwitcherBackdropReason;
 @end
 
 @interface SBUIController : NSObject {
