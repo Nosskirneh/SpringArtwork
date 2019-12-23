@@ -491,15 +491,23 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _blurredImage = nil;
                 _colorInfo = nil;
 
-                if (artworkBackgroundMode == BlurredImage)
-                    [self _updateBlurEffect];
-                else if (artworkBackgroundMode == StaticColor)
+                if (artworkBackgroundMode == StaticColor)
                     [self _updateStaticColor:preferences];
 
                 // Updating these here as the updated values are required below
                 _artworkBackgroundMode = artworkBackgroundMode;
                 [self _getColorInfoWithStaticColorForImage:_artworkImage];
+
+                // This requires the _colorInfo to be updated
+                if (artworkBackgroundMode == BlurredImage)
+                    [self _updateBlurEffect];
             }
+        } else if (_artworkBackgroundMode == StaticColor) {
+            // Static color might have changed, we have to read it to check
+            UIColor *previousStaticColor = _staticColor;
+            [self _updateStaticColor:preferences];
+            if (![previousStaticColor isEqual:_staticColor])
+                [self _getColorInfoWithStaticColorForImage:_artworkImage];
         }
     }
 
