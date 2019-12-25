@@ -900,7 +900,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 /* Backup mechanism to get the artwork data */
 - (void)_getArtworkFromMediaRemote {
     [self _fetchArtwork:^(UIImage *image, NSString *trackIdentifier, NSString *artworkIdentifier) {
-        [self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier](image);
+        if (![_artworkIdentifier isEqualToString:artworkIdentifier])
+            [self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier](image);
     }];
 }
 
@@ -927,10 +928,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return ^(UIImage *image) {
         // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
         if (!image || [self _candidatePlaceholderImage:image]) {
-            // In case listening to an offline track in Spotify for example,
-            // there is no real artwork being sent after the placeholder. To solve that,
-            // we need to start a timer here and if some other call was received after that,
-            // cancel it. Otherwise hide all views.
+            // In case listening to an item without artwork, there no real
+            // artwork will follow the default placeholder. To solve that,
+            // we need to start a timer here and if some other call was
+            // received after that, cancel it. Otherwise hide all views.
             if ([self hasContent]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [_placeholderArtworkTimer invalidate];
@@ -1026,9 +1027,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         return;
 
     /* Apple changed the structure in the iOS 13 Music app;
-       the artworkIdentifier is not always included anymore */
+       the artworkIdentifier is not always included anymore.
+       For some reason, if not always using the MediaRemote
+       approach, concurrent calls occur despite comparing
+       the _artworkImage, which result in no animation. */
     NSString *artworkIdentifier = metadata[@"artworkIdentifier"];
-    if (!artworkIdentifier)
+    if (!artworkIdentifier ||
+        [_bundleID isEqualToString:kMusicBundleID])
         return [self _getArtworkFromMediaRemote];
     else if ([_artworkIdentifier isEqualToString:artworkIdentifier])
         return;
