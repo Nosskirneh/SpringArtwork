@@ -6,6 +6,7 @@
 #define kPostNotification @"PostNotification"
 #define kIconImage @"iconImage"
 #define kKey @"key"
+#define kID @"id"
 #define kDefault @"default"
 #define kCell @"cell"
 
@@ -28,6 +29,13 @@ typedef enum ArtworkBackgroundMode {
     StaticColor
 } ArtworkBackgroundMode;
 
+typedef enum BlurColoringMode {
+    BasedOnArtwork,
+    BasedOnDarkMode,
+    DarkBlurWhiteText,
+    LightBlurBlackText
+} BlurColoringMode;
+
 
 extern const char *kSpotifySettingsChanged;
 extern const char *kSettingsChanged;
@@ -46,6 +54,7 @@ extern NSString *const kArtworkBackgroundMode;
 extern NSString *const kStaticColor;
 
 extern NSString *const kOnlyBackground;
+extern NSString *const kBlurColoringMode;
 extern NSString *const kBlurRadius;
 extern NSString *const kAnimateArtwork;
 extern NSString *const kArtworkCornerRadiusPercentage;

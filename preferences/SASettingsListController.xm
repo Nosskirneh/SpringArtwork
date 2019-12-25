@@ -39,8 +39,9 @@
 - (void)savePreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:kKey];
 
-    NSMutableDictionary *preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if (!preferences) preferences = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *preferences = [NSMutableDictionary dictionaryWithContentsOfFile:kPrefPath];
+    if (!preferences)
+        preferences = [NSMutableDictionary new];
     [preferences setObject:value forKey:key];
     [preferences writeToFile:kPrefPath atomically:YES];
     
@@ -105,7 +106,7 @@
         return;
 
     NSIndexPath *indexPath = [self indexPathForSpecifier:specifier];
-    UITableViewCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
+    PSTableCell *cell = [self tableView:self.table cellForRowAtIndexPath:indexPath];
     if (cell) {
         cell.userInteractionEnabled = enabled;
         cell.textLabel.enabled = enabled;
@@ -115,6 +116,8 @@
             PSControlTableCell *controlCell = (PSControlTableCell *)cell;
             if (controlCell.control)
                 controlCell.control.enabled = enabled;
+        } else {
+            [cell setCellEnabled:enabled];
         }
     }
 }
@@ -150,7 +153,9 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)presentAlertWithTitle:(NSString *)title message:(NSString *)message actions:(NSArray<UIAlertAction *> *)actions {
+- (void)presentAlertWithTitle:(NSString *)title
+                      message:(NSString *)message
+                      actions:(NSArray<UIAlertAction *> *)actions {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
                                                                    message:message
                                                             preferredStyle:UIAlertControllerStyleAlert];
@@ -167,8 +172,6 @@
     // Tint
     settingsView = [[UIApplication sharedApplication] keyWindow];
     settingsView.tintColor = SAColor;
-
-    [self reloadSpecifiers];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {

@@ -290,3 +290,15 @@ typedef enum {
 - (void)_enumerateAssertionsToLevel:(unsigned long long)level
                           withBlock:(void (^)(SBAppStatusBarSettingsAssertion *))completion;
 @end
+
+
+
+typedef enum UIUserInterfaceStyle : NSInteger {
+    UIUserInterfaceStyleUnspecified,
+    UIUserInterfaceStyleLight,
+    UIUserInterfaceStyleDark
+} UIUserInterfaceStyle;
+
+@interface UITraitCollection (iOS12_13)
+@property (nonatomic, readonly) UIUserInterfaceStyle userInterfaceStyle;
+@end

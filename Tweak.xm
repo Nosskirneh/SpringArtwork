@@ -121,10 +121,6 @@
 %group SpringBoard
     SAManager *manager;
 
-    _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText) {
-        return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
-    }
-
     UIViewController<CoverSheetViewController> *getCoverSheetViewController() {
         SBLockScreenManager *lockscreenManager = (SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance];
         if ([lockscreenManager respondsToSelector:@selector(coverSheetViewController)])
@@ -479,11 +475,8 @@
         if (manager.enabledMode == HomescreenMode)
             return %orig;
 
-        SAColorInfo *info = manager.colorInfo;
-        if (info)
-            return legibilitySettingsForDarkText(info.hasDarkTextColor);
-
-        return %orig;
+        _UILegibilitySettings *settings = manager.legibilitySettings;
+        return settings ? : %orig;
     }
 
     %end

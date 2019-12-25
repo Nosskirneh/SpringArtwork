@@ -28,7 +28,6 @@
 @end
 
 extern UIViewController<CoverSheetViewController> *getCoverSheetViewController();
-extern _UILegibilitySettings *legibilitySettingsForDarkText(BOOL darkText);
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
 extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
@@ -95,6 +94,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     BOOL _artworkEnabled;
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
+    BlurColoringMode _blurColoringMode;
 
     BOOL _animateArtwork;
     NSNumber *_blurRadius;
@@ -319,6 +319,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     current = preferences[kOnlyBackground];
     _onlyBackground = current && [current boolValue];
 
+    current = preferences[kBlurColoringMode];
+    _blurColoringMode = current ? (BlurColoringMode)[current intValue] :
+                                     BasedOnArtwork;
+
     current = preferences[kBlurRadius];
     _blurRadius = current ? current : @(22.0f);
 
@@ -513,8 +517,22 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     if (_artworkBackgroundMode == BlurredImage) {
         current = preferences[kBlurRadius];
+        BOOL shouldUpdateBlur = NO;
         if (current && ![current isEqualToNumber:_blurRadius] && _artworkImage) {
             _blurRadius = current;
+            shouldUpdateBlur = YES;
+        } else {
+            current = preferences[kBlurColoringMode];
+            if (current) {
+                BlurColoringMode blurColoringMode = (BlurColoringMode)[current intValue];
+                if (blurColoringMode != _blurColoringMode) {
+                    _blurColoringMode = blurColoringMode;
+                    shouldUpdateBlur = YES;
+                }
+            }
+        }
+
+        if (shouldUpdateBlur) {
             [self _updateBlurEffect];
             [self _updateBlur];
         }
@@ -1198,16 +1216,52 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [self _updateOnMainQueueWithContent:NO];
 }
 
+- (void)_updateLegibilitySettings {
+    _legibilitySettings = [self _createLegibilitySettings];
+}
+
+- (BOOL)_shouldUseDarkText {
+    switch (_blurColoringMode) {
+        case BasedOnDarkMode:
+            if (@available(iOS 13, *)) {
+                return [UIScreen mainScreen].traitCollection.userInterfaceStyle != UIUserInterfaceStyleDark;
+                break;
+            }
+
+        case BasedOnArtwork:
+            return _colorInfo.hasDarkTextColor;
+
+        case LightBlurBlackText:
+            return YES;
+
+        case DarkBlurWhiteText:
+        default:
+            return NO;
+    }
+}
+
+- (_UILegibilitySettings *)_createLegibilitySettings {
+    if (_artworkBackgroundMode == BlurredImage)
+        return [self _legibilitySettingsForDarkText:[self _shouldUseDarkText]];
+
+    SAColorInfo *info = _colorInfo;
+    return info ? [self _legibilitySettingsForDarkText:info.hasDarkTextColor] : nil;
+}
+
+- (_UILegibilitySettings *)_legibilitySettingsForDarkText:(BOOL)darkText {
+    return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
+}
+
 - (void)_overrideLabels {
     if (!_colorInfo)
         return [self _revertLabels];
 
-    _UILegibilitySettings *settings = legibilitySettingsForDarkText(_colorInfo.hasDarkTextColor);
+    [self _updateLegibilitySettings];
 
     if (_enabledMode != LockscreenMode)
-        [self _setAppLabelsLegibilitySettings:settings revert:NO];
+        [self _setAppLabelsLegibilitySettingsAndRevert:NO];
 
-    [self _overrideStatusBar:settings];
+    [self _overrideStatusBar];
 
     if (_enabledMode != HomescreenMode)
         [self _updateLockscreenLabels];
@@ -1215,7 +1269,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)_revertLabels {
     if (_enabledMode != LockscreenMode)
-        [self _setAppLabelsLegibilitySettings:[self _getOriginalHomescreenLegibilitySettings] revert:YES];
+        [self _setAppLabelsLegibilitySettingsAndRevert:YES];
 
     [self _revertStatusBar];
 
@@ -1231,14 +1285,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return [getCoverSheetViewController().legibilityProvider currentLegibilitySettings];
 }
 
-- (void)_setAppLabelsLegibilitySettings:(_UILegibilitySettings *)settings
-                                 revert:(BOOL)revert {
-    _legibilitySettings = settings;
+- (void)_setAppLabelsLegibilitySettingsAndRevert:(BOOL)revert {
     SBIconController *iconController = getIconController();
-    [iconController setLegibilitySettings:settings];
+    [iconController setLegibilitySettings:_legibilitySettings];
 
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
-    [rootFolderController.contentView.pageControl setLegibilitySettings:settings];
+    [rootFolderController.contentView.pageControl setLegibilitySettings:_legibilitySettings];
     [self _colorFolderIconsWithIconController:iconController
                          rootFolderController:rootFolderController
                                        revert:revert];
@@ -1340,15 +1392,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     }
 }
 
-- (void)_overrideStatusBar:(_UILegibilitySettings *)settings {
+- (void)_overrideStatusBar {
     _UILegibilitySettings *homescreenSettings = nil;
     _UILegibilitySettings *lockscreenSettings = nil;
     if (_enabledMode == BothMode)
-        lockscreenSettings = homescreenSettings = settings;
+        lockscreenSettings = homescreenSettings = _legibilitySettings;
     else if (_enabledMode == LockscreenMode)
-        lockscreenSettings = settings;
+        lockscreenSettings = _legibilitySettings;
     else
-        homescreenSettings = settings;
+        homescreenSettings = _legibilitySettings;
 
     [self _setStatusBarHomescreenSettings:homescreenSettings lockscreenSettings:lockscreenSettings];
 }
@@ -1408,11 +1460,19 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [getCoverSheetViewController() _updateActiveAppearanceForReason:nil];
 }
 
+- (UIBlurEffectStyle)_getBlurStyle {
+    if (_artworkBackgroundMode == BlurredImage)
+        return [self _shouldUseDarkText] ?
+               UIBlurEffectStyleLight : UIBlurEffectStyleDark;
+
+    return [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
+           UIBlurEffectStyleLight : UIBlurEffectStyleDark;
+}
+
 - (void)_updateBlurEffect {
     _blurredImage = _artworkImage;
 
-    UIBlurEffectStyle style = [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
-                              UIBlurEffectStyleLight : UIBlurEffectStyleDark;
+    UIBlurEffectStyle style = [self _getBlurStyle];
 
     // Only update blur effect if a change was detected
     if (_blurEffect._style != style || ![_blurRadius isEqualToNumber:_blurEffect.blurRadius])

@@ -1,5 +1,5 @@
 #import "SASettingsListController.h"
-
+#import "SAColorListItemsController.h"
 
 @interface SAArtworkListController : SASettingsListController
 @end
@@ -11,6 +11,18 @@
         _specifiers = [self loadSpecifiersFromPlistName:@"Artwork" target:self];
 
     return _specifiers;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    [self insertBlurredColoringModes];
+}
+
+- (void)reloadSpecifiers {
+    [super reloadSpecifiers];
+
+    [self insertBlurredColoringModes];
 }
 
 - (void)checkStaticColorEnableStateWithKey:(NSString *)key {
@@ -30,7 +42,8 @@
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier];
     else if ([key isEqualToString:kOnlyBackground] && preferences[key] && [preferences[key] boolValue])
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier
-                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius]]];
+                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius,
+                                                                               kBlurColoringMode]]];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
     else if ([key isEqualToString:kAnimateArtwork] && preferences[key])
@@ -49,19 +62,53 @@
             [self checkStaticColorEnableStateWithKey:key];
     } else if ([key isEqualToString:kOnlyBackground]) {
         [super setEnabled:![value boolValue] forSpecifiersAfterSpecifier:specifier
-                                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius]]];
+                                                     excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius,
+                                                                                               kBlurColoringMode]]];
     } else if ([key isEqualToString:kArtworkBackgroundMode]) {
         [super setEnabled:[value intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
 
-        [super setEnabled:[value intValue] == BlurredImage
-             forSpecifier:[self specifierForID:kBlurRadius]];
+        BOOL enableBlurOptions = [value intValue] == BlurredImage;
+        [super setEnabled:enableBlurOptions forSpecifier:[self specifierForID:kBlurRadius]];
+        [super setEnabled:enableBlurOptions forSpecifier:[self specifierForID:kBlurColoringMode]];
     } else if ([key isEqualToString:kAnimateArtwork]) {
         [super setEnabled:![value boolValue]
              forSpecifier:[self specifierForID:kArtworkCornerRadiusPercentage]];
     }
 
     [super setPreferenceValue:value specifier:specifier];
+}
+
+- (void)insertBlurredColoringModes {
+    NSMutableArray *coloringModes = [NSMutableArray arrayWithArray:@[@"Based on artwork",
+                                                                     @"Dark blur & white text",
+                                                                     @"Light blur & black text"]];
+    NSMutableArray *coloringModeValues = [NSMutableArray arrayWithArray:@[@0, @2, @3]];
+    if (@available(iOS 13, *)) {
+        [coloringModes insertObject:@"Based on dark mode" atIndex:1];
+        [coloringModeValues insertObject:@1 atIndex:1];
+    }
+
+    // Create a specifier for it
+    PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:@"Blur coloring mode"
+                                                            target:self
+                                                               set:@selector(setPreferenceValue:specifier:)
+                                                               get:@selector(readPreferenceValue:)
+                                                            detail:SAColorListItemsController.class
+                                                              cell:PSLinkListCell
+                                                              edit:nil];
+
+    [specifier setProperty:coloringModeValues[0] forKey:kDefault];
+    [specifier setProperty:kBlurColoringMode forKey:kID];
+    [specifier setProperty:kBlurColoringMode forKey:kKey];
+    [specifier setProperty:[NSString stringWithUTF8String:kSettingsChanged]
+                    forKey:kPostNotification];
+    [specifier setValues:coloringModeValues titles:coloringModes];
+
+    // Add the specifiers
+    [self insertSpecifier:specifier
+         afterSpecifierID:@"blurColoringModeGroup"
+                 animated:NO];
 }
 
 @end
