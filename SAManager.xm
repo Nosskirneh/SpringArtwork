@@ -193,7 +193,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _trialEnded = YES;
 
     /* Used to guard against uninitialized tweak due to trial invalidity */
-    if (_didInit)
+    if (!_didInit)
         return;
 
     [self _unsubscribeToArtworkChanges];
