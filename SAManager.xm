@@ -1268,6 +1268,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)_revertLabels {
+    _legibilitySettings = nil;
+
     if (_enabledMode != LockscreenMode)
         [self _setAppLabelsLegibilitySettingsAndRevert:YES];
 
@@ -1287,10 +1289,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (void)_setAppLabelsLegibilitySettingsAndRevert:(BOOL)revert {
     SBIconController *iconController = getIconController();
-    [iconController setLegibilitySettings:_legibilitySettings];
+    _UILegibilitySettings *legibilitySettings = revert ?
+                                                [self _getOriginalHomescreenLegibilitySettings] :
+                                                _legibilitySettings;
+
+    [iconController setLegibilitySettings:legibilitySettings];
 
     SBRootFolderController *rootFolderController = [iconController _rootFolderController];
-    [rootFolderController.contentView.pageControl setLegibilitySettings:_legibilitySettings];
+    [rootFolderController.contentView.pageControl setLegibilitySettings:legibilitySettings];
     [self _colorFolderIconsWithIconController:iconController
                          rootFolderController:rootFolderController
                                        revert:revert];
