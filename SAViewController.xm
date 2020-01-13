@@ -69,7 +69,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [_canvasContainerImageView.layer addSublayer:_canvasLayer];
 
         if ([_manager hasContent]) {
-            [self performWithoutAnimation:^ {
+            [self performWithoutAnimation:^{
                 [self updateRelevantStartTime];
                 [self artworkUpdated:_manager];
             }];
@@ -379,7 +379,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
            (otherwise view is not visible and animation will not start). */
         void (^completion)() = nil;
         if (hasAnimatingArtwork)
-            completion = ^ {
+            completion = ^{
                 [self _tryAddArtworkAnimation];
             };
         [self _showArtworkViews:completion];
