@@ -30,11 +30,6 @@
         return [getSpotifyAppDelegate() serviceForIdentifier:[c serviceIdentifier] inScope:scopeStr];
     }
 
-    static SPTVideoURLAssetLoaderImplementation *getVideoURLAssetLoader() {
-        return ((SPTNetworkServiceImplementation *)getSessionServiceForClass(%c(SPTNetworkServiceImplementation),
-                                                                             application)).videoAssetLoader;
-    }
-
     static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
         return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation),
                                                                             session)).trackChecker;
@@ -51,12 +46,14 @@
         [c sendMessageName:kCanvasURLMessage userInfo:dict];
     }
 
-    %hook SPTNowPlayingBarContainerViewController
+    %hook SPTCanvasNowPlayingContentReloader
 
     %property (nonatomic, assign) BOOL sa_onlyOnWifi;
 
-    - (void)loadView {
-        %orig;
+    - (id)initWithPlayerFeature:(id)playerFeature
+               videoAssetLoader:(id)videoAssetLoader
+                   offlineState:(id)offlineState {
+        self = %orig;
 
         int token;
         notify_register_dispatch(kSpotifySettingsChanged,
@@ -67,16 +64,18 @@
                 self.sa_onlyOnWifi = preferences[kCanvasOnlyWiFi] &&
                                      [preferences[kCanvasOnlyWiFi] boolValue];
             });
+        return self;
     }
 
-    - (void)setCurrentTrack:(SPTPlayerTrack *)track {
-        if ([getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
+    - (void)setCurrentState:(SPTPlayerState *)state {
+        SPTPlayerTrack *track = state.track;
+
+        if (track && [getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
             if (![canvasURL.absoluteString hasSuffix:@".mp4"])
                 return sendCanvasURL(nil);
 
-            SPTVideoURLAssetLoaderImplementation *assetLoader = getVideoURLAssetLoader();
-
+            SPTVideoURLAssetLoaderImplementation *assetLoader = self.videoAssetLoader;
             if ([assetLoader hasLocalAssetForURL:canvasURL]) {
                 sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
             } else {

@@ -6,7 +6,7 @@
 @end
 
 @interface SpotifyAppDelegate : NSObject
-- (id)serviceForIdentifier:(NSString *)identifier inScope:(NSString *)scope;
+- (id<SPTService>)serviceForIdentifier:(NSString *)identifier inScope:(NSString *)scope;
 @end
 
 
@@ -14,10 +14,6 @@
 - (NSURL *)localURLForAssetURL:(NSURL *)url;
 - (void)loadAssetWithURL:(id)arg1 onlyOnWifi:(BOOL)arg2 completion:(id)arg3;
 - (BOOL)hasLocalAssetForURL:(id)arg1;
-@end
-
-@interface SPTNetworkServiceImplementation : NSObject<SPTService>
-@property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
 @end
 
 @interface SPTPlayerTrack : NSObject
@@ -32,6 +28,17 @@
 @property (retain, nonatomic) SPTCanvasTrackCheckerImplementation *trackChecker;
 @end
 
+@interface SPTPlayerState : NSObject
+@property (retain, nonatomic) SPTPlayerTrack *track;
+@end
+
+@interface SPTCanvasNowPlayingContentReloader
+@property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
+@property (retain, nonatomic) SPTPlayerState *currentState;
+
+@property (nonatomic, assign) BOOL sa_onlyOnWifi;
+@end
+
 
 typedef enum SpotifyServiceScope {
     zero,
@@ -42,9 +49,4 @@ typedef enum SpotifyServiceScope {
 
 @interface NSDictionary (SPTTypeSafety)
 - (NSURL *)spt_URLForKey:(NSString *)key;
-@end
-
-
-@interface SPTNowPlayingBarContainerViewController : UIViewController
-@property (nonatomic, assign) BOOL sa_onlyOnWifi;
 @end
