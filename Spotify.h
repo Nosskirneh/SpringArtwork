@@ -1,6 +1,9 @@
 #import <AppSupport/CPDistributedMessagingCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
 
+#define ARTWORK_WIDTH [UIScreen mainScreen].nativeBounds.size.width
+#define ARTWORK_SIZE CGSizeMake(ARTWORK_WIDTH, ARTWORK_WIDTH)
+
 @protocol SPTService <NSObject>
 + (NSString *)serviceIdentifier;
 @end
@@ -18,6 +21,8 @@
 
 @interface SPTPlayerTrack : NSObject
 @property (copy, nonatomic) NSDictionary *metadata;
+@property (readonly, nonatomic) NSURL *coverArtURLXLarge;
+@property (copy, nonatomic) NSString *UID;
 @end
 
 @interface SPTCanvasTrackCheckerImplementation : NSObject
@@ -28,8 +33,20 @@
 @property (retain, nonatomic) SPTCanvasTrackCheckerImplementation *trackChecker;
 @end
 
+@interface SPTGLUEImageLoaderFactoryImplementation : NSObject
+- (id)createImageLoaderForSourceIdentifier:(NSString *)sourceIdentifier;
+@end
+
+@interface SPTQueueServiceImplementation : NSObject
+@property (retain, nonatomic) SPTGLUEImageLoaderFactoryImplementation *glueImageLoaderFactory;
+@end
+
 @interface SPTPlayerState : NSObject
 @property (retain, nonatomic) SPTPlayerTrack *track;
+@end
+
+@interface SPTGLUEImageLoader : NSObject
+- (id)loadImageForURL:(NSURL *)URL imageSize:(CGSize)size completion:(id)completion;
 @end
 
 @interface SPTCanvasNowPlayingContentReloader
@@ -37,6 +54,9 @@
 @property (retain, nonatomic) SPTPlayerState *currentState;
 
 @property (nonatomic, assign) BOOL sa_onlyOnWifi;
+@property (nonatomic, assign) BOOL sa_canvasEnabled;
+@property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
+- (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
 @end
 
 

@@ -1,5 +1,8 @@
-NSString *const kCanvasURLMessage = @"se.nosskirneh.springartwork/canvasUpdated";
+NSString *const kSpotifyMessage = @"se.nosskirneh.springartwork/spotifyMessage";
 NSString *const kCanvasURL = @"canvasURL";
+NSString *const kArtwork = @"artwork";
+NSString *const kTrackIdentifier = @"trackIdentifier";
+
 NSString *const kCanvasAsset = @"canvasAsset";
 NSString *const kCanvasThumbnail = @"canvasThumbnail";
 NSString *const kIsDirty = @"isDirty";

@@ -35,7 +35,16 @@
                                                                             session)).trackChecker;
     }
 
-    static void sendCanvasURL(NSURL *url) {
+    static SPTQueueServiceImplementation *getQueueService() {
+        return (SPTQueueServiceImplementation *)getSessionServiceForClass(%c(SPTQueueServiceImplementation),
+                                                                          session);
+    }
+
+    static SPTGLUEImageLoaderFactoryImplementation *getImageLoaderFactory() {
+        return getQueueService().glueImageLoaderFactory;
+    }
+
+    static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *trackIdentifier) {
         CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SA_IDENTIFIER];
         rocketbootstrap_distributedmessagingcenter_apply(c);
 
@@ -43,17 +52,38 @@
 
         if (url)
             dict[kCanvasURL] = url.absoluteString;
-        [c sendMessageName:kCanvasURLMessage userInfo:dict];
+        else if (artwork) {
+            dict[kArtwork] = UIImagePNGRepresentation(artwork);
+            dict[kTrackIdentifier] = trackIdentifier;
+        }
+        [c sendMessageName:kSpotifyMessage userInfo:dict];
+    }
+
+    static void sendCanvasURL(NSURL *url) {
+        sendMessageWithURLOrArtwork(url, nil, nil);
+    }
+
+    static void sendArtwork(UIImage *artwork, NSString *trackIdentifier) {
+        sendMessageWithURLOrArtwork(nil, artwork, trackIdentifier);
+    }
+
+    static void sendEmptyMessage() {
+        sendMessageWithURLOrArtwork(nil, nil, nil);
     }
 
     %hook SPTCanvasNowPlayingContentReloader
 
     %property (nonatomic, assign) BOOL sa_onlyOnWifi;
+    %property (nonatomic, assign) BOOL sa_canvasEnabled;
+    %property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
 
     - (id)initWithPlayerFeature:(id)playerFeature
                videoAssetLoader:(id)videoAssetLoader
                    offlineState:(id)offlineState {
         self = %orig;
+
+        // Load image loader
+        self.imageLoader = [getImageLoaderFactory() createImageLoaderForSourceIdentifier:@"se.nosskirneh.springartwork"];
 
         int token;
         notify_register_dispatch(kSpotifySettingsChanged,
@@ -61,8 +91,10 @@
             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
             ^(int t) {
                 NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-                self.sa_onlyOnWifi = preferences[kCanvasOnlyWiFi] &&
-                                     [preferences[kCanvasOnlyWiFi] boolValue];
+                NSNumber *current = preferences[kCanvasOnlyWiFi];
+                self.sa_onlyOnWifi = current && [current boolValue];
+                current = preferences[kCanvasEnabled];
+                self.sa_canvasEnabled = !current || [current boolValue];
             });
         return self;
     }
@@ -70,10 +102,10 @@
     - (void)setCurrentState:(SPTPlayerState *)state {
         SPTPlayerTrack *track = state.track;
 
-        if (track && [getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
+        if (self.sa_canvasEnabled && track && [getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
             if (![canvasURL.absoluteString hasSuffix:@".mp4"])
-                return sendCanvasURL(nil);
+                return [self tryWithArtworkForTrack:track];
 
             SPTVideoURLAssetLoaderImplementation *assetLoader = self.videoAssetLoader;
             if ([assetLoader hasLocalAssetForURL:canvasURL]) {
@@ -85,9 +117,24 @@
                 }];
             }
         } else {
-            sendCanvasURL(nil);
+            [self tryWithArtworkForTrack:track];
         }
         %orig;
+    }
+
+    %new
+    - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track {
+        if ([self.imageLoader respondsToSelector:@selector(loadImageForURL:imageSize:completion:)]) {
+            [self.imageLoader loadImageForURL:track.coverArtURLXLarge
+                                    imageSize:ARTWORK_SIZE
+                                   completion:^(UIImage *image) {
+                if (!image)
+                    return sendEmptyMessage();
+                sendArtwork(image, track.UID);
+            }];
+        } else {
+            sendEmptyMessage();
+        }
     }
 
     %end

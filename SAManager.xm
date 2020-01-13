@@ -654,7 +654,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
     rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
     [_rbs_center runServerOnCurrentThread];
-    [_rbs_center registerForMessageName:kCanvasURLMessage
+    [_rbs_center registerForMessageName:kSpotifyMessage
                                  target:self
                                selector:@selector(_handleIncomingMessage:withUserInfo:)];
 
@@ -662,7 +662,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (void)_unregisterEventsForCanvasMode {
-    [_rbs_center unregisterForMessageName:kCanvasURLMessage];
+    [_rbs_center unregisterForMessageName:kSpotifyMessage];
     [_rbs_center stopServer];
     _rbs_center = nil;
 }
@@ -870,7 +870,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (BOOL)_isDeviceLocked {
     SpringBoard *springBoard = (SpringBoard *)[%c(SpringBoard) sharedApplication];
     return [[springBoard pluginUserAgent] deviceIsLocked];
-
 }
 
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
@@ -880,14 +879,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (!_bundleID) {
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
-    } else if ([_disabledApps containsObject:_bundleID]) {
+    } else if ([_disabledApps containsObject:_bundleID] || [_bundleID isEqualToString:kSpotifyBundleID]) {
         [self _unsubscribeToArtworkChanges];
+        _ignoredImages = nil;
     } else {
         [self _subscribeToArtworkChanges];
 
-        if ([_bundleID isEqualToString:kSpotifyBundleID])
-            _ignoredImages = @[[SAImageHelper stringToImage:SPOTIFY_PLACEHOLDER_BASE64]];
-        else if ([_bundleID isEqualToString:kDeezerBundleID])
+        if ([_bundleID isEqualToString:kDeezerBundleID])
             _ignoredImages = @[[SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64],
                                [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_iOS13_BASE64]];
         else
@@ -913,6 +911,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     _artworkIdentifier = nil;
     _trackIdentifier = nil;
+    _ignoredImages = nil;
 }
 
 /* Backup mechanism to get the artwork data */
@@ -1504,7 +1503,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
         if ([_disabledApps containsObject:kSpotifyBundleID])
             [self _sendCanvasUpdatedEvent];
-        return;
+        else if (dict[kArtwork]) {
+            [self _updateModeToArtworkWithTrackIdentifier:dict[kTrackIdentifier]];
+            [self _updateArtworkWithImage:[UIImage imageWithData:dict[kArtwork]]];
+            return;
+        }
     } else {
         if (_placeholderArtworkTimer) {
             [_placeholderArtworkTimer invalidate];
