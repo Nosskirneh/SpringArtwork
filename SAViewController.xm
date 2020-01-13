@@ -271,18 +271,20 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
     layer.opacity = from;
 
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
 
-    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-    animation.duration = ANIMATION_DURATION;
-    animation.toValue = @(to);
-    animation.fromValue = @(from);
+        CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+        animation.duration = ANIMATION_DURATION;
+        animation.toValue = @(to);
+        animation.fromValue = @(from);
 
-    [CATransaction setCompletionBlock:completion];
-    [layer addAnimation:animation forKey:@"timeViewFadeIn"];
-    layer.opacity = to;
-    [CATransaction commit];
+        [CATransaction setCompletionBlock:completion];
+        [layer addAnimation:animation forKey:@"timeViewFadeIn"];
+        layer.opacity = to;
+        [CATransaction commit];
+    });
 }
 
 - (void)setArtwork:(UIImage *)artwork {
