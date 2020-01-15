@@ -125,9 +125,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (!targetView)
         return [self.view removeFromSuperview];
 
-    self.view.frame = CGRectMake(0, 0,
-                                 targetView.frame.size.width,
-                                 targetView.frame.size.height);
+    CGRect frame = targetView.frame;
+    if (CGRectEqualToRect(frame, CGRectZero))
+        frame = [UIScreen mainScreen].bounds;
+    self.view.frame = frame;
+    _visualEffectView.frame = frame;
     [targetView addSubview:self.view];
 }
 
