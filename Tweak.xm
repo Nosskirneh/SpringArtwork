@@ -204,6 +204,7 @@
         if (shared) {
             if (manager.enabledMode == LockscreenMode) {
                 [self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
+                [manager updateInControlViewControllerVisibility];
             } else {
                 /* We only need to clear the lockscreen view controller and never
                    the homescreen one simply because the latter is used in all
@@ -397,12 +398,8 @@
         return;
 
     // Show when returning from LS?
-    if (fromLockscreen) {
-        if (manager.enabledMode == HomescreenMode)
-            manager.inChargeController.view.hidden = NO;
-        else if (manager.enabledMode == LockscreenMode)
-            manager.inChargeController.view.hidden = YES;
-    }
+    if (fromLockscreen)
+        [manager updateInControlViewControllerVisibility];
 }
 
 %end

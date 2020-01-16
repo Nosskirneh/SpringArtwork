@@ -187,6 +187,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [_viewControllers removeObject:viewController];
 }
 
+- (void)updateInControlViewControllerVisibility {
+    if (_enabledMode == HomescreenMode)
+        _inChargeController.view.hidden = NO;
+    else if (_enabledMode == LockscreenMode)
+        _inChargeController.view.hidden = YES;
+}
+
 - (void)hide {
     [self _setModeToNone];
     [self _updateOnMainQueueWithContent:NO];

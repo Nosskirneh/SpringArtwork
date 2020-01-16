@@ -14,4 +14,5 @@
 - (void)videoEnded;
 - (BOOL)isDirty;
 - (BOOL)changedContent;
+- (void)updateInControlViewControllerVisibility;
 @end
