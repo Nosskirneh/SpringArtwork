@@ -200,29 +200,54 @@
                                    variant:(long long)variant
                                     shared:(BOOL)shared {
         manager.isSharedWallpaper = shared;
+
         if (shared) {
-            if (manager.enabledMode == LockscreenMode)
-                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                           manager:manager
-                                                                                          inCharge:YES];
-            else {
-                self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                           manager:manager
-                                                                                          inCharge:YES];
+            if (manager.enabledMode == LockscreenMode) {
+                [self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
+            } else {
+                /* We only need to clear the lockscreen view controller and never
+                   the homescreen one simply because the latter is used in all
+                   cases but for the case where only the lockscreen is enabled.
+                   If that's the case, such change requires a respring regardless,
+                   so no need to implement anything dynamic for it. */
+                [self destroyLockscreenCanvasViewController];
+                [self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
             }
-        } else {
+        } else { // No need to set the properties to nil here as both will be set
             BOOL homescreen = variant == 1;
             if (homescreen) {
                 if (manager.enabledMode != LockscreenMode)
-                    self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                               manager:manager
-                                                                                              inCharge:YES];
+                    [self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
             } else if (manager.enabledMode != HomescreenMode)
-                self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                           manager:manager
-                                                                                          inCharge:YES];
+                [self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
         }
         return wallpaperView;
+    }
+
+    %new
+    - (void)destroyLockscreenCanvasViewController {
+        [manager removeViewController:self.lockscreenCanvasViewController];
+        self.lockscreenCanvasViewController = nil;
+    }
+
+    %new
+    - (void)updateHomescreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView {
+        if (!self.homescreenCanvasViewController)
+            self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                       manager:manager
+                                                                                      inCharge:YES];
+        else
+            [self.homescreenCanvasViewController setTargetView:wallpaperView];
+    }
+
+    %new
+    - (void)updateLockscreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView {
+        if (!self.lockscreenCanvasViewController)
+            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                       manager:manager
+                                                                                      inCharge:YES];
+        else
+            [self.lockscreenCanvasViewController setTargetView:wallpaperView];
     }
 
     %end

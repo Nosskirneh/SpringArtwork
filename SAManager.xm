@@ -183,6 +183,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [_viewControllers addObject:viewController];
 }
 
+- (void)removeViewController:(SAViewController *)viewController {
+    [_viewControllers removeObject:viewController];
+}
+
 - (void)hide {
     [self _setModeToNone];
     [self _updateOnMainQueueWithContent:NO];

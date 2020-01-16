@@ -173,6 +173,9 @@ typedef enum NowPlayingState {
                                 shared:(BOOL)shared;
 - (_UILegibilitySettings *)legibilitySettingsForVariant:(long long)variant;
 - (CGImage *)homescreenLightForegroundBlurImage;
+- (void)updateHomescreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView;
+- (void)updateLockscreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView;
+- (void)destroyLockscreenCanvasViewController;
 @end
 
 @interface _SBIconWallpaperBackgroundProvider : NSObject
