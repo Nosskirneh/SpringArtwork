@@ -355,8 +355,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     current = preferences[kShakeToPause];
     _shakeToPause = !current || [current boolValue];
 
-    current = preferences[kHideDockBackground];
-    _hideDockBackground = !current || [current boolValue];
+    if (_enabledMode != LockscreenMode) {
+        current = preferences[kHideDockBackground];
+        _hideDockBackground = !current || [current boolValue];
+    }
 
     current = preferences[kPauseContentWithMedia];
     _pauseContentWithMedia = !current || [current boolValue];
