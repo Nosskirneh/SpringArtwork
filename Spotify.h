@@ -56,6 +56,7 @@
 @property (nonatomic, assign) BOOL sa_onlyOnWifi;
 @property (nonatomic, assign) BOOL sa_canvasEnabled;
 @property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
+- (void)sa_loadPrefs;
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
 @end
 

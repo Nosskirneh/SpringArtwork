@@ -90,13 +90,19 @@
             &token,
             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
             ^(int t) {
-                NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-                NSNumber *current = preferences[kCanvasOnlyWiFi];
-                self.sa_onlyOnWifi = current && [current boolValue];
-                current = preferences[kCanvasEnabled];
-                self.sa_canvasEnabled = !current || [current boolValue];
+                [self sa_loadPrefs];
             });
+        [self sa_loadPrefs];
         return self;
+    }
+
+    %new
+    - (void)sa_loadPrefs {
+        NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+        NSNumber *current = preferences[kCanvasOnlyWiFi];
+        self.sa_onlyOnWifi = current && [current boolValue];
+        current = preferences[kCanvasEnabled];
+        self.sa_canvasEnabled = !current || [current boolValue];
     }
 
     - (void)setCurrentState:(SPTPlayerState *)state {
