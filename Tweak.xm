@@ -30,9 +30,9 @@
         return [getSpotifyAppDelegate() serviceForIdentifier:[c serviceIdentifier] inScope:scopeStr];
     }
 
-    static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
-        return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation),
-                                                                            session)).trackChecker;
+    static SPTVideoURLAssetLoaderImplementation *getVideoURLAssetLoader() {
+        return ((SPTNetworkServiceImplementation *)getSessionServiceForClass(%c(SPTNetworkServiceImplementation),
+                                                                             application)).videoAssetLoader;
     }
 
     static SPTQueueServiceImplementation *getQueueService() {
@@ -71,19 +71,29 @@
         sendMessageWithURLOrArtwork(nil, nil, nil);
     }
 
-    %hook SPTCanvasNowPlayingContentReloader
+    /* This is done to avoid hooking init calls that are likely to change. */
+    %hook SPTCanvasServiceImplementation
+
+    - (void)setCanvasLogger:(SPTCanvasLogger *)canvasLogger {
+        %orig;
+        [canvasLogger sa_commonInit];
+    }
+
+    %end
+
+    /* Another class that can be used is the SPTCanvasNowPlayingContentReloader,
+       but it only exists on more recent Spotify versions. */
+    %hook SPTCanvasLogger
 
     %property (nonatomic, assign) BOOL sa_onlyOnWifi;
     %property (nonatomic, assign) BOOL sa_canvasEnabled;
     %property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
+    %property (nonatomic, retain) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
 
-    - (id)initWithPlayerFeature:(id)playerFeature
-               videoAssetLoader:(id)videoAssetLoader
-                   offlineState:(id)offlineState {
-        self = %orig;
-
-        // Load image loader
+    %new
+    - (void)sa_commonInit {
         self.imageLoader = [getImageLoaderFactory() createImageLoaderForSourceIdentifier:@"se.nosskirneh.springartwork"];
+        self.videoAssetLoader = getVideoURLAssetLoader();
 
         int token;
         notify_register_dispatch(kSpotifySettingsChanged,
@@ -93,7 +103,6 @@
                 [self sa_loadPrefs];
             });
         [self sa_loadPrefs];
-        return self;
     }
 
     %new
@@ -105,10 +114,10 @@
         self.sa_canvasEnabled = !current || [current boolValue];
     }
 
-    - (void)setCurrentState:(SPTPlayerState *)state {
+    - (void)setCurrentPlayerState:(SPTPlayerState *)state {
         SPTPlayerTrack *track = state.track;
 
-        if (self.sa_canvasEnabled && track && [getCanvasTrackChecker() isCanvasEnabledForTrack:track]) {
+        if (self.sa_canvasEnabled && track && [self.trackChecker isCanvasEnabledForTrack:track]) {
             NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
             if (![canvasURL.absoluteString hasSuffix:@".mp4"])
                 return [self tryWithArtworkForTrack:track];
@@ -117,7 +126,7 @@
             if ([assetLoader hasLocalAssetForURL:canvasURL]) {
                 sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
             } else {
-                // The compiler doesn't like when `AVURLAsset *` is specified as the type for some reason...
+                // The compiler doesn't like `AVURLAsset *` being specified as the type for some reason...
                 [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:self.sa_onlyOnWifi completion:^(id asset) {
                     sendCanvasURL(((AVURLAsset *)asset).URL);
                 }];
