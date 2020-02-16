@@ -1,5 +1,6 @@
 #import "SettingsKeys.h"
 
+#define kSpringBoardBundleID @"com.apple.springboard"
 #define kSpotifyBundleID @"com.spotify.client"
 #define kMusicBundleID @"com.apple.Music"
 #define kDeezerBundleID @"com.deezer.Deezer"
