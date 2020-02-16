@@ -1,7 +1,4 @@
-#import <AVFoundation/AVPlayerItem.h>
-#import <AVFoundation/AVPlayerLayer.h>
-#import <AVFoundation/AVPlayer.h>
-#import <AVFoundation/AVAudioSession.h>
+#import <AVFoundation/AVFoundation.h>
 #import "SAViewControllerManager.h"
 #import "SAAnimatingViewController.h"
 

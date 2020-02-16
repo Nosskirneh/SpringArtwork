@@ -1,8 +1,5 @@
 #import "SAViewControllerManager.h"
-#import <AVFoundation/AVPlayerItem.h>
-#import <AVFoundation/AVPlayerLayer.h>
-#import <AVFoundation/AVPlayer.h>
-#import <AVFoundation/AVAudioSession.h>
+#import <AVFoundation/AVFoundation.h>
 
 @protocol SAViewControllerManager;
 

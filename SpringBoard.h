@@ -296,6 +296,7 @@ typedef enum {
 
 
 
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 100000
 typedef enum UIUserInterfaceStyle : NSInteger {
     UIUserInterfaceStyleUnspecified,
     UIUserInterfaceStyleLight,
@@ -305,3 +306,4 @@ typedef enum UIUserInterfaceStyle : NSInteger {
 @interface UITraitCollection (iOS12_13)
 @property (nonatomic, readonly) UIUserInterfaceStyle userInterfaceStyle;
 @end
+#endif
