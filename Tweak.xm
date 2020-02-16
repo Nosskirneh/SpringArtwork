@@ -374,7 +374,7 @@
     %end
 
 
-    /* Lockscreen background when transitioning to camera */
+    /* Lockscreen background when transitioning to the camera. */
     %hook CoverSheetViewController
 
     - (void)loadView {
@@ -417,9 +417,10 @@
 
 
     /* Lockscreen statusbar */
-    /* Fix for fake statusbar which is visible when bringing down the lockscreen from
-       the homescreen. This is not perfect since it still has a black shadow that then
-       jumps to a white one, but it's better than a complete white status bar. */
+    /* Fix for fake statusbar which is visible when bringing down the
+       lockscreen from the homescreen. This is not perfect since it
+       still has a black shadow that then jumps to a white one, but
+       it's better than a complete white status bar. */
     %hook CoverSheetViewController
 
     - (UIStatusBar *)_createFakeStatusBar {
@@ -503,9 +504,10 @@
 %end
 %end
 
-/* When opening the app switcher, this method is taking an image of the SB wallpaper, blurs and
-   appends it to the SBHomeScreenView. The video is thus seen as paused while actually still playing.
-   The solution is to hide the UIImageView and instead always show the transition MTMaterialView. */
+/* When opening the app switcher, this method is taking an image of the SB
+   wallpaper, blurs and appends it to the `SBHomeScreenView`. The video is thus
+   seen as paused while actually still playing. The solution is to hide the
+   `UIImageView` and instead always show the transition `MTMaterialView`. */
 %group SwitcherBackdrop_iOS11
 %hook SBUIController
 
@@ -521,9 +523,9 @@
 
 %group SwitcherBackdrop_iOS12
 /* On iOS 12 and 13, the homescreen becomes hidden after the snapshot is taken.
-   If we simply unhide it in the _updateBackdropViewIfNeeded method below,
-   it results in home screen layout not being editible. Hooking the setHidden
-   method of the SBIconContentView view results in the same thing. The solution
+   If we simply unhide it in the `_updateBackdropViewIfNeeded` method below,
+   it results in home screen layout not being editible. Hooking the `setHidden:`
+   method of the `SBIconContentView` view results in the same thing. The solution
    is to nuke the two methods down below if the backdrop is used for the app
    switcher. */
 
@@ -766,7 +768,8 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
 
     manager = [[SAManager alloc] init];
 
-    // License check – if no license found, present message. If no valid license found, do not init
+    /* License check – if no license found, present message.
+       If no valid license found, do not init. */
     switch (check_lic(licensePath$bs(), package$bs())) {
         case CheckNoLicense:
             %init(Welcome);
