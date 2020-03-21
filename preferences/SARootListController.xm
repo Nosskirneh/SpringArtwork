@@ -171,16 +171,16 @@
         [_label setTranslatesAutoresizingMaskIntoConstraints:NO];
         [_label setAdjustsFontSizeToFitWidth:YES];
         [_label setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:48]];
-        
+
         NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:@"SpringArtwork"];
-        
+
         [_label setAttributedText:attributedString];
         [_label setTextAlignment:NSTextAlignmentCenter];
         [_label setBackgroundColor:[UIColor clearColor]];
-        
+
         [self addSubview:_label];
         [self setBackgroundColor:[UIColor clearColor]];
-        
+
         // Setup constraints
         NSLayoutConstraint *leftConstraint = [NSLayoutConstraint constraintWithItem:_label attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0];
         NSLayoutConstraint *rightConstraint = [NSLayoutConstraint constraintWithItem:_label attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0];

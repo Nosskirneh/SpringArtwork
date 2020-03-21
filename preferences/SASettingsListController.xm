@@ -1,5 +1,5 @@
 #import "SASettingsListController.h"
-#import "../notifyDefines.h"
+#import <notify.h>
 #import "../../DRM/respring.xm"
 
 @interface UISegmentedControl (Missing)
@@ -45,10 +45,9 @@
     [preferences setObject:value forKey:key];
     [preferences writeToFile:kPrefPath atomically:YES];
     
-    if (specifier.properties[kPostNotification]) {
-        CFStringRef post = (CFStringRef)CFBridgingRetain(specifier.properties[kPostNotification]);
-        notify(post);
-    }
+    NSString *notificationString = specifier.properties[kPostNotification];
+    if (notificationString)
+        notify_post([notificationString UTF8String]);
 }
 
 - (void)preferenceValueChanged:(id)value specifier:(PSSpecifier *)specifier {}
