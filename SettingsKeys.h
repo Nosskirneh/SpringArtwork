@@ -1,4 +1,4 @@
-#define SAColor [UIColor colorWithRed:0.88 green:0.42 blue:0.04 alpha:1.0] // ~ #E26C0B
+#define SAColor [UIColor colorWithRed:0.62 green:0.20 blue:0.54 alpha:1.00] // ~ #9B348F
 #define SA_IDENTIFIER @"se.nosskirneh.springartwork"
 #define kPrefPath [NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", SA_IDENTIFIER]
 
