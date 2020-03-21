@@ -197,6 +197,16 @@
             <key>cellClass</key>
             <string>SAColorButtonCell</string>
             <key>action</key>
+            <string>iconCredits</string>
+            <key>label</key>
+            <string>Icon by pupsicola</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>cellClass</key>
+            <string>SAColorButtonCell</string>
+            <key>action</key>
             <string>sendEmail</string>
             <key>label</key>
             <string>Email me</string>

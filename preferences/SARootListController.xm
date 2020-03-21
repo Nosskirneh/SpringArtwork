@@ -130,6 +130,10 @@
     openTwitter();
 }
 
+- (void)iconCredits {
+    openTwitterWithUsername(@"pupsicola_");
+}
+
 - (void)safariViewControllerDidFinish:(id)arg1 {
     safariViewControllerDidFinish(self);
 }
