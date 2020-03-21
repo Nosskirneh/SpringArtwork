@@ -44,7 +44,7 @@
         preferences = [NSMutableDictionary new];
     [preferences setObject:value forKey:key];
     [preferences writeToFile:kPrefPath atomically:YES];
-    
+
     NSString *notificationString = specifier.properties[kPostNotification];
     if (notificationString)
         notify_post([notificationString UTF8String]);
@@ -110,7 +110,7 @@
         cell.userInteractionEnabled = enabled;
         cell.textLabel.enabled = enabled;
         cell.detailTextLabel.enabled = enabled;
-        
+
         if ([cell isKindOfClass:[PSControlTableCell class]]) {
             PSControlTableCell *controlCell = (PSControlTableCell *)cell;
             if (controlCell.control)

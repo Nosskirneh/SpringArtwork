@@ -230,7 +230,7 @@
 %end
 
 
-/* If only one of LS and HS is set and the wallpaper is shared, 
+/* If only one of LS and HS is set and the wallpaper is shared,
    we need to hide/show depending on where the user is looking. */
 %group NotBoth
 %hook SBCoverSheetPrimarySlidingViewController

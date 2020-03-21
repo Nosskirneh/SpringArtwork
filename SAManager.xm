@@ -644,7 +644,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _registeredAutoPlayPauseEvents = YES;
 
     [self _registerScreenEvent];
-    
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_currentAppChanged:)
                                                  name:kSBApplicationProcessStateDidChange
@@ -657,7 +657,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _registeredAutoPlayPauseEvents = NO;
 
     [self _unregisterScreenEvent];
-    
+
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:kSBApplicationProcessStateDidChange
                                                   object:nil];
@@ -1179,7 +1179,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     AnalyzedInfo info = [%c(CFWBucket) analyzeImage:image resize:YES];
     CFWColorInfo *colorInfo = [%c(CFWColorInfo) colorInfoWithAnalyzedInfo:info];
     return colorInfo.backgroundColor;
-} 
+}
 
 - (void)_getColorInfoWithStaticColorForImage:(UIImage *)image {
     UIColor *customColor = nil;

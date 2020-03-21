@@ -60,7 +60,7 @@ typedef union {
     const float dimension = 10;
     const float flexibility = 2;
     const float range = 60;
- 
+
     // 2. Determine the colors in the image
     NSMutableArray *colors = [NSMutableArray new];
     CGImageRef imageRef = [image CGImage];
@@ -74,7 +74,7 @@ typedef union {
     CGColorSpaceRelease(colorSpace);
     CGContextDrawImage(context, CGRectMake(0, 0, dimension, dimension), imageRef);
     CGContextRelease(context);
- 
+
     float x = 0;
     float y = 0;
     for (int n = 0; n < (dimension * dimension); n++) {
@@ -95,24 +95,24 @@ typedef union {
         }
     }
     free(rawData);
- 
+
     // 3. Add some color flexibility (adds more colors either side of the colors in the image)
     NSArray *copyColors = [NSArray arrayWithArray:colors];
     NSMutableArray *flexibleColors = [NSMutableArray new];
- 
+
     float flexFactor = flexibility * 2 + 1;
     float factor = flexFactor * flexFactor * 3; // (r, g, b) => * 3
     for (int n = 0; n < (dimension * dimension); n++) {
- 
+
         NSArray *pixelColors = copyColors[n];
         NSMutableArray *reds = [NSMutableArray new];
         NSMutableArray *greens = [NSMutableArray new];
         NSMutableArray *blues = [NSMutableArray new];
- 
+
         for (int p = 0; p < 3; p++) {
             NSString *rgbStr = pixelColors[p];
             int rgb = [rgbStr intValue];
- 
+
             for (int f = -flexibility; f < flexibility + 1; f++) {
                 int newRGB = rgb + f;
                 if (newRGB < 0)
@@ -126,7 +126,7 @@ typedef union {
                     [blues addObject:[NSString stringWithFormat:@"%i", newRGB]];
             }
         }
- 
+
         int r = 0;
         int g = 0;
         int b = 0;
@@ -134,10 +134,10 @@ typedef union {
             int red = [reds[r] intValue];
             int green = [greens[g] intValue];
             int blue = [blues[b] intValue];
- 
+
             NSString *rgbString = [NSString stringWithFormat:@"%i,%i,%i", red, green, blue];
             [flexibleColors addObject:rgbString];
- 
+
             b++;
             if (b == flexFactor) {
                 b = 0;
@@ -149,24 +149,24 @@ typedef union {
             }
         }
     }
- 
+
     // 4. Distinguish the colors
     //    Orders the flexible colors by their occurrence
     //    then keeps them if they are sufficiently disimilar
     NSMutableDictionary *colorCounter = [NSMutableDictionary new];
- 
+
     // Count the occurences in the array
     NSCountedSet *countedSet = [[NSCountedSet alloc] initWithArray:flexibleColors];
     for (NSString *item in countedSet) {
         NSUInteger count = [countedSet countForObject:item];
         [colorCounter setValue:[NSNumber numberWithInteger:count] forKey:item];
     }
- 
+
     // Sort keys highest occurrence to lowest
     NSArray *orderedKeys = [colorCounter keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [obj2 compare:obj1];
     }];
- 
+
     // Checks if the color is similar to another one already included
     NSMutableArray *ranges = [NSMutableArray new];
     for (NSString *key in orderedKeys) {
@@ -177,21 +177,21 @@ typedef union {
         bool exclude = NO;
         for (NSString *ranged_key in ranges) {
             NSArray *rangedRGB = [ranged_key componentsSeparatedByString:@","];
- 
+
             int rangedR = [rangedRGB[0] intValue];
             int rangedG = [rangedRGB[1] intValue];
             int rangedB = [rangedRGB[2] intValue];
- 
+
             if ((r >= rangedR - range && r <= rangedR + range) &&
                 (g >= rangedG - range && g <= rangedG + range) &&
                 (b >= rangedB - range && b <= rangedB + range))
                 exclude = YES;
         }
- 
+
         if (!exclude)
             [ranges addObject:key];
     }
- 
+
     NSMutableArray *colorArray = [NSMutableArray new];
     for (NSString *key in ranges) {
         NSArray *rgb = [key componentsSeparatedByString:@","];
@@ -305,7 +305,7 @@ typedef union {
        (and thus account for Retina resolution). Pass 1.0 to force exact pixel size. */
     UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
     [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();    
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return newImage;
 }
