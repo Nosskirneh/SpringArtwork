@@ -123,7 +123,7 @@
 }
 
 - (void)myTweaks {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://henrikssonbrothers.com/cydia/repo/packages.html"]];
+    openURL([NSURL URLWithString:@"https://henrikssonbrothers.com/cydia/repo/packages.html"]);
 }
 
 - (void)followTwitter {
