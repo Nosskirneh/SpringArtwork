@@ -1520,34 +1520,35 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (void)_handleIncomingSpotifyMessage:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
-        _useCanvasArtworkTimer = YES;
         _canvasURL = nil;
         _canvasAsset = nil;
 
         if ([_disabledApps containsObject:kSpotifyBundleID])
             [self _sendCanvasUpdatedEvent];
         else if (dict[kArtwork]) {
+            _useCanvasArtworkTimer = YES;
+
             [self _updateModeToArtworkWithTrackIdentifier:dict[kTrackIdentifier]];
             if (_artworkEnabled)
                 [self _updateArtworkWithImage:[UIImage imageWithData:dict[kArtwork]]];
-            return;
         }
-    } else {
-        if (_placeholderArtworkTimer) {
-            [_placeholderArtworkTimer invalidate];
-            _placeholderArtworkTimer = nil;
-        }
-
-        _useCanvasArtworkTimer = NO;
-        if (_canvasArtworkTimer) {
-            [_canvasArtworkTimer invalidate];
-            _canvasArtworkTimer = nil;
-        }
-
-        _artworkImage = nil;
-        _trackIdentifier = nil;
-        _artworkIdentifier = nil;
+        return;
     }
+
+    if (_placeholderArtworkTimer) {
+        [_placeholderArtworkTimer invalidate];
+        _placeholderArtworkTimer = nil;
+    }
+
+    _useCanvasArtworkTimer = NO;
+    if (_canvasArtworkTimer) {
+        [_canvasArtworkTimer invalidate];
+        _canvasArtworkTimer = nil;
+    }
+
+    _artworkImage = nil;
+    _trackIdentifier = nil;
+    _artworkIdentifier = nil;
 
     if (![urlString isEqualToString:_canvasURL]) {
         _canvasURL = urlString;
