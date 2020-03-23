@@ -651,6 +651,10 @@
 - (void)nu_colorizeFolderBackground:(UIColor *)color {
     SBFolderBackgroundView *backgroundView = self.backgroundView;
 
+    // In case some other tweak removed this one
+    if (!backgroundView)
+        return;
+
     if (!color)
         color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.8];
 
