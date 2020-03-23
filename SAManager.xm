@@ -1,6 +1,5 @@
 #import "SAManager.h"
-#import <AppSupport/CPDistributedMessagingCenter.h>
-#import <rocketbootstrap/rocketbootstrap.h>
+#import "SACenter.h"
 #import "Common.h"
 #import <notify.h>
 #import "SpringBoard.h"
@@ -23,9 +22,6 @@
 + (NSValue *)valueWithCMTime:(CMTime)time;
 @end
 
-@interface CPDistributedMessagingCenter (Missing)
-- (void)unregisterForMessageName:(NSString *)name;
-@end
 
 extern UIViewController<CoverSheetViewController> *getCoverSheetViewController();
 extern SBWallpaperController *getWallpaperController();
@@ -34,7 +30,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 
 @implementation SAManager {
-    CPDistributedMessagingCenter *_rbs_center;
+    SACenter *_center;
     int _notifyTokenForDidChangeDisplayStatus;
     int _notifyTokenForSettingsChanged;
 
@@ -646,7 +642,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     [self _registerScreenEvent];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_currentAppChanged:)
+                                             selector:@selector(_handleCurrentAppChanged:)
                                                  name:kSBApplicationProcessStateDidChange
                                                object:nil];
 }
@@ -831,8 +827,13 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return YES;
 }
 
-- (void)_currentAppChanged:(NSNotification *)notification {
+- (void)_handleCurrentAppChanged:(NSNotification *)notification {
     SBApplication *app = notification.object;
+    [self _currentAppChanged:app];
+}
+
+
+- (void)_currentAppChanged:(SBApplication *)app {
     if ([app.bundleIdentifier isEqualToString:@"com.apple.MusicUIService"])
         return;
 
@@ -1507,7 +1508,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     }
 }
 
-- (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
+- (void)_handleIncomingSpotifyMessage:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
         _useCanvasArtworkTimer = YES;

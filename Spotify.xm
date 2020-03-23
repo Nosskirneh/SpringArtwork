@@ -1,4 +1,5 @@
 #import "Spotify.h"
+#import "SACenter.h"
 #import "Common.h"
 #import <notify.h>
 #import <AVFoundation/AVAsset.h>
@@ -39,8 +40,7 @@ static SPTGLUEImageLoaderFactoryImplementation *getImageLoaderFactory() {
 }
 
 static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *trackIdentifier) {
-    CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SA_IDENTIFIER];
-    rocketbootstrap_distributedmessagingcenter_apply(c);
+    SACenter *center = [SACenter centerNamed:SA_IDENTIFIER];
 
     NSMutableDictionary *dict = [NSMutableDictionary new];
 
@@ -50,7 +50,9 @@ static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *
         dict[kArtwork] = UIImagePNGRepresentation(artwork);
         dict[kTrackIdentifier] = trackIdentifier;
     }
-    [c sendMessageName:kSpotifyMessage userInfo:dict];
+    [center callExternalMethod:SPOTIFY_MESSAGE_SELECTOR
+                 withArguments:dict
+                    completion:nil];
 }
 
 static void sendCanvasURL(NSURL *url) {

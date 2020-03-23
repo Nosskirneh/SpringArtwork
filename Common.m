@@ -1,4 +1,3 @@
-NSString *const kSpotifyMessage = @"se.nosskirneh.springartwork/spotifyMessage";
 NSString *const kCanvasURL = @"canvasURL";
 NSString *const kArtwork = @"artwork";
 NSString *const kTrackIdentifier = @"trackIdentifier";
