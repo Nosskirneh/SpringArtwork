@@ -459,7 +459,8 @@
 %new
 - (void)sa_hideWallpaperView:(BOOL)hide {
     UIView *blurView = self.panelFadeOutWallpaperEffectView.blurView;
-    MSHookIvar<UIView *>(blurView, "_wallpaperView").hidden = hide;
+    if (blurView)
+        MSHookIvar<UIView *>(blurView, "_wallpaperView").hidden = hide;
 }
 %end
 
