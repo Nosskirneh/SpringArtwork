@@ -107,8 +107,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     [self _fillPropertiesFromSettings:preferences];
 
-    if (_canvasEnabled)
-        [self _registerEventsForCanvasMode];
+    if (_animateArtwork)
+        [self _registerAutoPlayPauseEvents];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_nowPlayingAppChanged:)
@@ -204,7 +204,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         return;
 
     [self _unsubscribeToArtworkChanges];
-    [self _unregisterEventsForCanvasMode];
+    [self _unregisterSpotifyNotifications];
     [self _unregisterAutoPlayPauseEvents];
     notify_cancel(_notifyTokenForSettingsChanged);
 
@@ -432,7 +432,6 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _mode = Artwork;
                 _previousMode = Canvas;
             }
-            [self _unregisterEventsForCanvasMode];
 
             /* Don't disable auto play pause events
                if artwork animation is enabled. */
@@ -448,7 +447,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 _previousMode = Artwork;
             }
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self _registerEventsForCanvasMode];
+                [self _registerSpotifyNotifications];
             });
         }
     }
@@ -587,8 +586,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         if (onlyBackground) {
             _shouldAddRotation = NO;
             _shouldRemoveRotation = YES;
-        }
-        else {
+        } else {
             _shouldRemoveRotation = NO;
             _shouldAddRotation = YES;
         }
@@ -659,21 +657,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                                                   object:nil];
 }
 
-- (void)_registerEventsForCanvasMode {
-    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
-    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
-    [_rbs_center runServerOnCurrentThread];
-    [_rbs_center registerForMessageName:kSpotifyMessage
-                                 target:self
-                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
+- (void)_registerSpotifyNotifications {
+    _center = [SACenter centerNamed:SA_IDENTIFIER];
+    [_center addTarget:self action:SPOTIFY_MESSAGE_SELECTOR];
 
-    [self _registerAutoPlayPauseEvents];
+    if (_canvasEnabled)
+        [self _registerAutoPlayPauseEvents];
 }
 
-- (void)_unregisterEventsForCanvasMode {
-    [_rbs_center unregisterForMessageName:kSpotifyMessage];
-    [_rbs_center stopServer];
-    _rbs_center = nil;
+- (void)_unregisterSpotifyNotifications {
+    [_center removeAction:SPOTIFY_MESSAGE_SELECTOR];
+    _center = nil;
 }
 
 - (BOOL)_registerScreenEvent {
@@ -901,10 +895,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     if (!_bundleID) {
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
-    } else if ([_disabledApps containsObject:_bundleID] || [_bundleID isEqualToString:kSpotifyBundleID]) {
-        [self _unsubscribeToArtworkChanges];
-        _ignoredImages = nil;
     } else {
+        BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
+        if (isSpotify) {
+            [self _registerSpotifyNotifications];
+        }
+
+        if ([_disabledApps containsObject:_bundleID] || isSpotify) {
+            [self _unsubscribeToArtworkChanges];
+            _ignoredImages = nil;
+        }
+
         [self _subscribeToArtworkChanges];
 
         if ([_bundleID isEqualToString:kDeezerBundleID])
