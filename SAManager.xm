@@ -1518,7 +1518,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             [self _sendCanvasUpdatedEvent];
         else if (dict[kArtwork]) {
             [self _updateModeToArtworkWithTrackIdentifier:dict[kTrackIdentifier]];
-            [self _updateArtworkWithImage:[UIImage imageWithData:dict[kArtwork]]];
+            if (_artworkEnabled)
+                [self _updateArtworkWithImage:[UIImage imageWithData:dict[kArtwork]]];
             return;
         }
     } else {
