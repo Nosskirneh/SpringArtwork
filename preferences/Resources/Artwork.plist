@@ -58,7 +58,7 @@
                 <string>2</string>
             </array>
             <key>default</key>
-            <string>0</string>
+            <string>1</string>
             <key>PostNotification</key>
             <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
