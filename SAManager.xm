@@ -685,6 +685,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             notify_get_state(_notifyTokenForDidChangeDisplayStatus, &state);
             _screenTurnedOn = BOOL(state);
 
+            /* If going to the lockscreen when only homescreen is enabled,
+               we need to hide the view if using a shared wallpaper. */
+            if (_enabledMode == HomescreenMode && !_screenTurnedOn && _isSharedWallpaper) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _inChargeController.view.hidden = YES;
+                });
+            }
+
             BOOL contentVisible = _screenTurnedOn && !_insideApp;
 
             if (![self _canAutoPlayPause]) {
