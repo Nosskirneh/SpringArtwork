@@ -656,9 +656,6 @@
     if (!backgroundView)
         return;
 
-    if (!color)
-        color = [[backgroundView _tintViewBackgroundColorAtFullAlpha] colorWithAlphaComponent:0.8];
-
     UIView *view = MSHookIvar<UIView *>(backgroundView, "_blurView");
     if (!view)
         view = MSHookIvar<UIView *>(backgroundView, "_tintView");
