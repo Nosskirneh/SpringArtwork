@@ -904,15 +904,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         if ([_disabledApps containsObject:_bundleID] || isSpotify) {
             [self _unsubscribeToArtworkChanges];
             _ignoredImages = nil;
+        } else {
+            [self _subscribeToArtworkChanges];
+
+            if ([_bundleID isEqualToString:kDeezerBundleID])
+                _ignoredImages = @[[SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64],
+                                   [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_iOS13_BASE64]];
+            else
+                _ignoredImages = nil;
         }
-
-        [self _subscribeToArtworkChanges];
-
-        if ([_bundleID isEqualToString:kDeezerBundleID])
-            _ignoredImages = @[[SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64],
-                               [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_iOS13_BASE64]];
-        else
-            _ignoredImages = nil;
     }
 }
 
