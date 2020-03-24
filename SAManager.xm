@@ -391,6 +391,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                 [self _unsubscribeToArtworkChanges];
             } else {
                 [self _subscribeToArtworkChanges];
+                [self _requestManualUpdate:NO];
             }
         }
     }
