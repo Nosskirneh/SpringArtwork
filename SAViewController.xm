@@ -178,6 +178,13 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         imageViewFrame.origin.y += yOffsetPercentage / 100.0 *
                                    self.view.frame.size.height;
     _artworkImageView.frame = imageViewFrame;
+
+    // Recreate the CD layer mask
+    if ([_manager hasAnimatingArtwork]) {
+        [self _destroySpinArtwork];
+        [self _prepareSpinArtwork];
+        [self updateArtworkCornerRadius:[_manager artworkCornerRadiusPercentage]];
+    }
 }
 
 - (void)updateArtworkCornerRadius:(int)percentage {
@@ -473,7 +480,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (CALayer *)_createLayerArtworkOuterCD {
-    CGFloat outerHoleWidth = 40.0f;
+    CGFloat outerHoleWidth = _artworkImageView.frame.size.width * 0.20f;
     CGRect outerHoleFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - outerHoleWidth / 2,
                                        _artworkImageView.frame.size.height / 2 - outerHoleWidth / 2,
                                        outerHoleWidth, outerHoleWidth);
@@ -490,7 +497,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                  _artworkImageView.frame.size.height);
     UIBezierPath *beizerPath = [UIBezierPath bezierPathWithRect:allFrame];
 
-    CGFloat innerHoleWidth = 20.0f;
+    CGFloat innerHoleWidth = _artworkImageView.frame.size.width * 0.10f;
     CGRect holeFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - innerHoleWidth / 2,
                                   _artworkImageView.frame.size.height / 2 - innerHoleWidth / 2,
                                   innerHoleWidth, innerHoleWidth);
