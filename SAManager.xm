@@ -373,10 +373,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 /* Check if some changes are required because of a change in preferences. */
 - (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {
     NSSet *newDisabledApps = [self _getDisabledApps:preferences[kDisabledApps]];
-    if (_bundleID &&
-        [_disabledApps containsObject:_bundleID] &&
-        ![newDisabledApps containsObject:_bundleID]) {
-        [self _requestManualUpdate:NO];
+    if (_bundleID) {
+        if ([_disabledApps containsObject:_bundleID] &&
+            ![newDisabledApps containsObject:_bundleID]) {
+            [self _requestManualUpdate:NO];
+        } else if (![_disabledApps containsObject:_bundleID] &&
+                   [newDisabledApps containsObject:_bundleID]) {
+            _artworkImage = nil;
+            _canvasURL = nil;
+            _canvasAsset = nil;
+            [self _sendCanvasUpdatedEvent];
+        }
     }
 
     NSNumber *current = preferences[kTintFolderIcons];
