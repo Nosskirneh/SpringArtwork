@@ -331,7 +331,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
                                      BasedOnArtwork;
 
     current = preferences[kBlurRadius];
-    _blurRadius = current ? current : @(22.0f);
+    _blurRadius = current ? : @(22.0f);
 
     current = preferences[kAnimateArtwork];
     _animateArtwork = current && [current boolValue];

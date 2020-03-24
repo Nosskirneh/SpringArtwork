@@ -205,7 +205,7 @@ typedef union {
         [colorArray addObject:color];
     }
 
-    UIColor *backgroundColor = staticBackgroundColor ? staticBackgroundColor : colorArray[0];
+    UIColor *backgroundColor = staticBackgroundColor ? : colorArray[0];
     UIColor *primaryColor = nil;
     UIColor *secondaryColor = nil;
     if (colorArray.count > 1) {

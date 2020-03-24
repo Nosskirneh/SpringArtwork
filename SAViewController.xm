@@ -290,8 +290,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)setArtwork:(UIImage *)artwork {
-    /* If call came from change of settings, it might be that the artwork is still the same.
-       Hence, compare the image pointer before updating. */
+    /* If call came from change of settings, it might be
+       that the artwork is still the same. Hence, compare
+       the image pointer before updating. */
     if (artwork == _artworkImageView.image)
         return;
 

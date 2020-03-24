@@ -2,7 +2,7 @@
 #import "SAAppListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <AppList/AppList.h>
-#import "../notifyDefines.h"
+#import <notify.h>
 
 @interface PSSpecifier (Missing)
 + (id)groupSpecifierWithHeader:(NSString *)header footer:(NSString *)footer;
@@ -43,7 +43,7 @@
     }];
 
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-    NSArray *disabledAppsList = preferences && preferences[kDisabledApps] ? preferences[kDisabledApps] : @[];
+    NSArray *disabledAppsList = preferences[kDisabledApps] ? : @[];
     NSSet *disabledApps = [NSSet setWithArray:disabledAppsList];
 
     // Add each application as a switch
@@ -71,7 +71,7 @@
     if (!preferences) preferences = [NSMutableDictionary new];
     NSString *key = [specifier propertyForKey:kKey];
 
-    NSArray *disabledAppsList = preferences[kDisabledApps] ? preferences[kDisabledApps] : @[];
+    NSArray *disabledAppsList = preferences[kDisabledApps] ? : @[];
     NSMutableSet *disabledApps = [NSMutableSet setWithArray:disabledAppsList];
 
     if ([value isEqualToNumber:@NO])
@@ -82,8 +82,7 @@
     preferences[kDisabledApps] = [disabledApps allObjects];
     [preferences writeToFile:kPrefPath atomically:YES];
 
-    CFStringRef post = (CFStringRef)CFBridgingRetain([NSString stringWithUTF8String:kSettingsChanged]);
-    notify(post);
+    notify_post(kSettingsChanged);
 }
 
 @end
