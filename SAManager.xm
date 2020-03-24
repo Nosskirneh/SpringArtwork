@@ -297,6 +297,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 #pragma mark Private
 
+- (NSSet *)_getDisabledApps:(NSArray *)apps {
+    NSArray *disabledAppsList = apps ? : @[];
+    return [NSSet setWithArray:disabledAppsList];
+}
+
+/* Load data from preferences. */
 - (void)_fillPropertiesFromSettings:(NSDictionary *)preferences {
     id current = preferences[kEnabledMode];
     _enabledMode = current ? (EnabledMode)[current intValue] : BothMode;
@@ -308,8 +314,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _artworkEnabled = !current || [current boolValue];
 
     current = preferences[kDisabledApps];
-    NSArray *disabledAppsList = current ? current : @[];
-    _disabledApps = [NSSet setWithArray:disabledAppsList];
+    _disabledApps = [self _getDisabledApps:current];
 
     current = preferences[kArtworkBackgroundMode];
     if (current) {
@@ -365,7 +370,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     _staticColor = current ? LCPParseColorString(current, nil) : UIColor.blackColor;
 }
 
+/* Check if some changes are required because of a change in preferences. */
 - (void)_updateConfigurationWithDictionary:(NSDictionary *)preferences {
+    NSSet *newDisabledApps = [self _getDisabledApps:preferences[kDisabledApps]];
+    if (_bundleID &&
+        [_disabledApps containsObject:_bundleID] &&
+        ![newDisabledApps containsObject:_bundleID]) {
+        [self _requestManualUpdate:NO];
+    }
+
     NSNumber *current = preferences[kTintFolderIcons];
     if (current) {
         BOOL tintFolderIcons = [current boolValue];
