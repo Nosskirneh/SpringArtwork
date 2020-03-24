@@ -57,7 +57,8 @@
 
 @interface SPTCanvasLogger : NSObject
 @property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
-@property (retain, nonatomic) SPTPlayerState *currentState;
+@property (retain, nonatomic) SPTPlayerState *currentState; // Old
+@property (retain, nonatomic) SPTPlayerState *currentPlayerState; // New
 
 @property (nonatomic, assign) BOOL sa_onlyOnWifi;
 @property (nonatomic, assign) BOOL sa_canvasEnabled;
@@ -65,6 +66,7 @@
 @property (nonatomic, retain) SPTCanvasTrackCheckerImplementation *trackChecker;
 - (void)sa_commonInit;
 - (void)sa_loadPrefs;
+- (void)sa_fetchDataForState:(SPTPlayerState *)state;
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
 @end
 

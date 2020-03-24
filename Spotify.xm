@@ -98,6 +98,20 @@ static void sendEmptyMessage() {
         ^(int t) {
             [self sa_loadPrefs];
         });
+
+    notify_register_dispatch(kManualSpotifyUpdate,
+        &token,
+        dispatch_get_main_queue(),
+        ^(int t) {
+            SPTPlayerState *playerState;
+            if ([self respondsToSelector:@selector(currentPlayerState)])
+                playerState = self.currentPlayerState;
+            else
+                playerState = self.currentState;
+
+            [self sa_fetchDataForState:playerState];
+        });
+
     [self sa_loadPrefs];
 }
 
@@ -110,7 +124,8 @@ static void sendEmptyMessage() {
     self.sa_canvasEnabled = !current || [current boolValue];
 }
 
-- (void)setCurrentPlayerState:(SPTPlayerState *)state {
+%new
+- (void)sa_fetchDataForState:(SPTPlayerState *)state {
     SPTPlayerTrack *track = state.track;
 
     if (self.sa_canvasEnabled && track && [self.trackChecker isCanvasEnabledForTrack:track]) {
@@ -123,14 +138,20 @@ static void sendEmptyMessage() {
             sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
         } else {
             // The compiler doesn't like `AVURLAsset *` being specified as the type for some reason...
-            [assetLoader loadAssetWithURL:canvasURL onlyOnWifi:self.sa_onlyOnWifi completion:^(id asset) {
+            [assetLoader loadAssetWithURL:canvasURL
+                               onlyOnWifi:self.sa_onlyOnWifi
+                               completion:^(id asset) {
                 sendCanvasURL(((AVURLAsset *)asset).URL);
             }];
         }
     } else {
         [self tryWithArtworkForTrack:track];
     }
+}
+
+- (void)setCurrentPlayerState:(SPTPlayerState *)state {
     %orig;
+    [self sa_fetchDataForState:state];
 }
 
 %new

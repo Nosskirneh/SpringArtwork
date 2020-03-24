@@ -21,3 +21,4 @@ extern NSString *const kChangeOfContent;
 
 
 #define SPOTIFY_MESSAGE_SELECTOR @selector(_handleIncomingSpotifyMessage:)
+#define kManualSpotifyUpdate "se.nosskirneh.springartwork/manualSpotifyUpdate"

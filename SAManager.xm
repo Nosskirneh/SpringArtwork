@@ -888,6 +888,17 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     return [[springBoard pluginUserAgent] deviceIsLocked];
 }
 
+- (void)_requestManualUpdate:(BOOL)isSpotify {
+    if (isSpotify) {
+        notify_post(kManualSpotifyUpdate);
+    } else {
+        [self _fetchArtwork:^(UIImage *image, NSString *trackIdentifier, NSString *artworkIdentifier) {
+            _artworkImage = image;
+            [self _updateOnMainQueueWithContent:YES];
+        }];
+    }
+}
+
 - (void)_nowPlayingAppChanged:(NSNotification *)notification {
     SBMediaController *mediaController = notification.object;
     _bundleID = mediaController.nowPlayingApplication.bundleIdentifier;
@@ -896,9 +907,15 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
     } else {
+        _artworkImage = nil;
+
         BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
         if (isSpotify) {
             [self _registerSpotifyNotifications];
+        } else {
+            [self _unregisterSpotifyNotifications];
+            _canvasURL = nil;
+            _canvasAsset = nil;
         }
 
         if ([_disabledApps containsObject:_bundleID] || isSpotify) {
@@ -913,6 +930,8 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
             else
                 _ignoredImages = nil;
         }
+
+        [self _requestManualUpdate:isSpotify];
     }
 }
 
