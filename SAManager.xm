@@ -377,12 +377,12 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         if ([_disabledApps containsObject:_bundleID] &&
             ![newDisabledApps containsObject:_bundleID]) {
             [self _requestManualUpdate:NO];
-        } else if (![_disabledApps containsObject:_bundleID] &&
+        } else if (![_disabledApps containsObject:_bundleID] &&
                    [newDisabledApps containsObject:_bundleID]) {
             _artworkImage = nil;
             _canvasURL = nil;
             _canvasAsset = nil;
-            [self _sendCanvasUpdatedEvent];
+            [self _updateOnMainQueueWithContent:NO];
         }
     }
 
@@ -914,8 +914,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         notify_post(kManualSpotifyUpdate);
     } else {
         [self _fetchArtwork:^(UIImage *image, NSString *trackIdentifier, NSString *artworkIdentifier) {
-            _artworkImage = image;
-            [self _updateOnMainQueueWithContent:YES];
+            [self _updateArtworkWithImage:image];
         }];
     }
 }
