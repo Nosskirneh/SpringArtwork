@@ -7,13 +7,13 @@
 + (instancetype)defaultCenter;
 @end
 
-@interface NUIPCMethod : NSObject
+@interface SAIPCMethod : NSObject
 @property (nonatomic, readonly) id target;
 @property (nonatomic, readonly) SEL selector;
 - (instancetype)initWithTarget:(id)target selector:(SEL)selector;
 @end
 
-@implementation NUIPCMethod
+@implementation SAIPCMethod
 
 - (instancetype)initWithTarget:(id)target selector:(SEL)selector {
     if (self = [self init]) {
@@ -35,7 +35,7 @@
 
 @implementation SACenter {
     NSDistributedNotificationCenter *_notificationCenter;
-    NSMutableDictionary<NSString *, NUIPCMethod*> *_methods;
+    NSMutableDictionary<NSString *, SAIPCMethod*> *_methods;
 }
 
 + (instancetype)centerNamed:(NSString *)name {
@@ -63,7 +63,7 @@
     if (_methods[messageName])
         THROW(@"method already registered: %@", NSStringFromSelector(action));
 
-    NUIPCMethod *method = [[NUIPCMethod alloc] initWithTarget:target
+    SAIPCMethod *method = [[SAIPCMethod alloc] initWithTarget:target
                                                      selector:action];
     _methods[messageName] = method;
 
@@ -145,7 +145,7 @@
 
 - (void)_messageReceived:(NSNotification *)notification {
     NSString *messageName = notification.name;
-    NUIPCMethod *method = _methods[messageName];
+    SAIPCMethod *method = _methods[messageName];
     if (!method)
         THROW(@"unrecognised message: %@", messageName);
 
