@@ -251,8 +251,8 @@
     if (!manager.isSharedWallpaper)
         return;
 
-    BOOL hide = ((self.appearState == Lockscreen && manager.enabledMode == HomescreenMode) ||
-                 (self.appearState == Homescreen && manager.enabledMode == LockscreenMode));
+    BOOL hide = ((self.appearState == Lockscreen && manager.enabledMode == HomescreenMode && presented) ||
+                 (self.appearState == Homescreen && manager.enabledMode == LockscreenMode && !presented));
     manager.inChargeController.view.hidden = hide;
 }
 
