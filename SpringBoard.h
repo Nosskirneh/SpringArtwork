@@ -97,6 +97,21 @@ typedef enum NowPlayingState {
 @property (nonatomic, retain) UIColor *textColor;
 @end
 
+
+
+@interface SBFloatingDockView : UIView
+@property(retain, nonatomic) UIView *backgroundView;
+@end
+
+@interface SBFloatingDockViewController : UIViewController
+@property (nonatomic, retain) SBFloatingDockView *dockView;
+@end
+
+@interface SBFloatingDockController : NSObject
+@property (nonatomic, readonly) SBFloatingDockViewController *floatingDockViewController;
++ (BOOL)isFloatingDockSupported;
+@end
+
 @interface SBDockView : UIView {
     SBWallpaperEffectView *_backgroundView;
 }
@@ -219,6 +234,7 @@ typedef enum NowPlayingState {
 
 @interface SBIconController : NSObject
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
+@property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
 - (SBFolderController *)_openFolderController;

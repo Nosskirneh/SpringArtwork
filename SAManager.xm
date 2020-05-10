@@ -779,21 +779,28 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 - (void)_hideDock:(BOOL)hide {
     _dockHidden = hide;
 
-    SBRootFolderController *rootFolderController = [[%c(SBIconController) sharedInstance] _rootFolderController];
-    SBDockView *dockView = [rootFolderController.contentView dockView];
-    if (!dockView)
-        return;
+    SBIconController *iconController = [%c(SBIconController) sharedInstance];
+    UIView *backgroundView;
 
-    UIView *background = MSHookIvar<UIView *>(dockView, "_backgroundView");
+    if ([%c(SBFloatingDockController) isFloatingDockSupported]) {
+        backgroundView = iconController.floatingDockController.floatingDockViewController.dockView.backgroundView;
+    } else {
+        SBRootFolderController *rootFolderController = [iconController _rootFolderController];
+        SBDockView *dockView = [rootFolderController.contentView dockView];
+        if (!dockView)
+            return;
+
+        backgroundView = MSHookIvar<UIView *>(dockView, "_backgroundView");
+    }
 
     if (!hide)
-        background.hidden = NO;
+        backgroundView.hidden = NO;
 
-    [_inChargeController performLayerOpacityAnimation:background.layer
+    [_inChargeController performLayerOpacityAnimation:backgroundView.layer
                                                  show:!hide
                                            completion:^{
         if (hide)
-            background.hidden = YES;
+            backgroundView.hidden = YES;
     }];
 }
 
