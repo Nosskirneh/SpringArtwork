@@ -24,6 +24,20 @@ typedef enum AppearState {
 @end
 
 
+typedef NS_ENUM(NSUInteger, IrisWallpaperMode) {
+    LockscreenVisible = 0,
+    LockscreenNotVisible = 1
+};
+
+@interface ISPlayerView : UIView
+@property (nonatomic, readonly) UIGestureRecognizer *gestureRecognizer;
+@end
+
+@interface SBFIrisWallpaperView : UIView
+- (UIGestureRecognizer *)irisGestureRecognizer;
+@end
+
+
 /* iOS 11 media widget inactivity */
 typedef enum NowPlayingState {
     Inactive,
@@ -227,6 +241,7 @@ typedef enum NowPlayingState {
 
 @protocol CoverSheetViewController
 @property (nonatomic, retain) UIView<CoverSheetView> *view;
+@property (nonatomic, retain) SBFIrisWallpaperView *irisWallpaperView;
 @property (nonatomic, retain) SBDashBoardLegibilityProvider *legibilityProvider;
 - (void)_updateActiveAppearanceForReason:(id)reason;
 @end

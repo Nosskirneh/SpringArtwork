@@ -373,6 +373,35 @@
     %end
 
 
+    /* Live Photos constantly appear in front of SpringArtwork's views.
+       This prevents that from happening. */
+    %hook SBFIrisWallpaperView
+
+    - (BOOL)_setupContentViewForMode:(IrisWallpaperMode)mode {
+        BOOL orig = %orig;
+
+        if (mode == LockscreenVisible) {
+            UIView *playerView = MSHookIvar<UIView *>(self, "_playerView");
+            [self sendSubviewToBack:playerView];
+        }
+
+        return orig;
+    }
+
+    /* Since the gesture recognizer is constantly changed,
+       we need to update it whenever a new one is set. */
+    - (void)playerViewGestureRecognizerDidChange:(ISPlayerView *)playerView {
+        %orig;
+
+        if ([manager hasContent]) {
+            playerView.gestureRecognizer.enabled = NO;
+        }
+    }
+
+    %end
+    // ---
+
+
     /* Lockscreen background when transitioning to the camera. */
     %hook CoverSheetViewController
 

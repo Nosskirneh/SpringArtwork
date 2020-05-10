@@ -808,11 +808,14 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
         [self _revertLabels];
     }
 
-    SBCoverSheetPrimarySlidingViewController *slidingViewController = getSlidingViewController();
-    // This method is only initiated on some firmwares
-    if (_enabledMode != HomescreenMode &&
-        [slidingViewController respondsToSelector:@selector(sa_hideWallpaperView)])
-        [slidingViewController sa_hideWallpaperView:content];
+    if (_enabledMode != HomescreenMode) {
+        [self _enableLivePhotoGesture:!content];
+
+        // This method is only initiated on some firmwares
+        SBCoverSheetPrimarySlidingViewController *slidingViewController = getSlidingViewController();
+        if ([slidingViewController respondsToSelector:@selector(sa_hideWallpaperView)])
+            [slidingViewController sa_hideWallpaperView:content];
+    }
 
     if (_hideDockBackground)
         [self _tryHideDock:content];
@@ -1311,6 +1314,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
 - (_UILegibilitySettings *)_legibilitySettingsForDarkText:(BOOL)darkText {
     return [_UILegibilitySettings sharedInstanceForStyle:darkText ? 2 : 1];
+}
+
+- (void)_enableLivePhotoGesture:(BOOL)enable {
+    [getCoverSheetViewController().irisWallpaperView irisGestureRecognizer].enabled = enable;
 }
 
 - (void)_overrideLabels {
