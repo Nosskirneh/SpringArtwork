@@ -23,7 +23,6 @@
     return self;
 }
 
-
 @end
 
 @interface SACenter ()
@@ -178,7 +177,7 @@
 - (void)_throwException:(NSString *)msg fromMethod:(SEL)method {
     NSString *reason = [NSString stringWithFormat:@"-[%@ %@] - %@",
                         [self class], NSStringFromSelector(method), msg];
-    NSException *myException = [NSException exceptionWithName:@"NUIPCException"
+    NSException *myException = [NSException exceptionWithName:@"SAIPCException"
                                                        reason:reason
                                                      userInfo:nil];
     @throw myException;

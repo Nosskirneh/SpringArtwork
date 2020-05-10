@@ -173,7 +173,6 @@
     %hook AdjunctListModel
 
     - (void)_handleLockScreenContentActionInvalidation:(id)action {
-
         if ([action isKindOfClass:%c(SBSLockScreenContentAction)])
             [manager mediaWidgetDidActivate:NO];
 
