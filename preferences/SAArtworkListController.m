@@ -43,7 +43,8 @@
     else if ([key isEqualToString:kOnlyBackground] && preferences[key] && [preferences[key] boolValue])
         [super setEnabled:NO forSpecifiersAfterSpecifier:specifier
                                      excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius,
-                                                                               kBlurColoringMode]]];
+                                                                               kBlurColoringMode,
+                                                                               kOverrideTextColorMode]]];
     else if ([key isEqualToString:kArtworkBackgroundMode])
         [self checkStaticColorEnableStateWithKey:key preferences:preferences];
     else if ([key isEqualToString:kAnimateArtwork] && preferences[key])
@@ -63,7 +64,8 @@
     } else if ([key isEqualToString:kOnlyBackground]) {
         [super setEnabled:![value boolValue] forSpecifiersAfterSpecifier:specifier
                                                      excludedIdentifiers:[NSSet setWithArray:@[kBlurRadius,
-                                                                                               kBlurColoringMode]]];
+                                                                                               kBlurColoringMode,
+                                                                                               kOverrideTextColorMode]]];
     } else if ([key isEqualToString:kArtworkBackgroundMode]) {
         [super setEnabled:[value intValue] == StaticColor
              forSpecifier:[self specifierForID:kStaticColor]];
@@ -83,10 +85,12 @@
     NSMutableArray *coloringModes = [NSMutableArray arrayWithArray:@[@"Based on artwork",
                                                                      @"Dark blur & white text",
                                                                      @"Light blur & black text"]];
-    NSMutableArray *coloringModeValues = [NSMutableArray arrayWithArray:@[@0, @2, @3]];
+    NSMutableArray *coloringModeValues = [NSMutableArray arrayWithArray:@[@(BasedOnArtwork),
+                                                                          @(DarkBlurWhiteText),
+                                                                          @(LightBlurBlackText)]];
     if (@available(iOS 13, *)) {
         [coloringModes insertObject:@"Based on dark mode" atIndex:1];
-        [coloringModeValues insertObject:@1 atIndex:1];
+        [coloringModeValues insertObject:@(BasedOnDarkMode) atIndex:1];
     }
 
     // Create a specifier for it
@@ -107,7 +111,7 @@
 
     // Add the specifiers
     [self insertSpecifier:specifier
-         afterSpecifierID:@"blurColoringModeGroup"
+         afterSpecifierID:@"colors"
                  animated:NO];
 }
 

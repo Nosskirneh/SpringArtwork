@@ -16,6 +16,7 @@ NSString *const kStaticColor = @"staticColor";
 
 NSString *const kOnlyBackground = @"onlyBackground";
 NSString *const kBlurColoringMode = @"blurColoringMode";
+NSString *const kOverrideTextColorMode = @"overrideTextColorMode";
 NSString *const kBlurRadius = @"blurRadius";
 NSString *const kAnimateArtwork = @"animateArtwork";
 NSString *const kArtworkCornerRadiusPercentage = @"artworkCornerRadiusPercentage";

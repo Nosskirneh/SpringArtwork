@@ -36,6 +36,12 @@ typedef enum BlurColoringMode {
     LightBlurBlackText
 } BlurColoringMode;
 
+typedef enum OverrideTextColorMode {
+    InheritFromBlurMode,
+    ForceWhiteText,
+    ForceDarkText
+} OverrideTextColorMode;
+
 
 extern const char *kSpotifySettingsChanged;
 extern const char *kSettingsChanged;
@@ -55,6 +61,7 @@ extern NSString *const kStaticColor;
 
 extern NSString *const kOnlyBackground;
 extern NSString *const kBlurColoringMode;
+extern NSString *const kOverrideTextColorMode;
 extern NSString *const kBlurRadius;
 extern NSString *const kAnimateArtwork;
 extern NSString *const kArtworkCornerRadiusPercentage;

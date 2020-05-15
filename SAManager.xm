@@ -91,6 +91,7 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
     ArtworkBackgroundMode _artworkBackgroundMode;
     UIColor *_staticColor;
     BlurColoringMode _blurColoringMode;
+    OverrideTextColorMode _overrideTextColorMode;
 
     BOOL _animateArtwork;
     NSNumber *_blurRadius;
@@ -333,7 +334,11 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 
     current = preferences[kBlurColoringMode];
     _blurColoringMode = current ? (BlurColoringMode)[current intValue] :
-                                     BasedOnArtwork;
+                                  BasedOnArtwork;
+
+    current = preferences[kOverrideTextColorMode];
+    _overrideTextColorMode = current ? (OverrideTextColorMode)[current intValue] :
+                                       InheritFromBlurMode;
 
     current = preferences[kBlurRadius];
     _blurRadius = current ? : @(22.0f);
@@ -1292,6 +1297,16 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (BOOL)_shouldUseDarkText {
+    if (_overrideTextColorMode != InheritFromBlurMode) {
+        switch (_overrideTextColorMode) {
+            case ForceDarkText:
+                return YES;
+            case ForceWhiteText:
+            default:
+                return NO;
+        }
+    }
+
     switch (_blurColoringMode) {
         case BasedOnDarkMode:
             if (@available(iOS 13, *)) {

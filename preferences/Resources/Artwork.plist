@@ -102,16 +102,50 @@
             <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
-        <!-- Blur coloring mode -->
+        <!-- Colors -->
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>id</key>
-            <string>blurColoringModeGroup</string>
+            <string>colors</string>
             <key>label</key>
-            <string>Blur coloring mode</string>
+            <string>Colors</string>
         </dict>
+
+        <!-- Blur coloring mode -->
         <!-- Content dynamically added here -->
+
+        <!-- Override text color -->
+        <dict>
+            <key>id</key>
+            <string>overrideTextColorMode</string>
+            <key>cell</key>
+            <string>PSLinkListCell</string>
+            <key>detail</key>
+            <string>PSListItemsController</string>
+            <key>defaults</key>
+            <string>se.nosskirneh.springartwork</string>
+            <key>key</key>
+            <string>overrideTextColorMode</string>
+            <key>label</key>
+            <string>Override text color</string>
+            <key>validTitles</key>
+            <array>
+                <string>Inherit from blur option</string>
+                <string>Force white</string>
+                <string>Force black</string>
+            </array>
+            <key>validValues</key>
+            <array>
+                <string>0</string>
+                <string>1</string>
+                <string>2</string>
+            </array>
+            <key>default</key>
+            <string>0</string>
+            <key>PostNotification</key>
+            <string>se.nosskirneh.springartwork/settingsChanged</string>
+        </dict>
 
         <!-- Blur radius -->
         <dict>
