@@ -130,6 +130,10 @@
     openTwitter();
 }
 
+- (void)discordServer {
+    openURL([NSURL URLWithString:@"https://discord.gg/qMc63e6"]);
+}
+
 - (void)iconCredits {
     openTwitterWithUsername(@"pupsicola_");
 }
