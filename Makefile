@@ -16,8 +16,16 @@ $(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport MediaRemote
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
+ifdef PREFS_ONLY
+after-install::
+	install.exec "killall -9 Preferences"	
+else ifdef CLIENTS_ONLY
+after-install::
+	install.exec "killall -9 Spotify"
+else
 after-install::
 	install.exec "killall -9 SpringBoard"
+endif
 
 SUBPROJECTS += preferences
 
