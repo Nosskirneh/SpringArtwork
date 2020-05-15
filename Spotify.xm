@@ -39,6 +39,11 @@ static SPTGLUEImageLoaderFactoryImplementation *getImageLoaderFactory() {
     return getQueueService().glueImageLoaderFactory;
 }
 
+static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
+    return ((SPTCanvasServiceImplementation *)getSessionServiceForClass(%c(SPTCanvasServiceImplementation),
+                                                                        session)).trackChecker;
+}
+
 static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *trackIdentifier) {
     SACenter *center = [SACenter centerNamed:SA_IDENTIFIER];
 
@@ -67,6 +72,38 @@ static void sendEmptyMessage() {
     sendMessageWithURLOrArtwork(nil, nil, nil);
 }
 
+
+/* SPTCanvasNowPlayingContentReloader only exists on more recent Spotify versions. */
+%group SPTCanvasNowPlayingContentReloader
+
+/* This is done to avoid hooking init calls that are likely to change. */
+%hook SPTCanvasServiceImplementation
+
+- (void)load {
+    %orig;
+
+    [self.canvasContentReloader sa_commonInit];
+}
+
+%end
+
+%hook SPTCanvasNowPlayingContentReloader
+
+// This exists in the SPTCanvasLogger class
+%property (nonatomic, retain) SPTCanvasTrackCheckerImplementation *trackChecker;
+
+- (void)setCurrentState:(SPTPlayerState *)state {
+    %orig;
+    [self sa_fetchDataForState:state];
+}
+
+%end
+%end
+
+
+// Used on older Spotify versions
+%group SPTCanvasLogger
+
 /* This is done to avoid hooking init calls that are likely to change. */
 %hook SPTCanvasServiceImplementation
 
@@ -77,26 +114,45 @@ static void sendEmptyMessage() {
 
 %end
 
-/* Another class that can be used is the SPTCanvasNowPlayingContentReloader,
-   but it only exists on more recent Spotify versions. */
 %hook SPTCanvasLogger
+
+// This exists in the SPTCanvasNowPlayingContentReloader class
+%property (nonatomic, retain) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
+
+- (void)setCurrentPlayerState:(SPTPlayerState *)state {
+    %orig;
+    [self sa_fetchDataForState:state];
+}
+
+%end
+%end
+
+
+%hook TargetClass
 
 %property (nonatomic, assign) BOOL sa_onlyOnWifi;
 %property (nonatomic, assign) BOOL sa_canvasEnabled;
 %property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
-%property (nonatomic, retain) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
 
 %new
 - (void)sa_commonInit {
-    self.imageLoader = [getImageLoaderFactory() createImageLoaderForSourceIdentifier:@"se.nosskirneh.springartwork"];
-    self.videoAssetLoader = getVideoURLAssetLoader();
+    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
+    _self.imageLoader = [getImageLoaderFactory() createImageLoaderForSourceIdentifier:@"se.nosskirneh.springartwork"];
+
+    if (!_self.videoAssetLoader) {
+        _self.videoAssetLoader = getVideoURLAssetLoader();
+    }
+
+    if (!_self.trackChecker) {
+        _self.trackChecker = getCanvasTrackChecker();
+    }
 
     int token;
     notify_register_dispatch(kSpotifySettingsChanged,
         &token,
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0l),
         ^(int t) {
-            [self sa_loadPrefs];
+            [_self sa_loadPrefs];
         });
 
     notify_register_dispatch(kManualSpotifyUpdate,
@@ -104,60 +160,60 @@ static void sendEmptyMessage() {
         dispatch_get_main_queue(),
         ^(int t) {
             SPTPlayerState *playerState;
-            if ([self respondsToSelector:@selector(currentPlayerState)])
-                playerState = self.currentPlayerState;
+            if ([_self respondsToSelector:@selector(currentPlayerState)])
+                playerState = _self.currentPlayerState;
             else
-                playerState = self.currentState;
+                playerState = _self.currentState;
 
-            [self sa_fetchDataForState:playerState];
+            [_self sa_fetchDataForState:playerState];
         });
 
-    [self sa_loadPrefs];
+    [_self sa_loadPrefs];
 }
 
 %new
 - (void)sa_loadPrefs {
+    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
+
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSNumber *current = preferences[kCanvasOnlyWiFi];
-    self.sa_onlyOnWifi = current && [current boolValue];
+    _self.sa_onlyOnWifi = current && [current boolValue];
     current = preferences[kCanvasEnabled];
-    self.sa_canvasEnabled = !current || [current boolValue];
+    _self.sa_canvasEnabled = !current || [current boolValue];
 }
 
 %new
 - (void)sa_fetchDataForState:(SPTPlayerState *)state {
+    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
     SPTPlayerTrack *track = state.track;
 
-    if (self.sa_canvasEnabled && track && [self.trackChecker isCanvasEnabledForTrack:track]) {
+    if (_self.sa_canvasEnabled && track && [_self.trackChecker isCanvasEnabledForTrack:track]) {
         NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
         if (![canvasURL.absoluteString hasSuffix:@".mp4"])
-            return [self tryWithArtworkForTrack:track];
+            return [_self tryWithArtworkForTrack:track];
 
-        SPTVideoURLAssetLoaderImplementation *assetLoader = self.videoAssetLoader;
+        SPTVideoURLAssetLoaderImplementation *assetLoader = _self.videoAssetLoader;
         if ([assetLoader hasLocalAssetForURL:canvasURL]) {
             sendCanvasURL([assetLoader localURLForAssetURL:canvasURL]);
         } else {
             // The compiler doesn't like `AVURLAsset *` being specified as the type for some reason...
             [assetLoader loadAssetWithURL:canvasURL
-                               onlyOnWifi:self.sa_onlyOnWifi
+                               onlyOnWifi:_self.sa_onlyOnWifi
                                completion:^(id asset) {
                 sendCanvasURL(((AVURLAsset *)asset).URL);
             }];
         }
     } else {
-        [self tryWithArtworkForTrack:track];
+        [_self tryWithArtworkForTrack:track];
     }
-}
-
-- (void)setCurrentPlayerState:(SPTPlayerState *)state {
-    %orig;
-    [self sa_fetchDataForState:state];
 }
 
 %new
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track {
-    if ([self.imageLoader respondsToSelector:@selector(loadImageForURL:imageSize:completion:)]) {
-        [self.imageLoader loadImageForURL:track.coverArtURLXLarge
+    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
+
+    if ([_self.imageLoader respondsToSelector:@selector(loadImageForURL:imageSize:completion:)]) {
+        [_self.imageLoader loadImageForURL:track.coverArtURLXLarge
                                 imageSize:ARTWORK_SIZE
                                completion:^(UIImage *image) {
             if (!image)
@@ -177,6 +233,16 @@ static void sendEmptyMessage() {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
 
     if ([bundleID isEqualToString:kSpotifyBundleID] &&
-        (!preferences[kCanvasEnabled] || [preferences[kCanvasEnabled] boolValue]))
-        %init;
+        (!preferences[kCanvasEnabled] || [preferences[kCanvasEnabled] boolValue])) {
+
+        Class targetClass = %c(SPTCanvasNowPlayingContentReloader);
+        if (targetClass) {
+            %init(SPTCanvasNowPlayingContentReloader);
+        } else {
+            targetClass = %c(SPTCanvasLogger);
+            %init(SPTCanvasLogger);
+        }
+
+        %init(TargetClass = targetClass);
+    }
 }

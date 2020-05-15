@@ -33,10 +33,11 @@
 - (BOOL)isCanvasEnabledForTrack:(SPTPlayerTrack *)track;
 @end
 
-@class SPTCanvasLogger;
+@class SPTCanvasLogger, SPTCanvasNowPlayingContentReloader;
 @interface SPTCanvasServiceImplementation : NSObject<SPTService>
 @property (retain, nonatomic) SPTCanvasTrackCheckerImplementation *trackChecker;
 @property (retain, nonatomic) SPTCanvasLogger *canvasLogger;
+@property (retain, nonatomic) SPTCanvasNowPlayingContentReloader *canvasContentReloader;
 @end
 
 @interface SPTGLUEImageLoaderFactoryImplementation : NSObject
@@ -55,19 +56,33 @@
 - (id)loadImageForURL:(NSURL *)URL imageSize:(CGSize)size completion:(id)completion;
 @end
 
-@interface SPTCanvasLogger : NSObject
-@property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
-@property (retain, nonatomic) SPTPlayerState *currentState; // Old
-@property (retain, nonatomic) SPTPlayerState *currentPlayerState; // New
+
+@protocol SpringArtworkTarget<NSObject>
 
 @property (nonatomic, assign) BOOL sa_onlyOnWifi;
 @property (nonatomic, assign) BOOL sa_canvasEnabled;
 @property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, retain) SPTCanvasTrackCheckerImplementation *trackChecker;
+@property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
+
 - (void)sa_commonInit;
 - (void)sa_loadPrefs;
 - (void)sa_fetchDataForState:(SPTPlayerState *)state;
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
+
+@optional
+@property (retain, nonatomic) SPTPlayerState *currentState;
+@property (retain, nonatomic) SPTPlayerState *currentPlayerState;
+
+@end
+
+@interface SPTCanvasLogger : NSObject<SpringArtworkTarget>
+@property (retain, nonatomic) SPTPlayerState *currentState; // Old
+@property (retain, nonatomic) SPTPlayerState *currentPlayerState; // New
+@end
+
+
+@interface SPTCanvasNowPlayingContentReloader : NSObject<SpringArtworkTarget>
 @end
 
 
