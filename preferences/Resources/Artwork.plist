@@ -5,6 +5,16 @@
     <key>items</key>
     <array>
         <dict>
+            <key>id</key>
+            <string>disabledGroup</string>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>footerAlignment</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>id</key>
+            <string>artworkEnabled</string>
             <key>cell</key>
             <string>PSSwitchCell</string>
             <key>cellClass</key>
@@ -19,17 +29,7 @@
             <string>se.nosskirneh.springartwork/settingsChanged</string>
         </dict>
 
-
-        <dict>
-            <key>cell</key>
-            <string>PSLinkCell</string>
-            <key>detail</key>
-            <string>SAAppListController</string>
-            <key>isController</key>
-            <true/>
-            <key>label</key>
-            <string>Disabled apps</string>
-        </dict>
+        <!-- Disabled apps goes here -->
 
         <dict>
             <key>cell</key>

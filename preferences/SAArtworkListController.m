@@ -1,5 +1,7 @@
 #import "SASettingsListController.h"
 #import "SAColorListItemsController.h"
+#import "SAAppListController.h"
+#include <dlfcn.h>
 
 @interface SAArtworkListController : SASettingsListController
 @end
@@ -17,12 +19,14 @@
     [super viewDidLoad];
 
     [self insertBlurredColoringModes];
+    [self insertAppListSpecifier];
 }
 
 - (void)reloadSpecifiers {
     [super reloadSpecifiers];
 
     [self insertBlurredColoringModes];
+    [self insertAppListSpecifier];
 }
 
 - (void)checkStaticColorEnableStateWithKey:(NSString *)key {
@@ -81,6 +85,24 @@
     [super setPreferenceValue:value specifier:specifier];
 }
 
+- (void)insertAppListSpecifier {
+    void *dylibLink = dlopen("/usr/lib/libapplist.dylib", RTLD_NOW);
+    PSSpecifier *applistSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Disabled apps"
+                                                                   target:self
+                                                                      set:@selector(setPreferenceValue:specifier:)
+                                                                      get:@selector(readPreferenceValue:)
+                                                                   detail:SAAppListController.class
+                                                                     cell:PSLinkCell
+                                                                     edit:nil];
+    if (dylibLink == NULL) {
+        [applistSpecifier setProperty:@NO forKey:kEnabled];
+        PSSpecifier *groupSpecifier = [self specifierForID:@"disabledGroup"];
+        [groupSpecifier setProperty:@"Install AppList to disable apps." forKey:kFooterText];
+    }
+
+    [self insertSpecifier:applistSpecifier afterSpecifierID:kArtworkEnabled animated:NO];
+}
+
 - (void)insertBlurredColoringModes {
     NSMutableArray *coloringModes = [NSMutableArray arrayWithArray:@[@"Based on artwork",
                                                                      @"Dark blur & white text",
@@ -110,9 +132,7 @@
     [specifier setValues:coloringModeValues titles:coloringModes];
 
     // Add the specifiers
-    [self insertSpecifier:specifier
-         afterSpecifierID:@"colors"
-                 animated:NO];
+    [self insertSpecifier:specifier afterSpecifierID:@"colors" animated:NO];
 }
 
 @end

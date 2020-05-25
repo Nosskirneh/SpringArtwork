@@ -34,9 +34,9 @@
 - (void)addApplicationsToList:(NSMutableArray *)specifiers systemApps:(BOOL)systemApps {
     NSArray *sortedDisplayIdentifiers;
     NSString *predStr = systemApps ? @"isSystemApplication = TRUE" : @"isSystemApplication = FALSE";
-    NSDictionary *applications = [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:[NSPredicate predicateWithFormat:predStr]
-                                                                                                   onlyVisible:YES
-                                                                                        titleSortedIdentifiers:&sortedDisplayIdentifiers];
+    NSDictionary *applications = [[%c(ALApplicationList) sharedApplicationList] applicationsFilteredUsingPredicate:[NSPredicate predicateWithFormat:predStr]
+                                                                                                       onlyVisible:YES
+                                                                                            titleSortedIdentifiers:&sortedDisplayIdentifiers];
     // Sort the array
     NSArray *orderedKeys = [applications keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [obj1 compare:obj2];
@@ -58,8 +58,8 @@
         [spec setProperty:key forKey:kKey];
         [spec setProperty:@([disabledApps containsObject:key]) forKey:kDefault];
 
-        UIImage *icon = [[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall
-                                                         forDisplayIdentifier:key];
+        UIImage *icon = [[%c(ALApplicationList) sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall
+                                                             forDisplayIdentifier:key];
         [spec setProperty:icon forKey:kIconImage];
 
         [specifiers addObject:spec];

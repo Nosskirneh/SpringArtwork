@@ -9,6 +9,8 @@
 #define kID @"id"
 #define kDefault @"default"
 #define kCell @"cell"
+#define kEnabled @"enabled"
+#define kFooterText @"footerText"
 
 
 typedef enum EnabledMode {
