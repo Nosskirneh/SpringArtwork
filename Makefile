@@ -18,7 +18,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 
 ifdef PREFS_ONLY
 after-install::
-	install.exec "killall -9 Preferences"	
+	install.exec "killall -9 Preferences"
 else ifdef CLIENTS_ONLY
 after-install::
 	install.exec "killall -9 Spotify"
