@@ -98,17 +98,27 @@ typedef enum NowPlayingState {
 @end
 
 
+@interface SBFloatingDockPlatterView : UIView
+@property (nonatomic, retain) UIView *backgroundView;
+@end
 
 @interface SBFloatingDockView : UIView
-@property(retain, nonatomic) UIView *backgroundView;
+@property(retain, nonatomic) UIView *backgroundView; // iOS 13 only
+@property (nonatomic, retain) SBFloatingDockPlatterView *mainPlatterView; // iOS 11-12
 @end
 
 @interface SBFloatingDockViewController : UIViewController
 @property (nonatomic, retain) SBFloatingDockView *dockView;
 @end
 
+@interface SBFloatingDockRootViewController : UIViewController
+@property (nonatomic, retain) SBFloatingDockViewController *floatingDockViewController;
+@end
+
 @interface SBFloatingDockController : NSObject
-@property (nonatomic, readonly) SBFloatingDockViewController *floatingDockViewController;
+@property (nonatomic, readonly) SBFloatingDockViewController *floatingDockViewController; // iOS 13 only
+@property (nonatomic, readonly) UIViewController *viewController; // iOS 11-13
++ (id)sharedInstance; // iOS 11-12 only
 + (BOOL)isFloatingDockSupported;
 @end
 
@@ -234,7 +244,7 @@ typedef enum NowPlayingState {
 
 @interface SBIconController : NSObject
 @property (nonatomic, retain) _UILegibilitySettings *legibilitySettings;
-@property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
+@property (nonatomic, readonly) SBFloatingDockController *floatingDockController; // iOS 13 only
 + (id)sharedInstance;
 - (SBRootFolderController *)_rootFolderController;
 - (SBFolderController *)_openFolderController;
