@@ -1562,9 +1562,10 @@ extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
 }
 
 - (UIBlurEffectStyle)_getBlurStyle {
-    if (_artworkBackgroundMode == BlurredImage)
+    if (_artworkBackgroundMode == BlurredImage && _overrideTextColorMode == InheritFromBlurMode) {
         return [self _shouldUseDarkText] ?
                UIBlurEffectStyleLight : UIBlurEffectStyleDark;
+    }
 
     return [SAImageHelper colorIsLight:_colorInfo.backgroundColor] ?
            UIBlurEffectStyleLight : UIBlurEffectStyleDark;
