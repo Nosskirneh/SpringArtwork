@@ -1097,6 +1097,8 @@ static inline void initTrial() {
     [self _fetchArtwork:^(UIImage *image, NSString *trackIdentifier, NSString *artworkIdentifier) {
         if (![_artworkIdentifier isEqualToString:artworkIdentifier])
             [self _processImageCompletion:trackIdentifier artworkIdentifier:artworkIdentifier](image);
+        else if (_placeholderArtworkTimer)
+            [self _invalidatePlaceholderArtworkTimer];
     }];
 }
 
@@ -1118,6 +1120,20 @@ static inline void initTrial() {
     });
 }
 
+- (void)_startPlaceholderArtworkTimer {
+    [_placeholderArtworkTimer invalidate];
+    _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
+                                                                target:self
+                                                              selector:@selector(hide)
+                                                              userInfo:nil
+                                                               repeats:NO];
+}
+
+- (void)_invalidatePlaceholderArtworkTimer {
+    [_placeholderArtworkTimer invalidate];
+    _placeholderArtworkTimer = nil;
+}
+
 - (void (^)(UIImage *))_processImageCompletion:(NSString *)trackIdentifier
                              artworkIdentifier:(NSString *)artworkIdentifier {
     return ^(UIImage *image) {
@@ -1129,18 +1145,12 @@ static inline void initTrial() {
             // received after that, cancel it. Otherwise hide all views.
             if ([self hasContent]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [_placeholderArtworkTimer invalidate];
-                    _placeholderArtworkTimer = [NSTimer scheduledTimerWithTimeInterval:5.0f
-                                                                                target:self
-                                                                              selector:@selector(hide)
-                                                                              userInfo:nil
-                                                                               repeats:NO];
+                    [self _startPlaceholderArtworkTimer];
                 });
             }
             return;
         } else if (_placeholderArtworkTimer) {
-            [_placeholderArtworkTimer invalidate];
-            _placeholderArtworkTimer = nil;
+            [self _invalidatePlaceholderArtworkTimer];
         }
 
         if (_canvasURL) {
