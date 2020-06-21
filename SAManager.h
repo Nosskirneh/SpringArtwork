@@ -18,6 +18,8 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 #endif
 
 @interface SAManager : NSObject<SAViewControllerManager>
+@property (nonatomic, assign) BOOL enabled;
+
 @property (nonatomic, retain, readonly) AVAsset *canvasAsset;
 @property (nonatomic, retain, readonly) UIImage *canvasThumbnail;
 @property (nonatomic, retain, readonly) SAColorInfo *colorInfo;
@@ -45,9 +47,14 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 // ---
 
 @property (nonatomic, assign, readonly) BOOL trialEnded;
+
++ (instancetype)sharedManager;
+
 - (void)setTrialEnded;
 
-- (void)setupWithPreferences:(NSDictionary *)preferences;
+- (void)toggleEnabled;
+- (void)setEnabled:(BOOL)enabled;
+
 - (void)togglePlayManually;
 - (void)setupHaptic;
 

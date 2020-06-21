@@ -2,6 +2,7 @@ const char *kSpotifySettingsChanged = "se.nosskirneh.springartwork/spotifySettin
 const char *kSettingsChanged = "se.nosskirneh.springartwork/settingsChanged";
 
 // General
+NSString *const kEnabled = @"enabled";
 NSString *const kEnabledMode = @"enabledMode";
 NSString *const kShakeToPause = @"shakeToPause";
 NSString *const kPauseContentWithMedia = @"pauseContentWithMedia";
