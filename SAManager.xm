@@ -1072,7 +1072,7 @@ static inline void initTrial() {
 }
 
 - (void)_configureWithBundleID:(NSString *)bundleID {
-    if (!_bundleID) {
+    if (!bundleID) {
         [self _setModeToNone];
         [self _updateOnMainQueueWithContent:NO];
 
@@ -1081,7 +1081,7 @@ static inline void initTrial() {
     } else {
         _artworkImage = nil;
 
-        BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
+        BOOL isSpotify = [bundleID isEqualToString:kSpotifyBundleID];
         if (isSpotify) {
             [self _registerSpotifyNotifications];
         } else {
@@ -1090,13 +1090,13 @@ static inline void initTrial() {
             _canvasAsset = nil;
         }
 
-        if ([_disabledApps containsObject:_bundleID] || isSpotify) {
+        if ([_disabledApps containsObject:bundleID] || isSpotify) {
             [self _unsubscribeToArtworkChanges];
             _ignoredImages = nil;
         } else {
             [self _subscribeToArtworkChanges];
 
-            if ([_bundleID isEqualToString:kDeezerBundleID])
+            if ([bundleID isEqualToString:kDeezerBundleID])
                 _ignoredImages = @[[SAImageHelper stringToImage:DEEZER_PLACEHOLDER_BASE64],
                                    [SAImageHelper stringToImage:DEEZER_PLACEHOLDER_iOS13_BASE64]];
             else
