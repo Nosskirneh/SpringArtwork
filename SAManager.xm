@@ -182,10 +182,10 @@ static inline void initTrial() {
     switch (check_lic(licensePath$bs(), package$bs())) {
         case CheckNoLicense:
             %init(Welcome);
-            return nil;
+            return self;
         case CheckInvalidTrialLicense:
             initTrial();
-            return nil;
+            return self;
         case CheckValidTrialLicense:
             initTrial();
             break;
@@ -194,7 +194,7 @@ static inline void initTrial() {
         case CheckInvalidLicense:
         case CheckUDIDsDoNotMatch:
         default:
-            return nil;
+            return self;
     }
     // ---
 
@@ -229,6 +229,25 @@ static inline void initTrial() {
     _colorFlowEnabled = %c(CFWPrefsManager) &&
                         ((CFWPrefsManager *)[%c(CFWPrefsManager) sharedInstance]).lockScreenEnabled;
     return self;
+}
+
+- (void)toggleEnabled {
+    [self setEnabled:!_enabled];
+}
+
+- (void)setEnabled:(BOOL)enabled {
+    if (_trialEnded) {
+        _enabled = NO;
+        return;
+    }
+
+    _enabled = enabled;
+
+    if (!enabled) {
+        [self _configureWithBundleID:nil];
+    } else if (_bundleID) {
+        [self _configureWithBundleID:_bundleID];
+    }
 }
 
 - (BOOL)hasContent {
@@ -472,25 +491,6 @@ static inline void initTrial() {
 - (void)_updateStaticColor:(NSDictionary *)preferences {
     NSString *current = preferences[kStaticColor];
     _staticColor = current ? LCPParseColorString(current, nil) : UIColor.blackColor;
-}
-
-- (void)toggleEnabled {
-    [self setEnabled:!_enabled];
-}
-
-- (void)setEnabled:(BOOL)enabled {
-    if (_trialEnded) {
-        _enabled = NO;
-        return;
-    }
-
-    _enabled = enabled;
-
-    if (!enabled) {
-        [self _configureWithBundleID:nil];
-    } else if (_bundleID) {
-        [self _configureWithBundleID:_bundleID];
-    }
 }
 
 /* Check if some changes are required because of a change in preferences. */
