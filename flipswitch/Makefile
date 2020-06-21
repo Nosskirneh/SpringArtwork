@@ -5,20 +5,18 @@ else
 	ARCHS = arm64 arm64e
 endif
 
-INSTALL_TARGET_PROCESSES = SpringBoard
-
 include $(THEOS)/makefiles/common.mk
 
-BUNDLE_NAME = Flipswitch
+BUNDLE_NAME = SAFlipswitch
 
-Flipswitch_FILES = Switch.x
-Flipswitch_FRAMEWORKS = UIKit
-Flipswitch_LIBRARIES = flipswitch
-Flipswitch_INSTALL_PATH = /Library/Switches
-Flipswitch_CFLAGS = -fobjc-arc
+$(BUNDLE_NAME)_FILES = Switch.x
+$(BUNDLE_NAME)_FRAMEWORKS = UIKit
+$(BUNDLE_NAME)_LIBRARIES = flipswitch
+$(BUNDLE_NAME)_INSTALL_PATH = /Library/Switches
+$(BUNDLE_NAME)_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 
 internal-stage::
 	# PreferenceLoader plist
-	$(ECHO_NOTHING)if [ -f Preferences.plist ]; then mkdir -p $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/SpringArtworkFlipswitch; cp Preferences.plist $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/SpringArtworkFlipswitch/; fi$(ECHO_END)
+	$(ECHO_NOTHING)if [ -f Preferences.plist ]; then mkdir -p $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/SAFlipswitch; cp Preferences.plist $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/SAFlipswitch/; fi$(ECHO_END)

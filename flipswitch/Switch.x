@@ -12,10 +12,10 @@
 
 @end
 
-@interface SpringArtworkFlipswitchSwitch : NSObject <FSSwitchDataSource>
+@interface SAFlipswitchSwitch : NSObject <FSSwitchDataSource>
 @end
 
-@implementation SpringArtworkFlipswitchSwitch
+@implementation SAFlipswitchSwitch
 
 - (NSString *)titleForSwitchIdentifier:(NSString *)switchIdentifier {
     return @"SpringArtwork";

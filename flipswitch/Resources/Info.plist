@@ -5,11 +5,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>SpringArtworkFlipswitch</string>
+	<string>SAFlipswitch</string>
 	<key>CFBundleIdentifier</key>
 	<string>se.nosskirneh.sa-flipswitch</string>
 	<key>CFBundleDisplayName</key>
-	<string>SpringArtworkFlipswitch</string>
+	<string>SAFlipswitch</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -25,7 +25,7 @@
 	<key>MinimumOSVersion</key>
 	<string>3.0</string>
 	<key>NSPrincipalClass</key>
-	<string>SpringArtworkFlipswitchSwitch</string>
+	<string>SAFlipswitchSwitch</string>
 	<key>alternate-action-url</key>
 	<string>prefs:</string>
 </dict>
