@@ -28,5 +28,6 @@ after-install::
 endif
 
 SUBPROJECTS += preferences
+SUBPROJECTS += flipswitch
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
