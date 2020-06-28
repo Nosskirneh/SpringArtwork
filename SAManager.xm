@@ -1,6 +1,7 @@
 #import "SAManager.h"
 #import "DRMValidateOptions.mm"
-#import "SACenter.h"
+#import <AppSupport/CPDistributedMessagingCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 #import "Common.h"
 #import <notify.h>
 #import "SpringBoard.h"
@@ -23,6 +24,9 @@
 + (NSValue *)valueWithCMTime:(CMTime)time;
 @end
 
+@interface CPDistributedMessagingCenter (Missing)
+- (void)unregisterForMessageName:(NSString *)name;
+@end
 
 extern UIViewController<CoverSheetViewController> *getCoverSheetViewController();
 extern SBWallpaperController *getWallpaperController();
@@ -85,7 +89,7 @@ static inline void initTrial() {
 
 
 @implementation SAManager {
-    SACenter *_center;
+    CPDistributedMessagingCenter *_rbs_center;
     int _notifyTokenForDidChangeDisplayStatus;
     int _notifyTokenForSettingsChanged;
 
@@ -808,16 +812,21 @@ static inline void initTrial() {
 }
 
 - (void)_registerSpotifyNotifications {
-    _center = [SACenter centerNamed:SA_IDENTIFIER];
-    [_center addTarget:self action:SPOTIFY_MESSAGE_SELECTOR];
+    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
+    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
+    [_rbs_center runServerOnCurrentThread];
+    [_rbs_center registerForMessageName:kSpotifyMessage
+                                 target:self
+                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
 
     if (_canvasEnabled)
         [self _registerAutoPlayPauseEvents];
 }
 
 - (void)_unregisterSpotifyNotifications {
-    [_center removeAction:SPOTIFY_MESSAGE_SELECTOR];
-    _center = nil;
+    [_rbs_center unregisterForMessageName:kSpotifyMessage];
+    [_rbs_center stopServer];
+    _rbs_center = nil;
 }
 
 - (BOOL)_registerScreenEvent {
@@ -1733,7 +1742,7 @@ static inline void initTrial() {
     }
 }
 
-- (void)_handleIncomingSpotifyMessage:(NSDictionary *)dict {
+- (void)_handleIncomingMessage:(NSString *)name withUserInfo:(NSDictionary *)dict {
     NSString *urlString = dict[kCanvasURL];
     if (!urlString) {
         _canvasURL = nil;

@@ -1,5 +1,4 @@
 #import "Spotify.h"
-#import "SACenter.h"
 #import "Common.h"
 #import <notify.h>
 #import <AVFoundation/AVAsset.h>
@@ -45,7 +44,8 @@ static SPTCanvasTrackCheckerImplementation *getCanvasTrackChecker() {
 }
 
 static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *trackIdentifier) {
-    SACenter *center = [SACenter centerNamed:SA_IDENTIFIER];
+    CPDistributedMessagingCenter *c = [%c(CPDistributedMessagingCenter) centerNamed:SA_IDENTIFIER];
+    rocketbootstrap_distributedmessagingcenter_apply(c);
 
     NSMutableDictionary *dict = [NSMutableDictionary new];
 
@@ -55,9 +55,7 @@ static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *
         dict[kArtwork] = UIImagePNGRepresentation(artwork);
         dict[kTrackIdentifier] = trackIdentifier;
     }
-    [center callExternalMethod:SPOTIFY_MESSAGE_SELECTOR
-                 withArguments:dict
-                    completion:nil];
+    [c sendMessageName:kSpotifyMessage userInfo:dict];
 }
 
 static void sendCanvasURL(NSURL *url) {
