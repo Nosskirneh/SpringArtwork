@@ -812,12 +812,14 @@ static inline void initTrial() {
 }
 
 - (void)_registerSpotifyNotifications {
-    _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
-    rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
-    [_rbs_center runServerOnCurrentThread];
-    [_rbs_center registerForMessageName:kSpotifyMessage
-                                 target:self
-                               selector:@selector(_handleIncomingMessage:withUserInfo:)];
+    if (!_rbs_center) {
+        _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
+        rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
+        [_rbs_center runServerOnCurrentThread];
+        [_rbs_center registerForMessageName:kSpotifyMessage
+                                     target:self
+                                   selector:@selector(_handleIncomingMessage:withUserInfo:)];
+    }
 
     if (_canvasEnabled)
         [self _registerAutoPlayPauseEvents];
