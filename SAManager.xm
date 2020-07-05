@@ -503,7 +503,7 @@ static inline void initTrial() {
     if (_bundleID) {
         if ([_disabledApps containsObject:_bundleID] &&
             ![newDisabledApps containsObject:_bundleID]) {
-            [self _requestManualUpdate:NO];
+            [self _requestManualUpdateToSpotify:NO];
         } else if (![_disabledApps containsObject:_bundleID] &&
                    [newDisabledApps containsObject:_bundleID]) {
             _artworkImage = nil;
@@ -538,7 +538,7 @@ static inline void initTrial() {
                 [self _unsubscribeToArtworkChanges];
             } else {
                 [self _subscribeToArtworkChanges];
-                [self _requestManualUpdate:NO];
+                [self _requestManualUpdateToSpotify:NO];
             }
         }
     }
@@ -811,6 +811,7 @@ static inline void initTrial() {
                                                   object:nil];
 }
 
+// Should only be called if _canvasEnabled is set
 - (void)_registerSpotifyNotifications {
     if (!_rbs_center) {
         _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
@@ -821,8 +822,7 @@ static inline void initTrial() {
                                    selector:@selector(_handleIncomingMessage:withUserInfo:)];
     }
 
-    if (_canvasEnabled)
-        [self _registerAutoPlayPauseEvents];
+    [self _registerAutoPlayPauseEvents];
 }
 
 - (void)_unregisterSpotifyNotifications {
@@ -1064,7 +1064,7 @@ static inline void initTrial() {
     return [[springBoard pluginUserAgent] deviceIsLocked];
 }
 
-- (void)_requestManualUpdate:(BOOL)isSpotify {
+- (void)_requestManualUpdateToSpotify:(BOOL)isSpotify {
     if (isSpotify) {
         notify_post(kManualSpotifyUpdate);
     } else {
@@ -1092,8 +1092,8 @@ static inline void initTrial() {
     } else {
         _artworkImage = nil;
 
-        BOOL isSpotify = [bundleID isEqualToString:kSpotifyBundleID];
-        if (isSpotify) {
+        BOOL shouldUseCanvasSupport = [bundleID isEqualToString:kSpotifyBundleID] && _canvasEnabled;
+        if (shouldUseCanvasSupport) {
             [self _registerSpotifyNotifications];
         } else {
             [self _unregisterSpotifyNotifications];
@@ -1101,7 +1101,7 @@ static inline void initTrial() {
             _canvasAsset = nil;
         }
 
-        if ([_disabledApps containsObject:bundleID] || isSpotify) {
+        if ([_disabledApps containsObject:bundleID] || shouldUseCanvasSupport) {
             [self _unsubscribeToArtworkChanges];
             _ignoredImages = nil;
         } else {
@@ -1114,7 +1114,7 @@ static inline void initTrial() {
                 _ignoredImages = nil;
         }
 
-        [self _requestManualUpdate:isSpotify];
+        [self _requestManualUpdateToSpotify:shouldUseCanvasSupport];
     }
 }
 
