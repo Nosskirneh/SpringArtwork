@@ -583,6 +583,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return YES;
 }
 
+- (UIView *)_currentReplicantView {
+    for (UIView *subview in self.view.subviews) {
+        if ([subview isKindOfClass:%c(_UIReplicantView)]) {
+            return subview;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)_hideArtworkViews {
     if (![self _isShowingArtworkView])
         return NO;
@@ -591,6 +600,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [_artworkContainer removeFromSuperview];
         _artworkImageView.image = nil;
     }];
+
+    // iOS creates this view which is visible when pulling down the lockscreen from within an app.
+    // We need to remove it, otherwise it will look glitchy.
+    UIView *replicantView = [self _currentReplicantView];
+    [self performLayerOpacityAnimation:replicantView.layer show:NO completion:^{
+        [replicantView removeFromSuperview];
+    }];
+
     return YES;
 }
 
