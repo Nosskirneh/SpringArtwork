@@ -55,6 +55,8 @@ static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *
         dict[kArtwork] = UIImagePNGRepresentation(artwork);
         dict[kTrackIdentifier] = trackIdentifier;
     }
+
+    dict[kBundleID] = [NSBundle mainBundle].bundleIdentifier;
     [c sendMessageName:kSpotifyMessage userInfo:dict];
 }
 
@@ -227,12 +229,11 @@ static void sendEmptyMessage() {
 
 
 %ctor {
-    NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
+    NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
+    NSNumber *canvasEnabled = preferences[kCanvasEnabled];
 
-    if ([bundleID isEqualToString:kSpotifyBundleID] &&
-        (!preferences[kCanvasEnabled] || [preferences[kCanvasEnabled] boolValue])) {
-
+    if (isSpotify(bundleID) && (!canvasEnabled || [canvasEnabled boolValue])) {
         Class targetClass = %c(SPTCanvasNowPlayingContentReloader);
         if (targetClass) {
             %init(SPTCanvasNowPlayingContentReloader);

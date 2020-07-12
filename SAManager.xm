@@ -267,17 +267,17 @@ extern SAManager *manager;
     _mediaWidgetActive = activate;
 
     if ([self hasContent] || _previousCanvasURL) {
-        BOOL isSpotify = [_bundleID isEqualToString:kSpotifyBundleID];
+        BOOL _isSpotify = isSpotify(_bundleID);
         if (activate) {
             /* Restore canvas if any */
-            if (isSpotify && _previousCanvasURL) {
+            if (_isSpotify && _previousCanvasURL) {
                 _canvasURL = _previousCanvasURL;
                 _canvasAsset = _previousCanvasAsset;
             }
             [self _updateWithContent:YES];
         } else {
             /* Store canvas if any */
-            if (isSpotify) {
+            if (_isSpotify) {
                 _previousCanvasURL = _canvasURL;
                 _previousCanvasAsset = _canvasAsset;
             }
@@ -1001,7 +1001,7 @@ extern SAManager *manager;
     } else {
         _artworkImage = nil;
 
-        BOOL shouldUseCanvasSupport = [bundleID isEqualToString:kSpotifyBundleID] && _canvasEnabled;
+        BOOL shouldUseCanvasSupport = isSpotify(bundleID) && _canvasEnabled;
         if (shouldUseCanvasSupport) {
             [self _registerSpotifyNotifications];
         } else {
@@ -1659,7 +1659,8 @@ extern SAManager *manager;
         _canvasURL = nil;
         _canvasAsset = nil;
 
-        if ([_disabledApps containsObject:kSpotifyBundleID])
+        NSString *bundleID = dict[kBundleID];
+        if (bundleID && [_disabledApps containsObject:bundleID])
             [self _sendCanvasUpdatedEvent];
         else if (dict[kArtwork]) {
             _useCanvasArtworkTimer = YES;
