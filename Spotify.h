@@ -69,6 +69,7 @@
 - (void)sa_loadPrefs;
 - (void)sa_fetchDataForState:(SPTPlayerState *)state;
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
+- (SPTPlayerState *)sa_getPlayerState;
 
 @optional
 @property (retain, nonatomic) SPTPlayerState *currentState;
@@ -83,6 +84,7 @@
 
 
 @interface SPTCanvasNowPlayingContentReloader : NSObject<SpringArtworkTarget>
+@property (retain, nonatomic) SPTPlayerState *currentState;
 @end
 
 

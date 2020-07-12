@@ -213,11 +213,25 @@ static void sendEmptyMessage() {
                                completion:^(UIImage *image) {
             if (!image)
                 return sendEmptyMessage();
-            sendArtwork(image, track.UID);
+
+            SPTPlayerState *state = [self sa_getPlayerState];
+            if (state.track == track) {
+                sendArtwork(image, track.UID);
+            }
         }];
     } else {
         sendEmptyMessage();
     }
+}
+
+%new
+- (SPTPlayerState *)sa_getPlayerState {
+    if ([_self respondsToSelector:@selector(currentState)]) {
+        return _self.currentState;
+    } else if ([self respondsToSelector:@selector(currentPlayerState)]) {
+        return _self.currentPlayerState;
+    }
+    return nil;
 }
 
 #undef self
