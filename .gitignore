@@ -4,3 +4,4 @@ packages
 .DS_Store
 *.txt
 DRM*
+*/.stamp
