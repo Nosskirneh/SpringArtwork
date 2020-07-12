@@ -249,7 +249,7 @@ extern SAManager *manager;
     _artworkEnabled = NO;
     _canvasEnabled = NO;
 
-    [self _updateWithContent:NO];
+    [self _updateOnMainQueueWithContent:NO];
     _viewControllers = nil;
     _inChargeController = nil;
 }
@@ -274,7 +274,7 @@ extern SAManager *manager;
                 _canvasURL = _previousCanvasURL;
                 _canvasAsset = _previousCanvasAsset;
             }
-            [self _updateWithContent:YES];
+            [self _updateOnMainQueueWithContent:YES];
         } else {
             /* Store canvas if any */
             if (_isSpotify) {
@@ -814,7 +814,7 @@ extern SAManager *manager;
         }];
         return;
     } else {
-        [self _updateWithContent:NO];
+        [self _updateOnMainQueueWithContent:NO];
     }
 }
 
@@ -886,9 +886,13 @@ extern SAManager *manager;
 }
 
 - (void)_updateOnMainQueueWithContent:(BOOL)content {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    if ([NSThread isMainThread]) {
         [self _updateWithContent:content];
-    });
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateWithContent:content];
+        });
+    }
 }
 
 /* Only allow activate when the media widget is showing */
