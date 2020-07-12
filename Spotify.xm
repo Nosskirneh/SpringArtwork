@@ -129,6 +129,7 @@ static void sendEmptyMessage() {
 
 
 %hook TargetClass
+#define _self ((id<SpringArtworkTarget>)self)
 
 %property (nonatomic, assign) BOOL sa_onlyOnWifi;
 %property (nonatomic, assign) BOOL sa_canvasEnabled;
@@ -136,7 +137,6 @@ static void sendEmptyMessage() {
 
 %new
 - (void)sa_commonInit {
-    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
     _self.imageLoader = [getImageLoaderFactory() createImageLoaderForSourceIdentifier:@"se.nosskirneh.springartwork"];
 
     if (!_self.videoAssetLoader) {
@@ -173,8 +173,6 @@ static void sendEmptyMessage() {
 
 %new
 - (void)sa_loadPrefs {
-    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
-
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSNumber *current = preferences[kCanvasOnlyWiFi];
     _self.sa_onlyOnWifi = current && [current boolValue];
@@ -184,7 +182,6 @@ static void sendEmptyMessage() {
 
 %new
 - (void)sa_fetchDataForState:(SPTPlayerState *)state {
-    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
     SPTPlayerTrack *track = state.track;
 
     if (_self.sa_canvasEnabled && track && [_self.trackChecker isCanvasEnabledForTrack:track]) {
@@ -210,8 +207,6 @@ static void sendEmptyMessage() {
 
 %new
 - (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track {
-    id<SpringArtworkTarget> _self = (id<SpringArtworkTarget>)self;
-
     if ([_self.imageLoader respondsToSelector:@selector(loadImageForURL:imageSize:completion:)]) {
         [_self.imageLoader loadImageForURL:track.coverArtURLXLarge
                                 imageSize:ARTWORK_SIZE
@@ -225,6 +220,7 @@ static void sendEmptyMessage() {
     }
 }
 
+#undef self
 %end
 
 
