@@ -1,5 +1,4 @@
 #import "SAManager.h"
-#import "DRMValidateOptions.mm"
 #import <AppSupport/CPDistributedMessagingCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
 #import "Common.h"
@@ -32,60 +31,7 @@ extern UIViewController<CoverSheetViewController> *getCoverSheetViewController()
 extern SBWallpaperController *getWallpaperController();
 extern SBIconController *getIconController();
 extern SBCoverSheetPrimarySlidingViewController *getSlidingViewController();
-
-extern void init();
 extern SAManager *manager;
-
-
-
-
-%group PackagePirated
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        showPiracyAlert(packageShown$bs());
-    });
-}
-
-%end
-%end
-
-
-%group Welcome
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-    showSpringBoardDismissAlert(packageShown$bs(), WelcomeMsg$bs());
-}
-
-%end
-%end
-
-
-%group CheckTrialEnded
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-
-    if (!manager.trialEnded && check_lic(licensePath$bs(), package$bs()) == CheckInvalidTrialLicense) {
-        [manager setTrialEnded];
-        showSpringBoardDismissAlert(packageShown$bs(), TrialEndedMsg$bs());
-    }
-}
-
-%end
-%end
-
-__attribute__((always_inline, visibility("hidden")))
-static inline void initTrial() {
-    %init(CheckTrialEnded);
-}
 
 
 @implementation SAManager {
@@ -162,50 +108,14 @@ static inline void initTrial() {
 #pragma mark Public
 
 + (instancetype)sharedManager {
-    static id sharedManager = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedManager = [[self alloc] init];
-    });
-    return sharedManager;
+    return manager;
 }
 
-- (id)init {
-    if (fromUntrustedSource(package$bs())) {
-        %init(PackagePirated);
-        return nil;
-    }
-
-    self = [super init];
-    if (!self) {
-        return nil;
-    }
-
-    /* License check – if no license found, present message.
-       If no valid license found, do not init. */
-    switch (check_lic(licensePath$bs(), package$bs())) {
-        case CheckNoLicense:
-            %init(Welcome);
-            return self;
-        case CheckInvalidTrialLicense:
-            initTrial();
-            return self;
-        case CheckValidTrialLicense:
-            initTrial();
-            break;
-        case CheckValidLicense:
-            break;
-        case CheckInvalidLicense:
-        case CheckUDIDsDoNotMatch:
-        default:
-            return self;
-    }
-    // ---
-
-    init();
+- (void)setupWithPreferences:(NSDictionary *)preferences {
+    _didInit = YES;
     _screenTurnedOn = YES;
 
-    [self _fillPropertiesFromSettings:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
+    [self _fillPropertiesFromSettings:preferences];
 
     if (_animateArtwork)
         [self _registerAutoPlayPauseEvents];
@@ -232,7 +142,6 @@ static inline void initTrial() {
 
     _colorFlowEnabled = %c(CFWPrefsManager) &&
                         ((CFWPrefsManager *)[%c(CFWPrefsManager) sharedInstance]).lockScreenEnabled;
-    return self;
 }
 
 - (void)toggleEnabled {

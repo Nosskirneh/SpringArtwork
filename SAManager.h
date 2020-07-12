@@ -49,6 +49,7 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) BOOL trialEnded;
 
 + (instancetype)sharedManager;
+- (void)setupWithPreferences:(NSDictionary *)preferences;
 
 - (void)setTrialEnded;
 
