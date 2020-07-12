@@ -2,8 +2,10 @@ include $(THEOS)/makefiles/common.mk
 
 TARGET = iphone:clang:9.2
 TARGET_IPHONEOS_DEPLOYMENT_VERSION = 9.2
-ifdef DEBUG
+ifdef 64
 	ARCHS = arm64
+else ifdef 64E
+	ARCHS = arm64e
 else
 	ARCHS = arm64 arm64e
 endif

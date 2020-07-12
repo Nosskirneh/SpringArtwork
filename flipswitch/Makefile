@@ -1,6 +1,8 @@
 TARGET = iphone:clang:11.2
-ifdef DEBUG
+ifdef 64
 	ARCHS = arm64
+else ifdef 64E
+	ARCHS = arm64e
 else
 	ARCHS = arm64 arm64e
 endif
@@ -8,7 +10,6 @@ endif
 include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = SAFlipswitch
-
 $(BUNDLE_NAME)_FILES = Switch.x
 $(BUNDLE_NAME)_FRAMEWORKS = UIKit
 $(BUNDLE_NAME)_LIBRARIES = flipswitch
