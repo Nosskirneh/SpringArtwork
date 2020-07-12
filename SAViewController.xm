@@ -194,8 +194,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)artworkUpdated:(id<SAViewControllerManager>)manager {
+    BOOL changedContent = [manager changedContent];
     if (manager) {
-        BOOL changedContent = [manager changedContent];
         if (manager.canvasAsset) {
             void (^afterThumbnailCompletion)() = nil;
 
@@ -224,11 +224,12 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                                changedContent:changedContent];
         }
     } else {
+        // In case hiding from one of the two, animate it
         [self _noCheck_ArtworkUpdatedWithImage:nil
                                   blurredImage:nil
                                          color:nil
-                                changedContent:NO];
-        [self _canvasUpdatedWithAsset:nil isDirty:NO];
+                                changedContent:changedContent];
+        [self _canvasUpdatedWithAsset:nil isDirty:NO changedContent:changedContent];
     }
 }
 
@@ -330,6 +331,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 #pragma mark Private
+
+#pragma mark Artwork
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
                     blurredImage:(UIImage *)blurredImage
@@ -596,9 +599,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (![self _isShowingArtworkView])
         return NO;
 
+    _animating = YES;
     [self performLayerOpacityAnimation:_artworkContainer.layer show:NO completion:^{
+        _animating = NO;
         [_artworkContainer removeFromSuperview];
         _artworkImageView.image = nil;
+
+        if (_nextArtworkChange) {
+            _nextArtworkChange();
+            _nextArtworkChange = nil;
+        }
     }];
 
     // iOS creates this view which is visible when pulling down the lockscreen from within an app.
@@ -611,8 +621,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return YES;
 }
 
+#pragma mark Canvas
+
 - (void)_canvasUpdatedWithAsset:(AVAsset *)asset
-                        isDirty:(BOOL)isDirty {
+                        isDirty:(BOOL)isDirty
+                 changedContent:(BOOL)changedContent {
     [self _canvasUpdatedWithAsset:asset
                           isDirty:isDirty
                         thumbnail:nil

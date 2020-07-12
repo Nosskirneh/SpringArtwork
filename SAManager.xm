@@ -220,7 +220,7 @@ extern SAManager *manager;
 }
 
 - (void)hide {
-    [self _setModeToNone];
+    [self _reset];
     [self _updateOnMainQueueWithContent:NO];
 }
 
@@ -237,7 +237,7 @@ extern SAManager *manager;
     [self _unregisterAutoPlayPauseEvents];
     notify_cancel(_notifyTokenForSettingsChanged);
 
-    [self _setModeToNone];
+    [self _reset];
     _ignoredImages = nil;
 
     _previousCanvasURL = nil;
@@ -997,7 +997,7 @@ extern SAManager *manager;
 
 - (void)_configureWithBundleID:(NSString *)bundleID {
     if (!bundleID) {
-        [self _setModeToNone];
+        [self _reset];
         [self _updateOnMainQueueWithContent:NO];
 
         [self _unsubscribeToArtworkChanges];
@@ -1032,9 +1032,14 @@ extern SAManager *manager;
 }
 
 - (void)_setModeToNone {
+    _previousMode = _mode;
+    _mode = None;
+}
+
+- (void)_reset {
     [self _setPlayPauseState:NO];
 
-    _mode = None;
+    [self _setModeToNone];
     _previousMode = None;
 
     _canvasURL = nil;
@@ -1663,15 +1668,22 @@ extern SAManager *manager;
         _canvasURL = nil;
         _canvasAsset = nil;
 
-        NSString *bundleID = dict[kBundleID];
-        if (bundleID && [_disabledApps containsObject:bundleID])
-            [self _sendCanvasUpdatedEvent];
-        else if (dict[kArtwork]) {
+        if (dict[kArtwork]) {
             _useCanvasArtworkTimer = YES;
 
-            [self _updateModeToArtworkWithTrackIdentifier:dict[kTrackIdentifier]];
-            if (_artworkEnabled)
-                [self _updateArtworkWithImage:[UIImage imageWithData:dict[kArtwork]]];
+            UIImage *image;
+            if (_artworkEnabled) {
+                [self _updateModeToArtworkWithTrackIdentifier:dict[kTrackIdentifier]];
+                image = [UIImage imageWithData:dict[kArtwork]];
+            } else if (_mode == None) {
+                // In case we already changed to none, don't do anything
+                return;
+            } else {
+                [self _setModeToNone];
+            }
+            [self _updateArtworkWithImage:image];
+        } else if (dict[kBundleID] && [_disabledApps containsObject:dict[kBundleID]]) {
+            [self _sendCanvasUpdatedEvent];
         }
         return;
     }
