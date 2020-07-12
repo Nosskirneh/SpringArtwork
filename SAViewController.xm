@@ -659,6 +659,29 @@ static void setNoInterruptionMusic(AVPlayer *player) {
                       thumbnail:(UIImage *)thumbnail
                  changedContent:(BOOL)changedContent
                  afterThumbnail:(void (^)())afterThumbnailCompletion {
+    if (_animating) {
+        __weak typeof(self) weakSelf = self;
+        _nextArtworkChange = ^{
+            [weakSelf _noCheck_canvasUpdatedWithAsset:asset
+                                              isDirty:isDirty
+                                            thumbnail:thumbnail
+                                       changedContent:changedContent
+                                       afterThumbnail:afterThumbnailCompletion];
+        };
+    } else {
+        [self _noCheck_canvasUpdatedWithAsset:asset
+                                      isDirty:isDirty
+                                    thumbnail:thumbnail
+                               changedContent:changedContent
+                               afterThumbnail:afterThumbnailCompletion];
+    }
+}
+
+- (void)_noCheck_canvasUpdatedWithAsset:(AVAsset *)asset
+                                isDirty:(BOOL)isDirty
+                              thumbnail:(UIImage *)thumbnail
+                         changedContent:(BOOL)changedContent
+                         afterThumbnail:(void (^)())afterThumbnailCompletion {
     [self _preparePlayerForChange:_canvasLayer.player];
 
     if (asset) {
@@ -762,12 +785,28 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         _canvasContainerImageView.layer.opacity = show ? 1.0 : 0.0;
         if (completion)
             completion();
+
+        if (_nextArtworkChange) {
+            _nextArtworkChange();
+            _nextArtworkChange = nil;
+        }
         return;
     }
 
+    _animating = YES;
     [self performLayerOpacityAnimation:_canvasContainerImageView.layer
-                                   show:show
-                             completion:completion];
+                                  show:show
+                            completion:^{
+        _animating = NO;
+
+        if (completion)
+            completion();
+
+        if (_nextArtworkChange) {
+            _nextArtworkChange();
+            _nextArtworkChange = nil;
+        }
+    }];
 }
 
 // Needed in order to show on iOS 13.3+ lockscreen
