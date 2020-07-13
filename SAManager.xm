@@ -125,7 +125,8 @@ extern SAManager *manager;
                                                  name:kSBMediaNowPlayingAppChangedNotification
                                                object:nil];
 
-    [self _subscribeToArtworkChanges];
+    if (_artworkEnabled)
+        [self _subscribeToArtworkChanges];
 
     if (_pauseContentWithMedia)
         [self _subscribeToMediaPlayPause];
@@ -1014,7 +1015,7 @@ extern SAManager *manager;
             _canvasAsset = nil;
         }
 
-        if ([_disabledApps containsObject:bundleID] || shouldUseCanvasSupport) {
+        if ([_disabledApps containsObject:bundleID] || shouldUseCanvasSupport || !_artworkEnabled) {
             [self _unsubscribeToArtworkChanges];
             _ignoredImages = nil;
         } else {
