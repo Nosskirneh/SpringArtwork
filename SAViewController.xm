@@ -11,7 +11,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 @implementation SAViewController {
-    SAManager *_manager;
+    __weak SAManager *_manager;
     BOOL _inCharge;
 
     UIImageView *_canvasContainerImageView;
