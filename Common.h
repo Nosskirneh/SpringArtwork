@@ -6,7 +6,7 @@
 
 #define ANIMATION_DURATION 0.75
 
-extern NSString *const kSpotifyMessage;
+extern NSString *const kCanvasMessage;
 extern NSString *const kCanvasURL;
 extern NSString *const kArtwork;
 extern NSString *const kTrackIdentifier;

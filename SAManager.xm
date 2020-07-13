@@ -731,7 +731,7 @@ extern SAManager *manager;
         _rbs_center = [CPDistributedMessagingCenter centerNamed:SA_IDENTIFIER];
         rocketbootstrap_distributedmessagingcenter_apply(_rbs_center);
         [_rbs_center runServerOnCurrentThread];
-        [_rbs_center registerForMessageName:kSpotifyMessage
+        [_rbs_center registerForMessageName:kCanvasMessage
                                      target:self
                                    selector:@selector(_handleIncomingMessage:withUserInfo:)];
     }
@@ -740,7 +740,7 @@ extern SAManager *manager;
 }
 
 - (void)_unregisterSpotifyNotifications {
-    [_rbs_center unregisterForMessageName:kSpotifyMessage];
+    [_rbs_center unregisterForMessageName:kCanvasMessage];
     [_rbs_center stopServer];
     _rbs_center = nil;
 }

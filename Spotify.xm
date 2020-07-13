@@ -57,7 +57,7 @@ static void sendMessageWithURLOrArtwork(NSURL *url, UIImage *artwork, NSString *
     }
 
     dict[kBundleID] = [NSBundle mainBundle].bundleIdentifier;
-    [c sendMessageName:kSpotifyMessage userInfo:dict];
+    [c sendMessageName:kCanvasMessage userInfo:dict];
 }
 
 static void sendCanvasURL(NSURL *url) {
