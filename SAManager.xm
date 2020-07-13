@@ -233,13 +233,12 @@ extern SAManager *manager;
     if (!_didInit)
         return;
 
-    [self _unsubscribeToArtworkChanges];
+    [self _unsubscribeToArtworkChangesAndClean];
     [self _unregisterSpotifyNotifications];
     [self _unregisterAutoPlayPauseEvents];
     notify_cancel(_notifyTokenForSettingsChanged);
 
     [self _reset];
-    _ignoredImages = nil;
 
     _previousCanvasURL = nil;
     _previousCanvasAsset = nil;
@@ -443,9 +442,7 @@ extern SAManager *manager;
         BOOL artworkEnabled = [current boolValue];
         if (artworkEnabled != _artworkEnabled) {
             if (!artworkEnabled) {
-                _artworkIdentifier = nil;
-                _artworkImage = nil;
-                [self _unsubscribeToArtworkChanges];
+                [self _unsubscribeToArtworkChangesAndClean];
             } else {
                 [self _subscribeToArtworkChanges];
                 [self _requestManualUpdateToSpotify:NO];
@@ -694,6 +691,13 @@ extern SAManager *manager;
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:(__bridge NSString *)kMRMediaRemoteNowPlayingInfoDidChangeNotification
                                                   object:nil];
+}
+
+- (void)_unsubscribeToArtworkChangesAndClean {
+    [self _unsubscribeToArtworkChanges];
+    _ignoredImages = nil;
+    _artworkIdentifier = nil;
+    _artworkImage = nil;
 }
 
 - (void)_registerAutoPlayPauseEvents {
@@ -1001,7 +1005,7 @@ extern SAManager *manager;
         [self _reset];
         [self _updateOnMainQueueWithContent:NO];
 
-        [self _unsubscribeToArtworkChanges];
+        [self _unsubscribeToArtworkChangesAndClean];
         [self _unregisterSpotifyNotifications];
     } else {
         _artworkImage = nil;
@@ -1015,9 +1019,11 @@ extern SAManager *manager;
             _canvasAsset = nil;
         }
 
-        if ([_disabledApps containsObject:bundleID] || shouldUseCanvasSupport || !_artworkEnabled) {
-            [self _unsubscribeToArtworkChanges];
-            _ignoredImages = nil;
+        if (shouldUseCanvasSupport) {
+            [self _unsubscribeToArtworkChangesAndClean];
+        } else if ([_disabledApps containsObject:bundleID] || !_artworkEnabled) {
+            [self _unsubscribeToArtworkChangesAndClean];
+            return;
         } else {
             [self _subscribeToArtworkChanges];
 
