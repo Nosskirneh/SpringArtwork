@@ -13,6 +13,7 @@
 #import <AVFoundation/AVAssetImageGenerator.h>
 #import <libcolorpicker.h>
 #import "ColorFlow.h"
+#import "WeatherLock.h"
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -855,12 +856,30 @@ extern SAManager *manager;
     if (!hide)
         backgroundView.hidden = NO;
 
-    [_inChargeController performLayerOpacityAnimation:backgroundView.layer
+    [self _animateView:backgroundView hide:hide];
+}
+
+- (void)_animateView:(UIView *)view hide:(BOOL)hide {
+    if (!hide)
+        view.hidden = NO;
+    [_inChargeController performLayerOpacityAnimation:view.layer
                                                  show:!hide
                                            completion:^{
         if (hide)
-            backgroundView.hidden = YES;
+            view.hidden = YES;
     }];
+}
+
+- (void)_enableWeatherLockViews:(BOOL)enable {
+    WeatherLockManager *weatherLockManager = [%c(WeatherLockManager) sharedInstance];
+
+    if (_enabledMode != LockscreenMode) {
+        [self _animateView:weatherLockManager.homeWeather hide:!enable];
+    }
+
+    if (_enabledMode != HomescreenMode) {
+        [self _animateView:weatherLockManager.lockWeather hide:!enable];
+    }
 }
 
 - (void)_updateWithContent:(BOOL)content {
@@ -872,6 +891,10 @@ extern SAManager *manager;
         [self _overrideLabels];
     } else {
         [self _revertLabels];
+    }
+
+    if (%c(WeatherLockManager)) {
+        [self _enableWeatherLockViews:!content];
     }
 
     if (_enabledMode != HomescreenMode) {
