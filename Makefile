@@ -10,7 +10,7 @@ endif
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = SpringArtwork
-$(TWEAK_NAME)_FILES = Tweak.xm Spotify.xm SAViewController.xm SABlurEffect.m SAManager.xm Common.m SAImageHelper.m SettingsKeys.m
+$(TWEAK_NAME)_FILES = Tweak.xm Spotify.xm SASPTService.xm SASPTHandler.xm SAViewController.xm SABlurEffect.m SAManager.xm Common.m SAImageHelper.m SettingsKeys.m
 $(TWEAK_NAME)_FRAMEWORKS = AVFoundation MediaRemote
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
 $(TWEAK_NAME)_LIBRARIES = rocketbootstrap colorpicker

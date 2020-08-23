@@ -4,19 +4,35 @@
 #define ARTWORK_WIDTH [UIScreen mainScreen].nativeBounds.size.width
 #define ARTWORK_SIZE CGSizeMake(ARTWORK_WIDTH, ARTWORK_WIDTH)
 
+
+@protocol SPTServiceList <NSObject>
+- (NSArray *)serviceClassesForScope:(NSString *)scope;
+@end
+
+@protocol SPTService;
+
+@protocol SPTServiceProvider <NSObject>
+- (id <SPTService>)provideOptionalServiceForIdentifier:(NSString *)identifier;
+- (id <SPTService>)provideServiceForIdentifier:(NSString *)identifier;
+@end
+
+@protocol SPTServiceProvider;
+
 @protocol SPTService <NSObject>
-+ (NSString *)serviceIdentifier;
-@end
+@property (atomic, class, readonly) NSString *serviceIdentifier;
+- (void)configureWithServices:(id<SPTServiceProvider>)serviceProvider;
 
-@interface SpotifyAppDelegate : NSObject
-- (id<SPTService>)serviceForIdentifier:(NSString *)identifier inScope:(NSString *)scope;
+@optional
+- (void)idleStateWasReached;
+- (void)initialViewDidAppear;
+- (void)load;
+- (void)unload;
 @end
-
 
 @interface SPTVideoURLAssetLoaderImplementation : NSObject
 - (NSURL *)localURLForAssetURL:(NSURL *)url;
-- (void)loadAssetWithURL:(id)arg1 onlyOnWifi:(BOOL)arg2 completion:(id)arg3;
-- (BOOL)hasLocalAssetForURL:(id)arg1;
+- (void)loadAssetWithURL:(id)url onlyOnWifi:(BOOL)onlyOnWifi completion:(id)completion;
+- (BOOL)hasLocalAssetForURL:(id)url;
 @end
 
 @interface SPTNetworkServiceImplementation : NSObject<SPTService>
@@ -40,14 +56,6 @@
 @property (retain, nonatomic) SPTCanvasNowPlayingContentReloader *canvasContentReloader;
 @end
 
-@interface SPTGLUEImageLoaderFactoryImplementation : NSObject
-- (id)createImageLoaderForSourceIdentifier:(NSString *)sourceIdentifier;
-@end
-
-@interface SPTQueueServiceImplementation : NSObject
-@property (retain, nonatomic) SPTGLUEImageLoaderFactoryImplementation *glueImageLoaderFactory;
-@end
-
 @interface SPTPlayerState : NSObject
 @property (retain, nonatomic) SPTPlayerTrack *track;
 @end
@@ -56,35 +64,28 @@
 - (id)loadImageForURL:(NSURL *)URL imageSize:(CGSize)size completion:(id)completion;
 @end
 
+@protocol SPTGLUEImageLoaderFactory <NSObject>
+- (SPTGLUEImageLoader *)createImageLoaderForSourceIdentifier:(NSString *)sourceIdentifier;
+@end
 
-@protocol SpringArtworkTarget<NSObject>
+@protocol SPTGLUEService <SPTService>
+- (id <SPTGLUEImageLoaderFactory>)provideImageLoaderFactory;
+@end
 
-@property (nonatomic, assign) BOOL sa_onlyOnWifi;
-@property (nonatomic, assign) BOOL sa_canvasEnabled;
-@property (nonatomic, retain) SPTGLUEImageLoader *imageLoader;
-@property (nonatomic, retain) SPTCanvasTrackCheckerImplementation *trackChecker;
-@property (retain, nonatomic) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
+@protocol SPTPlayer <NSObject>
+@end
 
-- (void)sa_commonInit;
-- (void)sa_loadPrefs;
-- (void)sa_fetchDataForState:(SPTPlayerState *)state;
-- (void)tryWithArtworkForTrack:(SPTPlayerTrack *)track;
-- (SPTPlayerState *)sa_getPlayerState;
-
+@protocol SPTPlayerObserver <NSObject>
 @optional
-@property (retain, nonatomic) SPTPlayerState *currentState;
-@property (retain, nonatomic) SPTPlayerState *currentPlayerState;
-
-@end
-
-@interface SPTCanvasLogger : NSObject<SpringArtworkTarget>
-@property (retain, nonatomic) SPTPlayerState *currentState; // Old
-@property (retain, nonatomic) SPTPlayerState *currentPlayerState; // New
+- (void)player:(id <SPTPlayer>)player didEncounterError:(NSError *)error;
+- (void)player:(id <SPTPlayer>)player stateDidChange:(SPTPlayerState *)newState fromState:(SPTPlayerState *)oldState;
+- (void)player:(id <SPTPlayer>)player stateDidChange:(SPTPlayerState *)newState;
 @end
 
 
-@interface SPTCanvasNowPlayingContentReloader : NSObject<SpringArtworkTarget>
-@property (retain, nonatomic) SPTPlayerState *currentState;
+@interface SPTPlayerFeatureImplementation : NSObject<SPTService>
+- (void)removePlayerObserver:(id<SPTPlayerObserver>)observer;
+- (void)addPlayerObserver:(id<SPTPlayerObserver>)observer;
 @end
 
 
