@@ -1,4 +1,5 @@
 #import "SASPTService.h"
+#import "Common.h"
 #import "Spotify.h"
 #import "SASPTHandler.h"
 
@@ -15,7 +16,7 @@
 @implementation SASPTService
 
 + (NSString *)serviceIdentifier {
-    return @"";
+    return SA_IDENTIFIER;
 }
 
 - (void)configureWithServices:(id<SPTServiceProvider>)serviceProvider {
