@@ -29,27 +29,6 @@
 %end
 
 
-%group SBWallpaperController_iOS14
-%hook SBWallpaperController
-- (void)wallpaperPresenter:(SBWallpaperViewController *)presener
-didChangeWallpaperForLocations:(long long)locations
-         withConfiguration:(id)configuration {
-    %orig;
-
-    UIView *wallpaperView;
-    if (locations == 2) {
-        wallpaperView = presener.lockscreenWallpaperView;
-    } else if (locations == 1) {
-        wallpaperView = presener.homescreenWallpaperView;
-    } else {
-        wallpaperView = presener.sharedWallpaperView;
-    }
-    [self sa_newWallpaperViewCreated:wallpaperView variant:locations shared:locations == 3];
-}
-%end
-%end
-
-
 %group SpringBoard
     SAManager *manager;
 
@@ -72,7 +51,8 @@ didChangeWallpaperForLocations:(long long)locations
         return ((SBCoverSheetPresentationManager *)[%c(SBCoverSheetPresentationManager) sharedInstance]).coverSheetSlidingViewController;
     }
 
-    %hook SBWallpaperController
+    %hook SBWallpaperControllerClass
+    #define _self ((id<SBWallpaperControllerClass>)self)
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
     %property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
 
@@ -89,7 +69,7 @@ didChangeWallpaperForLocations:(long long)locations
 
         if (shared) {
             if (manager.enabledMode == LockscreenMode) {
-                [self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
+                [_self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
                 [manager updateInControlViewControllerVisibility];
             } else {
                 /* We only need to clear the lockscreen view controller and never
@@ -97,46 +77,47 @@ didChangeWallpaperForLocations:(long long)locations
                    cases but for the case where only the lockscreen is enabled.
                    If that's the case, such change requires a respring regardless,
                    so no need to implement anything dynamic for it. */
-                [self destroyLockscreenCanvasViewController];
-                [self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
+                [_self destroyLockscreenCanvasViewController];
+                [_self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
             }
         } else { // No need to set the properties to nil here as both will be set
             BOOL homescreen = variant == 1;
             if (homescreen) {
                 if (manager.enabledMode != LockscreenMode)
-                    [self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
+                    [_self updateHomescreenCanvasViewControllerWithWallpaperView:wallpaperView];
             } else if (manager.enabledMode != HomescreenMode)
-                [self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
+                [_self updateLockscreenCanvasViewControllerWithWallpaperView:wallpaperView];
         }
         return wallpaperView;
     }
 
     %new
     - (void)destroyLockscreenCanvasViewController {
-        [manager removeViewController:self.lockscreenCanvasViewController];
-        self.lockscreenCanvasViewController = nil;
+        [manager removeViewController:_self.lockscreenCanvasViewController];
+        _self.lockscreenCanvasViewController = nil;
     }
 
     %new
     - (void)updateHomescreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView {
-        if (!self.homescreenCanvasViewController)
-            self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                       manager:manager
-                                                                                      inCharge:YES];
+        if (!_self.homescreenCanvasViewController)
+            _self.homescreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                        manager:manager
+                                                                                       inCharge:YES];
         else
-            [self.homescreenCanvasViewController setTargetView:wallpaperView];
+            [_self.homescreenCanvasViewController setTargetView:wallpaperView];
     }
 
     %new
     - (void)updateLockscreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView {
-        if (!self.lockscreenCanvasViewController)
-            self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
-                                                                                       manager:manager
-                                                                                      inCharge:YES];
+        if (!_self.lockscreenCanvasViewController)
+            _self.lockscreenCanvasViewController = [[SAViewController alloc] initWithTargetView:wallpaperView
+                                                                                        manager:manager
+                                                                                       inCharge:YES];
         else
-            [self.lockscreenCanvasViewController setTargetView:wallpaperView];
+            [_self.lockscreenCanvasViewController setTargetView:wallpaperView];
     }
 
+    #undef _self
     %end
 
 
@@ -851,15 +832,14 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
         initMediaWidgetInactivity_iOS13(adjunctListModelClass);
     }
 
-    %init(SpringBoard);
+    // ?? did not work here cause of logos
+    Class wallpaperViewControllerClass = %c(SBWallpaperViewController);
+    Class wallpaperControllerClass = wallpaperViewControllerClass ? wallpaperViewControllerClass : %c(SBWallpaperController);
+    %init(SpringBoard, SBWallpaperControllerClass = wallpaperControllerClass);
 
-    Class wallpaperControllerClass = %c(SBWallpaperController);
     if ([wallpaperControllerClass instancesRespondToSelector:
-         @selector(_updateWallpaperForLocations:options:wallpaperMode:withCompletion:)]) {
-        %init(SBWallpaperController_iOS14);
-    } else if ([wallpaperControllerClass instancesRespondToSelector:
               @selector(_makeWallpaperViewWithConfiguration:forVariant:shared:options:)]) {
-        %init(SBWallpaperController_iOS13);
+        %init(SBWallpaperController_iOS13, SBWallpaperController = wallpaperControllerClass);
     } else {
         %init(SBWallpaperController_iOS12);
     }
