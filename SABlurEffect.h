@@ -1,3 +1,5 @@
+#import <UIKit/UIKit.h>
+
 @interface SABlurEffect : UIBlurEffect
 @property (nonatomic, retain) NSNumber *blurRadius;
 + (instancetype)effectWithStyle:(UIBlurEffectStyle)style

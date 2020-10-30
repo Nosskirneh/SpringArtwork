@@ -1,5 +1,6 @@
 #import <AppSupport/CPDistributedMessagingCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
+#import <UIKit/UIKit.h>
 
 #define ARTWORK_WIDTH [UIScreen mainScreen].nativeBounds.size.width
 #define ARTWORK_SIZE CGSizeMake(ARTWORK_WIDTH, ARTWORK_WIDTH)

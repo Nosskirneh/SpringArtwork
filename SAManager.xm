@@ -14,6 +14,7 @@
 #import <libcolorpicker.h>
 #import "ColorFlow.h"
 #import "WeatherLock.h"
+#import <HBLog.h>
 
 #define kNotificationNameDidChangeDisplayStatus "com.apple.iokit.hid.displayStatus"
 #define kSBApplicationProcessStateDidChange @"SBApplicationProcessStateDidChange"
@@ -1105,7 +1106,7 @@ extern SAManager *manager;
         if (!imageData)
             return completion(nil, nil, nil);
 
-        // HBLogDebug(@"We got the information: %@ – %@",
+        // log(@"We got the information: %@ – %@",
         //            dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoTitle],
         //            dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoArtist]);
 
@@ -1132,7 +1133,7 @@ extern SAManager *manager;
 - (void (^)(UIImage *))_processImageCompletion:(NSString *)trackIdentifier
                              artworkIdentifier:(NSString *)artworkIdentifier {
     return ^(UIImage *image) {
-        // HBLogDebug(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
+        // log(@"base64: %@, image: %@", [SAImageHelper imageToString:image], image);
         if (!image || [self _candidatePlaceholderImage:image]) {
             // In case listening to an item without artwork, there no real
             // artwork will follow the default placeholder. To solve that,
@@ -1316,7 +1317,7 @@ extern SAManager *manager;
             completion([UIImage imageWithCGImage:cgImage]);
         } else {
             #ifdef DEBUG
-            HBLogError(@"Error retrieving video placeholder: %@", error.localizedDescription);
+            log(@"Error retrieving video placeholder: %@", error.localizedDescription);
             #endif
             completion(nil);
         }
@@ -1548,7 +1549,7 @@ extern SAManager *manager;
         SBIconView *iconView = [listView iconViewForIcon:icon];
         SBFolderIconImageView *folderIconImageView = [iconView _folderIconImageView];
         if (![folderIconImageView respondsToSelector:@selector(sa_colorizeFolderBackground:)]) {
-            HBLogError(@"%@ (supposed to be %@) does not respond to sa_colorizeFolderBackground:",
+            log(@"%@ (supposed to be %@) does not respond to sa_colorizeFolderBackground:",
                        folderIconImageView, %c(SBFolderIconImageView));
             return;
         }

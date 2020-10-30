@@ -1,4 +1,7 @@
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <Preferences/Preferences.h>
+#import <HBLog.h>
 #import "SASettingsListController.h"
 #import <UIKit/UITableViewLabel.h>
 #import "../Common.h"

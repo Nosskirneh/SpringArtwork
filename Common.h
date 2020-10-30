@@ -1,3 +1,4 @@
+#import <Foundation/Foundation.h>
 #import "SettingsKeys.h"
 
 #define kSpringBoardBundleID @"com.apple.springboard"

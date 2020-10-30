@@ -1,3 +1,6 @@
+#import <UIKit/UIKit.h>
+#import <HBLog.h>
+
 @interface SAColorInfo : NSObject
 @property (nonatomic, retain, readonly) UIColor *backgroundColor;
 @property (nonatomic, retain, readonly) UIColor *textColor;

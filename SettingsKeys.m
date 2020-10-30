@@ -1,3 +1,5 @@
+#import <Foundation/Foundation.h>
+
 const char *kSpotifySettingsChanged = "se.nosskirneh.springartwork/spotifySettingsChanged";
 const char *kSettingsChanged = "se.nosskirneh.springartwork/settingsChanged";
 

@@ -1,3 +1,5 @@
+#import "Common.h"
+
 NSString *const kCanvasMessage = @"se.nosskirneh.springartwork/canvasMessage";
 NSString *const kCanvasURL = @"canvasURL";
 NSString *const kArtwork = @"artwork";
