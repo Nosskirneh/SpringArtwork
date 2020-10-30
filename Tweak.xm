@@ -51,6 +51,14 @@
         return ((SBCoverSheetPresentationManager *)[%c(SBCoverSheetPresentationManager) sharedInstance]).coverSheetSlidingViewController;
     }
 
+    %hook SBWallpaperController
+    - (void)orientationSource:(long long)source willRotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(CGFloat)duration {
+        %orig;
+
+        [manager wallpaperRotatedToOrientationInterface:interfaceOrientation duration:duration];
+    }
+    %end
+
     %hook SBWallpaperControllerClass
     #define _self ((id<SBWallpaperControllerClass>)self)
     %property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;

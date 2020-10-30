@@ -11,6 +11,7 @@
 - (void)updateArtworkCornerRadius:(int)percentage;
 - (void)updateBlurEffect:(BOOL)blur;
 - (void)setArtwork:(UIImage *)artwork;
+- (void)rotateToRadians:(float)rotation duration:(float)duration;
 @end
 
 @protocol SAAnimatingViewController

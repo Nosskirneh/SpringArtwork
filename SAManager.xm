@@ -147,6 +147,31 @@ extern SAManager *manager;
                         ((CFWPrefsManager *)[%c(CFWPrefsManager) sharedInstance]).lockScreenEnabled;
 }
 
+- (void)wallpaperRotatedToOrientationInterface:(UIInterfaceOrientation)orientation duration:(CGFloat)duration {
+    if (_lastRotatedInterfaceOrientation == orientation)
+        return;
+
+    _lastRotatedInterfaceOrientation = orientation;
+
+    float rotation = 0.0;
+    if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+        rotation = M_PI;
+    } else if (orientation == UIInterfaceOrientationLandscapeLeft) {
+        rotation = M_PI / 2.0;
+    } else if (orientation == UIInterfaceOrientationLandscapeRight) {
+        rotation = M_PI / (- 2.0);
+    }
+
+    [self _rotateToRadians:rotation duration:duration];
+}
+
+- (void)_rotateToRadians:(float)rotation duration:(float)duration {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (SAViewController *vc in _viewControllers)
+            [vc rotateToRadians:rotation duration:duration];
+    });
+}
+
 - (void)toggleEnabled {
     [self setEnabled:!_enabled];
 }

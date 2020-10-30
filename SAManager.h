@@ -46,6 +46,8 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) BOOL hideDockBackground;
 // ---
 
+
+@property (nonatomic, assign, readonly) UIInterfaceOrientation lastRotatedInterfaceOrientation;
 @property (nonatomic, assign, readonly) BOOL trialEnded;
 
 + (instancetype)sharedManager;
@@ -77,4 +79,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 
 - (int)artworkCornerRadiusPercentage;
 - (void)setShouldAddRotation;
+
+- (void)wallpaperRotatedToOrientationInterface:(UIInterfaceOrientation)orientation duration:(CGFloat)duration;
 @end

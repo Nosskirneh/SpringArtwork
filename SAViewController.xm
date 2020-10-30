@@ -14,6 +14,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     __weak SAManager *_manager;
     BOOL _inCharge;
 
+    UIView *_targetView;
     UIImageView *_canvasContainerImageView;
     AVPlayerLayer *_canvasLayer;
     UIView *_artworkContainer;
@@ -122,15 +123,29 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (void)setTargetView:(UIView *)targetView {
+    _targetView = targetView;
     if (!targetView)
         return [self.view removeFromSuperview];
-
-    CGRect frame = targetView.frame;
-    if (CGRectEqualToRect(frame, CGRectZero))
-        frame = [UIScreen mainScreen].bounds;
-    self.view.frame = frame;
-    _visualEffectView.frame = frame;
+    [self _updateFrameFromTargetView];
     [targetView addSubview:self.view];
+}
+
+- (void)_updateFrameFromTargetView {
+    CGRect frame = _targetView.frame;
+    if (CGRectEqualToRect(frame, CGRectZero)) {
+        frame = [UIScreen mainScreen].bounds;
+    }
+    self.view.frame = frame;
+
+    // When rotating, the blurred view doesn't seem to follow. To solve that, we flip the bounds
+    if (UIInterfaceOrientationIsPortrait(_manager.lastRotatedInterfaceOrientation)) {
+        CGFloat x = frame.origin.y;
+        CGFloat y = frame.origin.x;
+        CGFloat height = frame.size.width;
+        CGFloat width = frame.size.height;
+        frame = CGRectMake(x, y, height, width);
+    }
+    _visualEffectView.bounds = frame;
 }
 
 - (void)replayVideo {
@@ -812,6 +827,14 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 // Needed in order to show on iOS 13.3+ lockscreen
 - (BOOL)_canShowWhileLocked {
     return YES;
+}
+
+- (void)rotateToRadians:(float)rotation duration:(float)duration {
+    [UIView animateWithDuration:duration animations:^(void) {
+        self.view.transform = CGAffineTransformMakeRotation(rotation);
+        _visualEffectView.transform = CGAffineTransformMakeRotation(rotation);
+        [self _updateFrameFromTargetView];
+    }];
 }
 
 @end
