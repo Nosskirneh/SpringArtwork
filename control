@@ -4,7 +4,7 @@ Depends: mobilesubstrate, firmware (>= 11.0), com.rpetrich.rocketbootstrap (>> 1
 Version: 1.0~beta17
 Depiction: https://henrikssonbrothers.com/cydia/repo/depictions/?p=se.nosskirneh.springartwork
 Architecture: iphoneos-arm
-Description: Make your wallpaper awesome!
+Description: Artwork for your wallpaper
 Maintainer: Andreas Henriksson
 Author: Andreas Henriksson
 Section: Tweaks
