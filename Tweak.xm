@@ -29,6 +29,27 @@
 %end
 
 
+%group SBWallpaperController_iOS14
+%hook SBWallpaperController
+- (void)wallpaperPresenter:(SBWallpaperViewController *)presener
+didChangeWallpaperForLocations:(long long)locations
+         withConfiguration:(id)configuration {
+    %orig;
+
+    UIView *wallpaperView;
+    if (locations == 2) {
+        wallpaperView = presener.lockscreenWallpaperView;
+    } else if (locations == 1) {
+        wallpaperView = presener.homescreenWallpaperView;
+    } else {
+        wallpaperView = presener.sharedWallpaperView;
+    }
+    [self sa_newWallpaperViewCreated:wallpaperView variant:locations shared:locations == 3];
+}
+%end
+%end
+
+
 %group SpringBoard
     SAManager *manager;
 
@@ -230,7 +251,8 @@
 
 
 /* If only one of LS and HS is set and the wallpaper is shared,
-   we need to hide/show depending on where the user is looking. */
+   we need to hide/show depending on where the user is looking.
+   Not needed in iOS 14 since the views are split even when shared. */
 %group NotBoth
 %hook SBCoverSheetPrimarySlidingViewController
 
@@ -831,10 +853,16 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
 
     %init(SpringBoard);
 
-    [%c(SBWallpaperController) instancesRespondToSelector:
-        @selector(_makeWallpaperViewWithConfiguration:forVariant:shared:options:)] ?
-        (%init(SBWallpaperController_iOS13)) :
-        (%init(SBWallpaperController_iOS12));
+    Class wallpaperControllerClass = %c(SBWallpaperController);
+    if ([wallpaperControllerClass instancesRespondToSelector:
+         @selector(_updateWallpaperForLocations:options:wallpaperMode:withCompletion:)]) {
+        %init(SBWallpaperController_iOS14);
+    } else if ([wallpaperControllerClass instancesRespondToSelector:
+              @selector(_makeWallpaperViewWithConfiguration:forVariant:shared:options:)]) {
+        %init(SBWallpaperController_iOS13);
+    } else {
+        %init(SBWallpaperController_iOS12);
+    }
 
     if (%c(SBFProceduralWallpaperView))
         %init(SBFProceduralWallpaperView);
@@ -842,7 +870,11 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
     %init;
 
     if (manager.enabledMode != BothMode) {
-        %init(NotBoth);
+        // Not needed in iOS 14 since the views are split even when shared
+        if ([%c(SBCoverSheetPrimarySlidingViewController) instancesRespondToSelector:
+             @selector(_finishTransitionToPresented:animated:withCompletion:)]) {
+            %init(NotBoth);
+        }
 
         /* Enable lockscreen? */
         if (manager.enabledMode != HomescreenMode)

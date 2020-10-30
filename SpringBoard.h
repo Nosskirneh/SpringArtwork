@@ -202,7 +202,6 @@ typedef enum NowPlayingState {
 @interface SBRootIconListView : SBIconListView
 @end
 
-
 @interface SBWallpaperController : NSObject
 @property (nonatomic, retain) SAViewController *lockscreenCanvasViewController;
 @property (nonatomic, retain) SAViewController *homescreenCanvasViewController;
@@ -216,6 +215,17 @@ typedef enum NowPlayingState {
 - (void)updateLockscreenCanvasViewControllerWithWallpaperView:(UIView *)wallpaperView;
 - (void)destroyLockscreenCanvasViewController;
 @end
+
+// iOS 14
+@interface SBFWallpaperView : UIView
+@end
+
+@interface SBWallpaperViewController
+@property (nonatomic, retain) SBFWallpaperView *lockscreenWallpaperView;
+@property (nonatomic, retain) SBFWallpaperView *homescreenWallpaperView;
+@property (nonatomic, retain) SBFWallpaperView *sharedWallpaperView;
+@end
+// ---
 
 @interface _SBIconWallpaperBackgroundProvider : NSObject
 - (void)_updateAllClients;
