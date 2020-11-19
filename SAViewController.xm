@@ -190,32 +190,17 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (CGFloat)_artworkImageViewCenterYConstant:(int)yOffsetPercentage {
-    // The y offset should always use the current dimension's height
-    CGFloat yConstant = 0.f;
-    if (yOffsetPercentage != 0)
-        yConstant = yOffsetPercentage / 100.0 * [UIScreen mainScreen].bounds.size.height;
-    return yConstant;
-}
-
 - (void)updateArtworkWidthPercentage:(int)percentage
                    yOffsetPercentage:(int)yOffsetPercentage {
-    // Always use the smallest width dimension for the width;
-    // we don't want the size to change when rotating
-    CGFloat width = [self _minScreenWidth];
-    if (percentage != 100) {
-        float floatPercentage = 1 - (percentage / 100.0);
-        float difference = width * floatPercentage;
-        width -= difference;
-    }
-
     // Remove all previous constraints
     [_artworkImageView removeFromSuperview];
     [_artworkImageView removeConstraints:_artworkImageView.constraints];
     [_artworkContainer addSubview:_artworkImageView];
 
     _artworkImageViewCenterYConstraint = [_artworkImageView.centerYAnchor constraintEqualToAnchor:_artworkContainer.centerYAnchor
-                                                                                         constant:[self _artworkImageViewCenterYConstant:yOffsetPercentage]];
+                                                                                         constant:[self _artworkImageViewCenterYConstantForPercentage:yOffsetPercentage]];
+
+    CGFloat width = [self _artworkWidthForPercentage:percentage];
     [NSLayoutConstraint activateConstraints:@[
         _artworkImageViewCenterYConstraint,
         [_artworkImageView.centerXAnchor constraintEqualToAnchor:_artworkContainer.centerXAnchor],
@@ -226,7 +211,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     // Recreate the CD layer mask
     if ([_manager hasAnimatingArtwork]) {
         [self _destroySpinArtwork];
-        [self _prepareSpinArtwork];
+        [self _prepareSpinArtworkWithWidth:width];
     }
     [self _updateArtworkCornerRadius:[_manager artworkCornerRadiusPercentage] width:width];
 }
@@ -399,13 +384,33 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             [self _resetCanvasOrigin];
         }
 
-        _artworkImageViewCenterYConstraint.constant = [self _artworkImageViewCenterYConstant:_manager.artworkYOffsetPercentage];
+        _artworkImageViewCenterYConstraint.constant = [self _artworkImageViewCenterYConstantForPercentage:_manager.artworkYOffsetPercentage];
     }];
 }
 
 #pragma mark Private
 
 #pragma mark Artwork
+
+- (CGFloat)_artworkImageViewCenterYConstantForPercentage:(int)yOffsetPercentage {
+    // The y offset should always use the current dimension's height
+    CGFloat yConstant = 0.f;
+    if (yOffsetPercentage != 0)
+        yConstant = yOffsetPercentage / 100.0 * [UIScreen mainScreen].bounds.size.height;
+    return yConstant;
+}
+
+- (CGFloat)_artworkWidthForPercentage:(int)percentage {
+    // Always use the smallest width dimension for the width;
+    // we don't want the size to change when rotating
+    CGFloat width = [self _minScreenWidth];
+    if (percentage != 100) {
+        float floatPercentage = 1 - (percentage / 100.0);
+        float difference = width * floatPercentage;
+        width -= difference;
+    }
+    return width;
+}
 
 - (CGFloat)_minScreenWidth {
     CGSize mainBounds = [UIScreen mainScreen].bounds.size;
@@ -476,7 +481,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
     BOOL hasAnimatingArtwork = [_manager hasAnimatingArtwork];
     if (hasAnimatingArtwork)
-        [self _prepareSpinArtwork];
+        [self _prepareSpinArtworkWithWidth:[self _artworkWidthForPercentage:_manager.artworkWidthPercentage]];
 
     /* Not already visible, so we don't need to
        animate the image change but only the layer. */
@@ -550,10 +555,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (void)_prepareSpinArtwork {
+- (void)_prepareSpinArtworkWithWidth:(CGFloat)width {
     if (!_outerCDLayer) {
-        _artworkImageView.layer.mask = [self _createLayerArtworkMask];
-        [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD]];
+        _artworkImageView.layer.mask = [self _createLayerArtworkMask:width];
+        [_artworkImageView.layer addSublayer:[self _createLayerArtworkOuterCD:width]];
 
         _artworkImageView.layer.borderColor = [UIColor.grayColor colorWithAlphaComponent:0.3].CGColor;
         _artworkImageView.layer.borderWidth = 1.0f;
@@ -579,10 +584,11 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
-- (CALayer *)_createLayerArtworkOuterCD {
-    CGFloat outerHoleWidth = _artworkImageView.frame.size.width * 0.20f;
-    CGRect outerHoleFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - outerHoleWidth / 2,
-                                       _artworkImageView.frame.size.height / 2 - outerHoleWidth / 2,
+- (CALayer *)_createLayerArtworkOuterCD:(CGFloat)width {
+    CGFloat outerHoleWidth = width * 0.20f;
+    CGFloat dimensionLength = width / 2 - outerHoleWidth / 2;
+    CGRect outerHoleFrame = CGRectMake(dimensionLength,
+                                       dimensionLength,
                                        outerHoleWidth, outerHoleWidth);
     UIBezierPath *beizerPath = [UIBezierPath bezierPathWithOvalInRect:outerHoleFrame];
 
@@ -591,15 +597,16 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return _outerCDLayer;
 }
 
-- (CALayer *)_createLayerArtworkMask {
+- (CALayer *)_createLayerArtworkMask:(CGFloat)width {
     CGRect allFrame = CGRectMake(0, 0,
-                                 _artworkImageView.frame.size.width,
-                                 _artworkImageView.frame.size.height);
+                                 width,
+                                 width);
     UIBezierPath *beizerPath = [UIBezierPath bezierPathWithRect:allFrame];
 
-    CGFloat innerHoleWidth = _artworkImageView.frame.size.width * 0.10f;
-    CGRect holeFrame = CGRectMake(_artworkImageView.frame.size.width / 2 - innerHoleWidth / 2,
-                                  _artworkImageView.frame.size.height / 2 - innerHoleWidth / 2,
+    CGFloat innerHoleWidth = width * 0.10f;
+    CGFloat dimensionLength = width / 2 - innerHoleWidth / 2;
+    CGRect holeFrame = CGRectMake(dimensionLength,
+                                  dimensionLength,
                                   innerHoleWidth, innerHoleWidth);
     [beizerPath appendPath:[[UIBezierPath bezierPathWithOvalInRect:holeFrame]
                             bezierPathByReversingPath]];
