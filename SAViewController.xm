@@ -209,8 +209,9 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         width -= difference;
     }
 
-    // Removes all previous constraints
+    // Remove all previous constraints
     [_artworkImageView removeFromSuperview];
+    [_artworkImageView removeConstraints:_artworkImageView.constraints];
     [_artworkContainer addSubview:_artworkImageView];
 
     _artworkImageViewCenterYConstraint = [_artworkImageView.centerYAnchor constraintEqualToAnchor:_artworkContainer.centerYAnchor
