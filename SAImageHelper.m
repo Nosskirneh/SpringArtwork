@@ -391,7 +391,7 @@ typedef union {
 
                 CGFloat diffPercent = (CGFloat)(numDiffPixels + weightedDiffIncrement - 1) / checkTotal;
                 #ifdef DEBUG
-                HBLogDebug(@"[pixel %d/%ld]: numDiffPixels: %ld (+%ld), diffPercent: %f, tolerance: %f",
+                log(@"[pixel %d/%ld]: numDiffPixels: %ld (+%ld), diffPercent: %f, tolerance: %f",
                            n, (long)pixelCount, (long)numDiffPixels, (long)weightedDiffIncrement, diffPercent, tolerance);
                 #endif
                 if (diffPercent > tolerance) {
@@ -406,7 +406,7 @@ typedef union {
                 // If we have a match percentage already higher than the tolerance, return here
                 CGFloat currentlyMatchedPercentage = (CGFloat)(numMatchedPixels + weightedMatchIncrement - 1) / step;
                 #ifdef DEBUG
-                HBLogDebug(@"[pixel %d/%ld]: numMatchedPixels: %ld (+%ld), currentlyMatchedPercentage: %f, tolerance: %f",
+                log(@"[pixel %d/%ld]: numMatchedPixels: %ld (+%ld), currentlyMatchedPercentage: %f, tolerance: %f",
                            n, (long)pixelCount, (long)numMatchedPixels, (long)weightedMatchIncrement, currentlyMatchedPercentage, tolerance);
                 #endif
                 if (currentlyMatchedPercentage > tolerance) {
@@ -424,7 +424,7 @@ typedef union {
     free(secondImagePixels);
 
     #ifdef DEBUG
-    HBLogDebug(@"imageEqual: %d", imageEqual);
+    log(@"imageEqual: %d", imageEqual);
     #endif
     return imageEqual;
 }
