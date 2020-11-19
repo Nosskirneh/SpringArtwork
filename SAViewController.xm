@@ -770,7 +770,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (BOOL)_fadeCanvasLayerIn {
-    if (_canvasContainerImageView.superview)
+    if ([self _isShowingCanvasView])
         return NO;
 
     [self.view addSubview:_canvasContainerImageView];
@@ -780,7 +780,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 }
 
 - (BOOL)_fadeCanvasLayerOut {
-    if (!_canvasContainerImageView.superview)
+    if (![self _isShowingCanvasView])
         return NO;
 
     [self _showCanvasLayer:NO completion:^{
@@ -822,6 +822,10 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             _nextArtworkChange = nil;
         }
     }];
+}
+
+- (BOOL)_isShowingCanvasView {
+    return _canvasContainerImageView.superview;
 }
 
 // Needed in order to show on iOS 13.3+ lockscreen
