@@ -22,6 +22,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     UIImageView *_backgroundArtworkImageView;
     CAShapeLayer *_outerCDLayer;
     UIVisualEffectView *_visualEffectView;
+    NSLayoutConstraint *_artworkImageViewCenterYConstraint;
 
     BOOL _skipAnimation;
     BOOL _animating;
@@ -188,25 +189,33 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     }
 }
 
+- (CGFloat)_artworkImageViewCenterYConstant:(int)yOffsetPercentage {
+    // The y offset should always use the current dimension's height
+    CGFloat yConstant = 0.f;
+    if (yOffsetPercentage != 0)
+        yConstant = yOffsetPercentage / 100.0 * [UIScreen mainScreen].bounds.size.height;
+    return yConstant;
+}
+
 - (void)updateArtworkWidthPercentage:(int)percentage
                    yOffsetPercentage:(int)yOffsetPercentage {
+    // Always use the smallest width dimension for the width;
+    // we don't want the size to change when rotating
     CGFloat width = [self _minScreenWidth];
-
     if (percentage != 100) {
         float floatPercentage = 1 - (percentage / 100.0);
         float difference = width * floatPercentage;
         width -= difference;
     }
 
-    CGFloat yConstant = 0.f;
-    if (yOffsetPercentage != 0)
-        yConstant = yOffsetPercentage / 100.0 * width;
-
     // Removes all previous constraints
     [_artworkImageView removeFromSuperview];
     [_artworkContainer addSubview:_artworkImageView];
+
+    _artworkImageViewCenterYConstraint = [_artworkImageView.centerYAnchor constraintEqualToAnchor:_artworkContainer.centerYAnchor
+                                                                                         constant:[self _artworkImageViewCenterYConstant:yOffsetPercentage]];
     [NSLayoutConstraint activateConstraints:@[
-        [_artworkImageView.centerYAnchor constraintEqualToAnchor:_artworkContainer.centerYAnchor constant:yConstant],
+        _artworkImageViewCenterYConstraint,
         [_artworkImageView.centerXAnchor constraintEqualToAnchor:_artworkContainer.centerXAnchor],
         [_artworkImageView.widthAnchor constraintEqualToConstant:width],
         [_artworkImageView.heightAnchor constraintEqualToConstant:width]
@@ -387,6 +396,8 @@ static void setNoInterruptionMusic(AVPlayer *player) {
             // We need to set the origin to (0, 0), otherwise it will be misplaced
             [self _resetCanvasOrigin];
         }
+
+        _artworkImageViewCenterYConstraint.constant = [self _artworkImageViewCenterYConstant:_manager.artworkYOffsetPercentage];
     }];
 }
 
