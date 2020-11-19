@@ -815,8 +815,7 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
 
     manager = [[SAManager alloc] init];
 
-    /* License check – if no license found, present message.
-       If no valid license found, do not init. */
+    /* License check – if no license found, present message and do not init. */
     switch (check_lic(licensePath$bs(), package$bs())) {
         case CheckNoLicense:
             %init(Welcome);
