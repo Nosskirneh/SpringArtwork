@@ -167,8 +167,9 @@ extern SAManager *manager;
 
 - (void)_rotateToRadians:(float)rotation duration:(float)duration {
     dispatch_async(dispatch_get_main_queue(), ^{
-        for (SAViewController *vc in _viewControllers)
+        for (SAViewController *vc in _viewControllers) {
             [vc rotateToRadians:rotation duration:duration];
+        }
     });
 }
 

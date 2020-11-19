@@ -46,7 +46,6 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 @property (nonatomic, assign, readonly) BOOL hideDockBackground;
 // ---
 
-
 @property (nonatomic, assign, readonly) UIInterfaceOrientation lastRotatedInterfaceOrientation;
 @property (nonatomic, assign, readonly) BOOL trialEnded;
 

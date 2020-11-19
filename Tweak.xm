@@ -290,7 +290,7 @@
        the SBCoverSheetPrimarySlidingViewController's methods
        _finish and _begin down below. They are general ones to not only
        targetting the transition view controller. That one needs special
-       patching. Canvas videos doesn't need this as they always play
+       patching. Canvas videos don't need this as they always play
        regardless if switching target view. */
     %hook SBLockScreenManager
 
@@ -415,27 +415,29 @@
 
     /* Lockscreen background when transitioning to the camera. */
     %hook CoverSheetViewController
+    #define _self ((UIViewController<CoverSheetViewController> *)self)
 
     - (void)loadView {
         %orig;
 
-        UIViewController<CoverSheetViewController> *_self = (UIViewController<CoverSheetViewController> *)self;
         UIView<CoverSheetView> *view = (UIView<CoverSheetView> *)_self.view;
         view.canvasViewController = [[SAViewController alloc] initWithManager:manager];
     }
 
+    #undef _self
     %end
 
     %hook CoverSheetView
+    #define _self ((UIView<CoverSheetView> *)self)
     %property (nonatomic, retain) SAViewController *canvasViewController;
 
     - (void)setWallpaperEffectView:(UIView *)effectView {
         %orig;
 
-        UIView<CoverSheetView> *_self = (UIView<CoverSheetView> *)self;
         [_self.canvasViewController setTargetView:effectView];
     }
 
+    #undef _self
     %end
     // ---
 
