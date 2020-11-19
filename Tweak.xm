@@ -52,7 +52,9 @@
     }
 
     %hook SBWallpaperController
-    - (void)orientationSource:(long long)source willRotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(CGFloat)duration {
+    - (void)activeInterfaceOrientationDidChangeToOrientation:(long long)interfaceOrientation
+                                     willAnimateWithDuration:(double)duration
+                                             fromOrientation:(long long)from {
         %orig;
 
         [manager wallpaperRotatedToOrientationInterface:interfaceOrientation duration:duration];
@@ -493,8 +495,10 @@
 - (void)_createFadeOutWallpaperEffectView {
     %orig;
 
+    // The blur view does not rotate, so we should not counter-rotate our canvas view
     self.canvasFadeOutViewController = [[SAViewController alloc] initWithTargetView:self.panelFadeOutWallpaperEffectView.blurView
-                                                                            manager:manager];
+                                                                            manager:manager
+                                                                noAutomaticRotation:YES];
 }
 
 %new

@@ -37,38 +37,47 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     if (self == [super init]) {
         _manager = manager;
 
-        AVPlayer *player = [[AVPlayer alloc] init];
-        player.muted = YES;
-        [player _setPreventsSleepDuringVideoPlayback:NO];
-        setNoInterruptionMusic(player);
-
+        // Artwork
         _artworkContainer = [[UIView alloc] initWithFrame:self.view.frame];
+        _artworkContainer.translatesAutoresizingMaskIntoConstraints = NO;
 
         _backgroundArtworkImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
+        _backgroundArtworkImageView.translatesAutoresizingMaskIntoConstraints = NO;
         _backgroundArtworkImageView.contentMode = UIViewContentModeScaleAspectFill;
         if (manager.blurredImage)
             [self updateBlurEffect:YES];
 
         [_artworkContainer addSubview:_backgroundArtworkImageView];
+        [NSLayoutConstraint activateConstraints:[self _constraintsForBackgroundArtworkImageView]];
 
         _artworkImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _artworkImageView.translatesAutoresizingMaskIntoConstraints = NO;
         [self updateArtworkWidthPercentage:manager.artworkWidthPercentage
                          yOffsetPercentage:manager.artworkYOffsetPercentage];
-
-        int cornerRadius = [manager artworkCornerRadiusPercentage];
-        if (cornerRadius != 0)
-            [self updateArtworkCornerRadius:cornerRadius];
         _artworkImageView.contentMode = UIViewContentModeScaleAspectFit;
-        [_artworkContainer addSubview:_artworkImageView];
 
-        _canvasContainerImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
-        _canvasContainerImageView.contentMode = UIViewContentModeScaleAspectFill;
+        // Canvas
+        AVPlayer *player = [[AVPlayer alloc] init];
+        player.muted = YES;
+        [player _setPreventsSleepDuringVideoPlayback:NO];
+        setNoInterruptionMusic(player);
+
+        CGSize mainBounds = [UIScreen mainScreen].bounds.size;
+        CGRect canvasFrame = (CGRect) {
+            .origin.x = 0.0,
+            .origin.y = 0.0,
+            .size.width = MIN(mainBounds.height, mainBounds.width),
+            .size.height = MAX(mainBounds.height, mainBounds.width)
+        };
+        _canvasContainerImageView = [[UIImageView alloc] initWithFrame:canvasFrame];
+        _canvasContainerImageView.translatesAutoresizingMaskIntoConstraints = YES;
 
         _canvasLayer = [AVPlayerLayer playerLayerWithPlayer:player];
         _canvasLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-        _canvasLayer.frame = self.view.frame;
+        _canvasLayer.frame = canvasFrame;
         [_canvasContainerImageView.layer addSublayer:_canvasLayer];
 
+        // Overall
         if ([_manager hasContent]) {
             [self performWithoutAnimation:^{
                 [self updateRelevantStartTime];
@@ -79,6 +88,32 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         [manager addNewViewController:self];
     }
 
+    return self;
+}
+
+- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
+    if (self == [self initWithManager:manager])
+        [self setTargetView:targetView];
+    return self;
+}
+
+- (id)initWithTargetView:(UIView *)targetView
+                 manager:(SAManager *)manager
+                inCharge:(BOOL)inCharge {
+    if (self == [self initWithTargetView:targetView manager:manager]) {
+        _inCharge = inCharge;
+        if (inCharge)
+            manager.inChargeController = self;
+    }
+    return self;
+}
+
+- (id)initWithTargetView:(UIView *)targetView
+                 manager:(SAManager *)manager
+     noAutomaticRotation:(BOOL)noAutomaticRotation {
+    if (self == [self initWithTargetView:targetView manager:manager]) {
+        _noAutomaticRotation = noAutomaticRotation;
+    }
     return self;
 }
 
@@ -103,49 +138,26 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     _artworkAnimationStartTime = [_manager artworkAnimationTime];
 }
 
-- (id)initWithTargetView:(UIView *)targetView manager:(SAManager *)manager {
-    if (self == [self initWithManager:manager])
-        [self setTargetView:targetView];
-    return self;
-}
-
-- (id)initWithTargetView:(UIView *)targetView
-                 manager:(SAManager *)manager
-                inCharge:(BOOL)inCharge {
-    if (self == [self initWithManager:manager]) {
-        _inCharge = inCharge;
-        if (inCharge)
-            manager.inChargeController = self;
-
-        [self setTargetView:targetView];
-    }
-    return self;
-}
-
 - (void)setTargetView:(UIView *)targetView {
     _targetView = targetView;
     if (!targetView)
         return [self.view removeFromSuperview];
-    [self _updateFrameFromTargetView];
     [targetView addSubview:self.view];
-}
 
-- (void)_updateFrameFromTargetView {
-    CGRect frame = _targetView.frame;
-    if (CGRectEqualToRect(frame, CGRectZero)) {
-        frame = [UIScreen mainScreen].bounds;
-    }
-    self.view.frame = frame;
+    self.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+        [self.view.widthAnchor constraintEqualToAnchor:targetView.widthAnchor],
+        [self.view.heightAnchor constraintEqualToAnchor:targetView.heightAnchor]
+    ]];
 
-    // When rotating, the blurred view doesn't seem to follow. To solve that, we flip the bounds
-    if (UIInterfaceOrientationIsPortrait(_manager.lastRotatedInterfaceOrientation)) {
-        CGFloat x = frame.origin.y;
-        CGFloat y = frame.origin.x;
-        CGFloat height = frame.size.width;
-        CGFloat width = frame.size.height;
-        frame = CGRectMake(x, y, height, width);
+    // This is required for the camera transition view controller
+    // that will receive its target view later than the others
+    if ([self _isShowingArtworkView]) {
+        [NSLayoutConstraint activateConstraints:[self _constraintsForArtworkContainer]];
+        [NSLayoutConstraint activateConstraints:[self _constraintsForBackgroundArtworkImageView]];
+    } else if ([self _isShowingCanvasView]) {
+        [NSLayoutConstraint activateConstraints:[self _constraintsForCanvasContainerImageView]];
     }
-    _visualEffectView.bounds = frame;
 }
 
 - (void)replayVideo {
@@ -178,34 +190,38 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
 - (void)updateArtworkWidthPercentage:(int)percentage
                    yOffsetPercentage:(int)yOffsetPercentage {
-    CGRect imageViewFrame = self.view.frame;
+    CGFloat width = [self _minScreenWidth];
+
     if (percentage != 100) {
         float floatPercentage = 1 - (percentage / 100.0);
-        float difference = imageViewFrame.size.width * floatPercentage;
-        imageViewFrame.size.width -= difference;
-        imageViewFrame.origin.x += difference / 2.0;
+        float difference = width * floatPercentage;
+        width -= difference;
     }
-    imageViewFrame.size.height = imageViewFrame.size.width;
-    imageViewFrame.origin.y = self.view.frame.size.height / 2 -
-                              imageViewFrame.size.height / 2;
 
+    CGFloat yConstant = 0.f;
     if (yOffsetPercentage != 0)
-        imageViewFrame.origin.y += yOffsetPercentage / 100.0 *
-                                   self.view.frame.size.height;
-    _artworkImageView.frame = imageViewFrame;
+        yConstant = yOffsetPercentage / 100.0 * width;
+
+    // Removes all previous constraints
+    [_artworkImageView removeFromSuperview];
+    [_artworkContainer addSubview:_artworkImageView];
+    [NSLayoutConstraint activateConstraints:@[
+        [_artworkImageView.centerYAnchor constraintEqualToAnchor:_artworkContainer.centerYAnchor constant:yConstant],
+        [_artworkImageView.centerXAnchor constraintEqualToAnchor:_artworkContainer.centerXAnchor],
+        [_artworkImageView.widthAnchor constraintEqualToConstant:width],
+        [_artworkImageView.heightAnchor constraintEqualToConstant:width]
+    ]];
 
     // Recreate the CD layer mask
     if ([_manager hasAnimatingArtwork]) {
         [self _destroySpinArtwork];
         [self _prepareSpinArtwork];
-        [self updateArtworkCornerRadius:[_manager artworkCornerRadiusPercentage]];
     }
+    [self _updateArtworkCornerRadius:[_manager artworkCornerRadiusPercentage] width:width];
 }
 
 - (void)updateArtworkCornerRadius:(int)percentage {
-    _artworkImageView.clipsToBounds = percentage != 0;
-    _artworkImageView.layer.cornerRadius = _artworkImageView.frame.size.width / 2 *
-                                           (percentage / 100.0);
+    [self _updateArtworkCornerRadius:percentage width:[self _minScreenWidth]];
 }
 
 - (void)artworkUpdated:(id<SAViewControllerManager>)manager {
@@ -335,19 +351,72 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 
         [_visualEffectView setEffect:_manager.blurEffect];
 
-        // Force update of blur
+        // Force update blur
         [_visualEffectView _commonInit];
         [_visualEffectView _updateEffectsFromLegacyEffect];
     } else {
         _visualEffectView = [[UIVisualEffectView alloc] initWithEffect:_manager.blurEffect];
-        [_visualEffectView setFrame:self.view.frame];
+
         [_backgroundArtworkImageView addSubview:_visualEffectView];
+        _visualEffectView.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [_visualEffectView.widthAnchor constraintEqualToAnchor:_backgroundArtworkImageView.widthAnchor],
+            [_visualEffectView.heightAnchor constraintEqualToAnchor:_backgroundArtworkImageView.heightAnchor]
+        ]];
     }
+}
+
+// Rotates the canvas container view the opposite of the SpringBoard
+// rotation, allowing it to always appear in full screen.
+// Also rotates the artwork container if the target view is not
+// automatically rotating.
+- (void)rotateToRadians:(float)rotation duration:(float)duration {
+    [UIView animateWithDuration:duration animations:^(void) {
+        if (self.noAutomaticRotation) {
+            // Rotate artwork view
+            // This has to be done manually for the view controllers which
+            // target view is not automatically rotated.
+            _artworkContainer.transform = CGAffineTransformMakeRotation(-rotation);
+            _visualEffectView.transform = CGAffineTransformMakeRotation(-rotation);
+        } else {
+            // Rotate canvas view
+            // We need to counter-rotate the canvas views for the view controllers which
+            // target view automatically rotate.
+            _canvasContainerImageView.transform = CGAffineTransformMakeRotation(rotation);
+
+            // We need to set the origin to (0, 0), otherwise it will be misplaced
+            [self _resetCanvasOrigin];
+        }
+    }];
 }
 
 #pragma mark Private
 
 #pragma mark Artwork
+
+- (CGFloat)_minScreenWidth {
+    CGSize mainBounds = [UIScreen mainScreen].bounds.size;
+    return MIN(mainBounds.height, mainBounds.width);
+}
+
+- (void)_updateArtworkCornerRadius:(int)percentage width:(CGFloat)width {
+    _artworkImageView.clipsToBounds = percentage != 0;
+    _artworkImageView.layer.cornerRadius = width / 2 * (percentage / 100.0);
+}
+
+- (NSArray *)_constraintsForArtworkContainer {
+    return @[
+        [_artworkContainer.widthAnchor constraintEqualToAnchor:self.view.widthAnchor],
+        [_artworkContainer.heightAnchor constraintEqualToAnchor:self.view.heightAnchor]
+    ];
+}
+
+- (NSArray *)_constraintsForBackgroundArtworkImageView {
+    return @[
+        [_backgroundArtworkImageView.widthAnchor constraintEqualToAnchor:_artworkContainer.widthAnchor],
+        [_backgroundArtworkImageView.heightAnchor constraintEqualToAnchor:_artworkContainer.heightAnchor]
+    ];
+}
 
 - (void)_artworkUpdatedWithImage:(UIImage *)artwork
                     blurredImage:(UIImage *)blurredImage
@@ -567,13 +636,15 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return NO;
     }
 
+    [self.view addSubview:_artworkContainer];
+    [NSLayoutConstraint activateConstraints:[self _constraintsForArtworkContainer]];
+
     /* Using snapshots here as well to avoid blur glitch */
     _artworkContainer.alpha = 1.0f;
     __block UIView *snapshot = [_artworkContainer snapshotViewAfterScreenUpdates:YES];
     [self.view insertSubview:snapshot aboveSubview:_artworkContainer];
 
     _artworkContainer.alpha = 0.0f;
-    [self.view addSubview:_artworkContainer];
 
     if (_skipAnimation) {
         _artworkImageView.layer.opacity = 1.0;
@@ -774,9 +845,21 @@ static void setNoInterruptionMusic(AVPlayer *player) {
         return NO;
 
     [self.view addSubview:_canvasContainerImageView];
+    [NSLayoutConstraint activateConstraints:[self _constraintsForCanvasContainerImageView]];
+
     [self _showCanvasLayer:YES];
 
     return YES;
+}
+
+- (NSArray *)_constraintsForCanvasContainerImageView {
+    CGSize mainBounds = [UIScreen mainScreen].bounds.size;
+    CGFloat width = MIN(mainBounds.height, mainBounds.width);
+    CGFloat height = MAX(mainBounds.height, mainBounds.width);
+    return @[
+        [_canvasContainerImageView.widthAnchor constraintEqualToConstant:width],
+        [_canvasContainerImageView.heightAnchor constraintEqualToConstant:height]
+    ];
 }
 
 - (BOOL)_fadeCanvasLayerOut {
@@ -828,17 +911,18 @@ static void setNoInterruptionMusic(AVPlayer *player) {
     return _canvasContainerImageView.superview;
 }
 
+- (void)_resetCanvasOrigin {
+    CGRect frame = _canvasContainerImageView.frame;
+    frame.origin = (CGPoint) {
+        .x = 0.0,
+        .y = 0.0
+    };
+    _canvasContainerImageView.frame = frame;
+}
+
 // Needed in order to show on iOS 13.3+ lockscreen
 - (BOOL)_canShowWhileLocked {
     return YES;
-}
-
-- (void)rotateToRadians:(float)rotation duration:(float)duration {
-    [UIView animateWithDuration:duration animations:^(void) {
-        self.view.transform = CGAffineTransformMakeRotation(rotation);
-        _visualEffectView.transform = CGAffineTransformMakeRotation(rotation);
-        [self _updateFrameFromTargetView];
-    }];
 }
 
 @end
