@@ -13,6 +13,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 @implementation SAViewController {
     __weak SAManager *_manager;
     BOOL _inCharge;
+    BOOL _noAutomaticRotation;
 
     UIView *_targetView;
     UIImageView *_canvasContainerImageView;
@@ -381,7 +382,7 @@ static void setNoInterruptionMusic(AVPlayer *player) {
 // automatically rotating.
 - (void)rotateToRadians:(float)rotation duration:(float)duration {
     [UIView animateWithDuration:duration animations:^(void) {
-        if (self.noAutomaticRotation) {
+        if (_noAutomaticRotation) {
             // Rotate artwork view
             // This has to be done manually for the view controllers which
             // target view is not automatically rotated.

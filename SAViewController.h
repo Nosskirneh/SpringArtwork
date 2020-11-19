@@ -3,7 +3,6 @@
 #import "SAAnimatingViewController.h"
 
 @interface SAViewController : UIViewController<SAContentViewController, SAAnimatingViewController>
-@property (nonatomic, assign, readonly) BOOL noAutomaticRotation;
 /* Public */
 - (id)initWithManager:(id)manager;
 - (id)initWithTargetView:(UIView *)targetView
