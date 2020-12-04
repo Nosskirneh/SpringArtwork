@@ -36,16 +36,22 @@ static NSDictionary *addSAServiceToClassNamesScopes(NSDictionary<NSString *, NSA
 %end
 
 
+static inline BOOL initServiceSystem(Class serviceListClass) {
+    if (serviceListClass) {
+        %init(SPTServiceSystem, SPTServiceList = serviceListClass);
+        return YES;
+    }
+    return NO;
+}
+
 %ctor {
     NSDictionary *preferences = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
     NSNumber *canvasEnabled = preferences[kCanvasEnabled];
 
     if (isSpotify(bundleID) && (!canvasEnabled || [canvasEnabled boolValue])) {
-        Class serviceListClass = objc_getClass("SPTServiceSystem.SPTServiceList");
-        if (serviceListClass) {
-            %init(SPTServiceSystem, SPTServiceList = serviceListClass);
-        } else {
+        if (!initServiceSystem(%c(SPTServiceList)) &&
+            !initServiceSystem(objc_getClass("SPTServiceSystem.SPTServiceList"))) {
             %init(SPTDictionaryBasedServiceList);
         }
     }
