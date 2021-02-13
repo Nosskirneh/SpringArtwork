@@ -4,12 +4,21 @@
 #import <AVFoundation/AVAsset.h>
 #import "SASPTService.h"
 
-static NSDictionary *addSAServiceToClassNamesScopes(NSDictionary<NSString *, NSArray<NSString *> *> *scopes) {
+static NSDictionary *_addSAServiceToClassScopes(NSDictionary<NSString *, NSArray<NSString *> *> *scopes,
+                                                id classObject) {
     NSMutableDictionary *newScopes = [scopes mutableCopy];
     NSMutableArray *newSessionArray = [newScopes[@"session"] mutableCopy];
-    [newSessionArray addObject:NSStringFromClass(%c(SASPTService))];
+    [newSessionArray addObject:classObject];
     newScopes[@"session"] = newSessionArray;
     return newScopes;
+}
+
+static NSDictionary *addSAServiceToClassNamesScopes(NSDictionary<NSString *, NSArray<NSString *> *> *scopes) {
+    return _addSAServiceToClassScopes(scopes, NSStringFromClass(%c(SASPTService)));
+}
+
+static NSDictionary *addSAServiceToClassScopes(NSDictionary<NSString *, NSArray<NSString *> *> *scopes) {
+    return _addSAServiceToClassScopes(scopes, %c(SASPTService));
 }
 
 %group SPTDictionaryBasedServiceList
@@ -35,10 +44,25 @@ static NSDictionary *addSAServiceToClassNamesScopes(NSDictionary<NSString *, NSA
 %end
 %end
 
+%group SPTServiceSystem_864
+%hook SPTServiceList
+
+- (id)initWithScopeGraph:(id)graph
+   serviceClassesByScope:(NSDictionary<NSString *, NSArray<NSString *> *> *)scopes {
+    return %orig(graph, addSAServiceToClassScopes(scopes));
+}
+
+%end
+%end
+
 
 static inline BOOL initServiceSystem(Class serviceListClass) {
     if (serviceListClass) {
-        %init(SPTServiceSystem, SPTServiceList = serviceListClass);
+        if ([serviceListClass instancesRespondToSelector:@selector(initWithScopeGraph:serviceClassesByScope:)]) {
+            %init(SPTServiceSystem_864);
+        } else {
+            %init(SPTServiceSystem, SPTServiceList = serviceListClass);
+        }
         return YES;
     }
     return NO;
