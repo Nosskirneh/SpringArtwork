@@ -56,6 +56,22 @@ static NSDictionary *addSAServiceToClassScopes(NSDictionary<NSString *, NSArray<
 %end
 
 
+%hook AppDelegate
+
+- (NSArray *)sessionServices {
+    NSArray *orig = %orig;
+    if (!orig) {
+        return @[%c(SASPTService)];
+    }
+
+    NSMutableArray *newArray = [orig mutableCopy];
+    [newArray addObject:%c(SASPTService)];
+    return newArray;
+}
+
+%end
+
+
 static inline BOOL initServiceSystem(Class serviceListClass) {
     if (serviceListClass) {
         if ([serviceListClass instancesRespondToSelector:@selector(initWithScopeGraph:serviceClassesByScope:)]) {
@@ -74,8 +90,11 @@ static inline BOOL initServiceSystem(Class serviceListClass) {
     NSNumber *canvasEnabled = preferences[kCanvasEnabled];
 
     if (isSpotify(bundleID) && (!canvasEnabled || [canvasEnabled boolValue])) {
-        if (!initServiceSystem(%c(SPTServiceList)) &&
-            !initServiceSystem(objc_getClass("SPTServiceSystem.SPTServiceList"))) {
+        Class AppDelegateClass = objc_getClass("AppKernelFeature.AppDelegate");
+        if ([AppDelegateClass instancesRespondToSelector:@selector(sessionServices)]) {
+            %init(AppDelegate = AppDelegateClass);
+        } else if (!initServiceSystem(%c(SPTServiceList)) &&
+                   !initServiceSystem(objc_getClass("SPTServiceSystem.SPTServiceList"))) {
             %init(SPTDictionaryBasedServiceList);
         }
     }
