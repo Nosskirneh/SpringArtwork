@@ -6,6 +6,12 @@
 #define ARTWORK_SIZE CGSizeMake(ARTWORK_WIDTH, ARTWORK_WIDTH)
 
 
+@interface SpotifyServiceList
++ (NSArray *(^)(void))sessionServices;
++ (void)setSessionServices:(NSArray *(^)(void))sessionServices;
+@end
+
+
 @protocol SPTServiceList <NSObject>
 - (NSArray *)serviceClassesForScope:(NSString *)scope;
 @end
