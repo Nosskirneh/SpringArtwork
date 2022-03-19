@@ -49,9 +49,11 @@ static NSDictionary *addSAServiceToClassScopes(NSDictionary<NSString *, NSArray<
 
 %group SPTServiceSystem_864
 
-%hookf(NSArray *, initWithScopeGraph, id graph, NSDictionary<NSString *, NSArray<NSString *> *> *scopes) {
+%hook SPTServiceList
+- (NSArray *)initWithScopeGraph:(id)graph serviceClassesByScope:(NSDictionary<NSString *, NSArray<NSString *> *> *)scopes {
     return %orig(graph, addSAServiceToClassScopes(scopes));
 }
+%end
 
 %end
 
@@ -59,7 +61,7 @@ static NSDictionary *addSAServiceToClassScopes(NSDictionary<NSString *, NSArray<
 static inline BOOL initServiceSystem(Class serviceListClass) {
     if (serviceListClass) {
         if ([serviceListClass instancesRespondToSelector:@selector(initWithScopeGraph:serviceClassesByScope:)]) {
-            %init(SPTServiceSystem_864, initWithScopeGraph = MSFindSymbol(NULL, "-[SPTServiceList initWithScopeGraph:serviceClassesByScope:]"));
+            %init(SPTServiceSystem_864, SPTServiceList = serviceListClass);
         } else {
             %init(SPTServiceSystem, SPTServiceList = serviceListClass);
         }
