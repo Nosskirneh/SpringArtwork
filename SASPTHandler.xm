@@ -40,7 +40,6 @@ static void sendEmptyMessage() {
 @property (nonatomic, assign, readonly) BOOL onlyOnWifi;
 
 @property (nonatomic, strong, readonly) SPTGLUEImageLoader *imageLoader;
-@property (nonatomic, strong, readonly) SPTCanvasTrackCheckerImplementation *trackChecker;
 @property (nonatomic, strong, readonly) SPTVideoURLAssetLoaderImplementation *videoAssetLoader;
 
 @property (nonatomic, strong, nullable) SPTPlayerState *currentState;
@@ -49,11 +48,9 @@ static void sendEmptyMessage() {
 @implementation SASPTHandler
 
 - (id)initWithImageLoader:(SPTGLUEImageLoader *)imageLoader
-             trackChecker:(SPTCanvasTrackCheckerImplementation *)trackChecker
          videoAssetLoader:(SPTVideoURLAssetLoaderImplementation *)videoAssetLoader {
     if (self == [super init]) {
         _imageLoader = imageLoader;
-        _trackChecker = trackChecker;
         _videoAssetLoader = videoAssetLoader;
 
         int token;
@@ -98,9 +95,9 @@ static void sendEmptyMessage() {
 - (void)fetchDataForState:(SPTPlayerState *)state {
     SPTPlayerTrack *track = state.track;
 
-    if (self.canvasEnabled && track && [self.trackChecker isCanvasEnabledForTrack:track]) {
+    if (self.canvasEnabled && track) {
         NSURL *canvasURL = [track.metadata spt_URLForKey:@"canvas.url"];
-        if (![canvasURL.absoluteString hasSuffix:@".mp4"])
+        if (!canvasURL || ![canvasURL.absoluteString hasSuffix:@".mp4"])
             return [self tryWithArtworkForTrack:track state:state];
 
         SPTVideoURLAssetLoaderImplementation *assetLoader = self.videoAssetLoader;
