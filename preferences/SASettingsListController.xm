@@ -2,7 +2,54 @@
 #import <UIKit/UIKit.h>
 #import "SASettingsListController.h"
 #import <notify.h>
-#import "../../DRM/respring.xm"
+#import <substrate.h>
+#import <objc/runtime.h>
+#import <spawn.h>
+
+typedef enum {
+      NoneRespringStyle      = 0,
+      RestartRenderServer    = (1 << 0), // also relaunch backboardd
+      SnapshotTransition     = (1 << 1),
+      FadeToBlackTransition  = (1 << 2),
+} SBSRelaunchActionStyle;
+
+@interface SBSRelaunchAction : NSObject
++ (id)actionWithReason:(NSString *)reason
+               options:(SBSRelaunchActionStyle)options
+             targetURL:(NSURL *)url;
+@end
+
+@interface SBSRestartRenderServerAction : SBSRelaunchAction
++ (id)restartActionWithTargetRelaunchURL:(NSURL *)url;
+@end
+
+@interface FBSSystemService : NSObject
++ (id)sharedService;
+- (void)sendActions:(NSSet *)actions withResult:(id)completion;
+@end
+
+static void killProcess(const char *name) {
+    pid_t pid;
+    int status;
+    const char *args[] = { "killall", "-9", name, NULL };
+    posix_spawn(&pid, "/usr/bin/killall", NULL, NULL, (char *const *)args, NULL);
+    waitpid(pid, &status, WEXITED);
+}
+
+static void respring() {
+    if (objc_getClass("FBSSystemService")) {
+        Class relaunchAction = objc_getClass("SBSRelaunchAction");
+        SBSRelaunchAction *restartAction = relaunchAction ?
+                                               [relaunchAction actionWithReason:@"RestartRenderServer"
+                                                                        options:FadeToBlackTransition
+                                                                      targetURL:nil] :
+                                               [objc_getClass("SBSRestartRenderServerAction") restartActionWithTargetRelaunchURL:nil];
+        [[objc_getClass("FBSSystemService") sharedService] sendActions:[NSSet setWithObject:restartAction]
+                                                            withResult:nil];
+    } else {
+        killProcess("SpringBoard");
+    }
+}
 
 @interface UISegmentedControl (Missing)
 - (void)selectSegment:(int)index;
@@ -25,7 +72,7 @@
 @implementation SASettingsListController
 
 - (void)respring {
-    respring(NO);
+    respring();
 }
 
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
@@ -63,7 +110,7 @@
                                                                  style:UIAlertActionStyleDestructive
                                                                handler:^(UIAlertAction *action) {
                                             [self savePreferenceValue:value specifier:specifier];
-                                            respring(NO);
+                                            respring();
                                         }];
 
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"No, revert change"

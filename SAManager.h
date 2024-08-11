@@ -47,12 +47,9 @@ typedef enum UIImpactFeedbackStyle : NSInteger {
 // ---
 
 @property (nonatomic, assign, readonly) UIInterfaceOrientation lastRotatedInterfaceOrientation;
-@property (nonatomic, assign, readonly) BOOL trialEnded;
 
 + (instancetype)sharedManager;
 - (void)setupWithPreferences:(NSDictionary *)preferences;
-
-- (void)setTrialEnded;
 
 - (void)toggleEnabled;
 - (void)setEnabled:(BOOL)enabled;

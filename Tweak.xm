@@ -3,7 +3,6 @@
 #import "Common.h"
 #import "notifyDefines.h"
 #import <notify.h>
-#import "DRMValidateOptions.mm"
 
 
 %group SBWallpaperController_iOS12
@@ -712,55 +711,6 @@
 %end
 
 
-%group PackagePirated
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        showPiracyAlert(packageShown$bs());
-    });
-}
-
-%end
-%end
-
-
-%group Welcome
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-    showSpringBoardDismissAlert(packageShown$bs(), WelcomeMsg$bs());
-}
-
-%end
-%end
-
-
-%group CheckTrialEnded
-%hook SBCoverSheetPresentationManager
-
-- (void)_cleanupDismissalTransition {
-    %orig;
-
-    if (!manager.trialEnded && check_lic(licensePath$bs(), package$bs()) == CheckInvalidTrialLicense) {
-        [manager setTrialEnded];
-        showSpringBoardDismissAlert(packageShown$bs(), TrialEndedMsg$bs());
-    }
-}
-
-%end
-%end
-
-__attribute__((always_inline, visibility("hidden")))
-static inline void initTrial() {
-    %init(CheckTrialEnded);
-}
-
-
 __attribute__((always_inline, visibility("hidden")))
 static inline void initLockscreen() {
     Class coverSheetViewControllerClass = %c(CSCoverSheetViewController);
@@ -810,31 +760,7 @@ static inline void initMediaWidgetInactivity_iOS13(Class adjunctListModelClass) 
     if (![bundleID isEqualToString:kSpringBoardBundleID])
         return;
 
-    if (fromUntrustedSource(package$bs()))
-        %init(PackagePirated);
-
     manager = [[SAManager alloc] init];
-
-    /* License check – if no license found, present message and do not init. */
-    switch (check_lic(licensePath$bs(), package$bs())) {
-        case CheckNoLicense:
-            %init(Welcome);
-            return;
-        case CheckInvalidTrialLicense:
-            initTrial();
-            return;
-        case CheckValidTrialLicense:
-            initTrial();
-            break;
-        case CheckValidLicense:
-            break;
-        case CheckInvalidLicense:
-        case CheckUDIDsDoNotMatch:
-        default:
-            return;
-    }
-    // ---
-
     [manager setupWithPreferences:preferences];
     Class adjunctListModelClass = %c(CSAdjunctListModel);
     if (!adjunctListModelClass) {

@@ -178,11 +178,6 @@ extern SAManager *manager;
 }
 
 - (void)setEnabled:(BOOL)enabled {
-    if (_trialEnded) {
-        _enabled = NO;
-        return;
-    }
-
     _enabled = enabled;
 
     if (!enabled) {
@@ -251,35 +246,6 @@ extern SAManager *manager;
 - (void)hide {
     [self _reset];
     [self _updateOnMainQueueWithContent:NO];
-}
-
-// Destroy everything! MOHAHAHA! *evil laugh continues...*
-- (void)setTrialEnded {
-    _trialEnded = YES;
-
-    /* Used to guard against uninitialized tweak due to trial invalidity */
-    if (!_didInit)
-        return;
-
-    [self _unsubscribeToArtworkChangesAndClean];
-    [self _unregisterSpotifyNotifications];
-    [self _unregisterAutoPlayPauseEvents];
-    notify_cancel(_notifyTokenForSettingsChanged);
-
-    [self _reset];
-
-    _previousCanvasURL = nil;
-    _previousCanvasAsset = nil;
-
-    _canvasThumbnail = nil;
-    _canvasArtworkImage = nil;
-
-    _artworkEnabled = NO;
-    _canvasEnabled = NO;
-
-    [self _updateOnMainQueueWithContent:NO];
-    _viewControllers = nil;
-    _inChargeController = nil;
 }
 
 - (BOOL)changedContent {
